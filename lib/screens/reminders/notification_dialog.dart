@@ -20,102 +20,123 @@ class NotificationDialog extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeNotifications = notifications.where((n) => !n.isMutedDueToHoliday).toList();
     final mutedNotifications = notifications.where((n) => n.isMutedDueToHoliday).toList();
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
-        padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(
+          maxWidth: 480,
+          maxHeight: screenHeight * 0.82,
+        ),
+        padding: const EdgeInsets.all(18),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
+            // Responsive Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.notifications_active_rounded, color: Color(0xFF1E3A8A)),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Reminders & Alerts',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.notifications_active_rounded, color: Color(0xFF2563EB), size: 20),
                 ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.tune_rounded, size: 20),
-                      onPressed: onOpenSettings,
-                      tooltip: 'Customize Reminder Timings',
-                      visualDensity: VisualDensity.compact,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Reminders & Alerts',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ],
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.tune_rounded, size: 20),
+                  onPressed: onOpenSettings,
+                  tooltip: 'Settings',
+                  visualDensity: VisualDensity.compact,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  onPressed: () => Navigator.of(context).pop(),
+                  visualDensity: VisualDensity.compact,
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: 6),
+
+            // Sub-header summary and actions
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
                   '${activeNotifications.length} scheduled reminders',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     TextButton.icon(
                       onPressed: onOpenSettings,
-                      icon: const Icon(Icons.settings_outlined, size: 14),
+                      icon: const Icon(Icons.settings_outlined, size: 13),
                       label: const Text('Customize', style: TextStyle(fontSize: 11)),
-                      style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      ),
                     ),
                     if (activeNotifications.any((n) => !n.isRead)) ...[
                       const SizedBox(width: 4),
                       TextButton(
                         onPressed: onMarkAllRead,
-                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-                        child: const Text('Mark read', style: TextStyle(fontSize: 11)),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        ),
+                        child: const Text('Mark all read', style: TextStyle(fontSize: 11)),
                       ),
                     ],
                   ],
                 ),
               ],
             ),
-            const Divider(height: 16),
+            const Divider(height: 14),
 
             // Notification List
-            Expanded(
+            Flexible(
               child: notifications.isEmpty
                   ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.notifications_off_outlined, size: 48, color: Colors.grey),
-                          SizedBox(height: 8),
-                          Text('No reminders scheduled yet.', style: TextStyle(color: Colors.grey)),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.notifications_off_outlined, size: 44, color: Colors.grey),
+                            SizedBox(height: 8),
+                            Text('No reminders scheduled yet.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                          ],
+                        ),
                       ),
                     )
                   : ListView(
+                      shrinkWrap: true,
                       physics: const BouncingScrollPhysics(),
                       children: [
                         if (activeNotifications.isNotEmpty) ...[
                           ...activeNotifications.map((n) => _buildNotificationTile(n, isDark)),
                         ],
                         if (mutedNotifications.isNotEmpty) ...[
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
@@ -126,9 +147,12 @@ class NotificationDialog extends StatelessWidget {
                               children: const [
                                 Icon(Icons.volume_off_rounded, size: 14, color: Colors.grey),
                                 SizedBox(width: 6),
-                                Text(
-                                  'Silenced by Holiday Rule (No Class)',
-                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                                Expanded(
+                                  child: Text(
+                                    'Silenced by Holiday Conflict Rule (No Class)',
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                             ),
@@ -189,10 +213,12 @@ class NotificationDialog extends StatelessWidget {
                           fontWeight: n.isRead ? FontWeight.w600 : FontWeight.bold,
                           color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (n.isMutedDueToHoliday)
                       Container(
+                        margin: const EdgeInsets.only(left: 6),
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.grey.withValues(alpha: 0.2),

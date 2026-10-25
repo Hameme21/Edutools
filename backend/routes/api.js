@@ -270,7 +270,7 @@ router.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'EduCal Core Full-Stack API',
+    service: 'Edutools Core Full-Stack API',
     features: {
       universityEmailOtp: 'active',
       fileUploadLimits: '10MB enforced',

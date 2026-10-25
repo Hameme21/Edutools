@@ -52,6 +52,57 @@ class FileParserService {
 
   // ===================== ICS / iCALENDAR PARSING =====================
 
+  /// Distinguishes between recurring class timetables and academic calendar milestones
+  static bool isClassEvent(Map<String, String> ev) {
+    final uid = (ev['UID'] ?? '').toUpperCase();
+    if (uid.startsWith('CLS-') || uid.contains('CLASS')) return true;
+    if (uid.startsWith('NOT-') || uid.startsWith('ACAD-') || uid.startsWith('HOL-') || uid.startsWith('FEE-')) return false;
+
+    final categories = (ev['CATEGORIES'] ?? '').toLowerCase();
+    if (categories.contains('holiday') ||
+        categories.contains('semesterfee') ||
+        categories.contains('administrative')) {
+      return false;
+    }
+
+    final summary = (ev['SUMMARY'] ?? '').toLowerCase();
+    if (summary.contains('holiday') ||
+        summary.contains('last date of') ||
+        summary.contains('last day of') ||
+        summary.contains('installment') ||
+        summary.contains('semester fee') ||
+        summary.contains('advising and registration') ||
+        summary.contains('course advising') ||
+        summary.contains('course registration') ||
+        summary.contains('orientation') ||
+        summary.contains('classes begin') ||
+        summary.contains('mid-term') ||
+        summary.contains('final exam') ||
+        summary.contains('grade change') ||
+        summary.contains('grade submission') ||
+        summary.contains('course withdrawal') ||
+        summary.contains('course evaluation') ||
+        summary.contains('classes will remain suspended')) {
+      return false;
+    }
+
+    final rrule = ev['RRULE'] ?? '';
+    if (rrule.contains('FREQ=WEEKLY') || rrule.contains('BYDAY=')) return true;
+
+    final dtStartStr = ev['DTSTART'] ?? '';
+    final hasTime = dtStartStr.contains('T');
+    final hasLocation = (ev['LOCATION']?.trim().isNotEmpty ?? false);
+    final hasInstructor = (ev['DESCRIPTION']?.toLowerCase().contains('instructor') ?? false) ||
+        (ev['DESCRIPTION']?.toLowerCase().contains('teacher') ?? false);
+    final hasCodeFormat = (ev['SUMMARY'] ?? '').contains(':') || (ev['SUMMARY'] ?? '').contains(' - ');
+
+    if (hasTime && (hasLocation || hasInstructor || hasCodeFormat)) {
+      return true;
+    }
+
+    return false;
+  }
+
   static ParseResult<ClassSchedule> _parseClassIcs(String icsStr) {
     try {
       final events = _extractIcsEvents(icsStr);
@@ -63,6 +114,9 @@ class FileParserService {
       int counter = 1;
 
       for (var ev in events) {
+        // Enforce: only parse actual classes; do not mix academic milestones into classes!
+        if (!isClassEvent(ev)) continue;
+
         final summary = ev['SUMMARY'] ?? 'Untitled Class';
         final description = ev['DESCRIPTION'] ?? '';
         final location = ev['LOCATION'] ?? 'Room TBA';
@@ -133,6 +187,10 @@ class FileParserService {
         counter++;
       }
 
+      if (results.isEmpty) {
+        return ParseResult.failure('No recurring class events found in .ics file.');
+      }
+
       return ParseResult.success(results);
     } catch (e) {
       return ParseResult.failure('Failed to parse .ics class schedule: ${e.toString()}');
@@ -150,6 +208,9 @@ class FileParserService {
       int counter = 1;
 
       for (var ev in events) {
+        // Enforce: do not import class events as academic notices/events!
+        if (isClassEvent(ev)) continue;
+
         final title = ev['SUMMARY'] ?? 'Untitled Notice';
         final description = ev['DESCRIPTION'] ?? '';
         final dtStartStr = ev['DTSTART'] ?? '';
@@ -159,22 +220,40 @@ class FileParserService {
         final startDate = _parseIcsDateTime(dtStartStr) ?? DateTime.now();
         final endDate = _parseIcsDateTime(dtEndStr) ?? startDate;
 
+        final lowerTitle = title.toLowerCase();
         final isHoliday = categories.contains('holiday') ||
-            title.toLowerCase().contains('holiday') ||
+            lowerTitle.contains('holiday') ||
             description.toLowerCase().contains('holiday');
-        final isExam = categories.contains('exam') || title.toLowerCase().contains('exam');
-        final isFee = title.toLowerCase().contains('installment') || title.toLowerCase().contains('fee');
+        final isExam = categories.contains('exam') || lowerTitle.contains('exam') || lowerTitle.contains('mid-term');
+
+        // Rules:
+        // - "last day of registration," "course withdrawal," or "course evaluation" -> Administrative
+        final isAdmin = lowerTitle.contains('registration') ||
+            lowerTitle.contains('advising') ||
+            lowerTitle.contains('withdrawal') ||
+            lowerTitle.contains('evaluation') ||
+            lowerTitle.contains('drop') ||
+            lowerTitle.contains('grade') ||
+            categories.contains('administrative');
+
+        // - "last day of semester fee" -> semesterFee section
+        final isFee = lowerTitle.contains('installment') ||
+            lowerTitle.contains('semester fee') ||
+            (lowerTitle.contains('fee') && !lowerTitle.contains('drop')) ||
+            categories.contains('semesterfee') ||
+            categories.contains('fee');
 
         NoticeCategory category;
         if (isHoliday) {
           category = NoticeCategory.holiday;
         } else if (isExam) {
           category = NoticeCategory.exam;
+        } else if (isAdmin) {
+          category = NoticeCategory.administrative;
         } else if (isFee) {
           category = NoticeCategory.semesterFee;
-        } else if (title.toLowerCase().contains('registration') || title.toLowerCase().contains('drop') || title.toLowerCase().contains('grade')) {
-          category = NoticeCategory.administrative;
         } else {
+          // Others are Events (e.g. orientation, classes begin, makeup classes)
           category = NoticeCategory.event;
         }
 
@@ -189,6 +268,10 @@ class FileParserService {
           priority: isHoliday || isFee || isExam ? NoticePriority.urgent : NoticePriority.medium,
         ));
         counter++;
+      }
+
+      if (results.isEmpty) {
+        return ParseResult.failure('No academic calendar notices found in .ics file.');
       }
 
       return ParseResult.success(results);

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EduTools - Smart Academic Routine & Calendar Suite</title>
-  <style id="educal-inline-css">
+  <style id="edutools-inline-css">
 :root {
   /* Light Theme Variables */
   --bg-main: #F8FAFC;
@@ -2151,7 +2151,7 @@ body {
               <span class="sync-live-pulse"></span>
               <div class="sync-banner-text">
                 <strong>Google Drive Cloud Synced</strong>
-                <span>Syncs educal_sync_data.json across App & Web via user Google Drive.</span>
+                <span>Syncs edutools_sync_data.json across App & Web via user Google Drive.</span>
               </div>
               <button class="btn btn-sm btn-outline" id="btnForceCloudSync" title="Force Sync"><i class="fa-solid fa-arrows-rotate"></i></button>
             </div>
@@ -2827,7 +2827,7 @@ body {
       </div>
       <div class="modal-body">
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-          EduCal seamlessly parses standard <strong>.ICS (iCalendar)</strong>, <strong>JSON</strong>, and <strong>CSV</strong> files.
+          Edutools seamlessly parses standard <strong>.ICS (iCalendar)</strong>, <strong>JSON</strong>, and <strong>CSV</strong> files.
         </p>
 
         <h4 style="font-size: 13px; font-weight: 800; margin-bottom: 6px; color: var(--primary);">1. .ICS (iCalendar Standard)</h4>
@@ -2870,7 +2870,7 @@ CSE-205,Database Systems,Monday,11:00,12:30,Room 301,Prof. Alan Turing</pre>
       <div class="modal-header">
         <div class="modal-title-wrap">
           <i class="fa-solid fa-stethoscope text-blue"></i>
-          <h3>EduCal System Diagnostics & Health Audit</h3>
+          <h3>Edutools System Diagnostics & Health Audit</h3>
         </div>
         <button class="modal-close" data-close="diagnosticsModal">&times;</button>
       </div>
@@ -2941,7 +2941,7 @@ CSE-205,Database Systems,Monday,11:00,12:30,Room 301,Prof. Alan Turing</pre>
         <div id="routineSuspensionAlert" style="display: none; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 12px; margin-bottom: 14px; font-size: 12px; color: #F59E0B; line-height: 1.4;">
           <div style="display: flex; gap: 8px; align-items: flex-start;">
             <i class="fa-solid fa-circle-info" style="margin-top: 2px;"></i>
-            <span><strong>Notice:</strong> Current date is after classes were suspended for this trimester. EduCal auto-figured the full routine active dates from semester begin until classes were suspended.</span>
+            <span><strong>Notice:</strong> Current date is after classes were suspended for this trimester. Edutools auto-figured the full routine active dates from semester begin until classes were suspended.</span>
           </div>
         </div>
 
@@ -3008,9 +3008,9 @@ CSE-205,Database Systems,Monday,11:00,12:30,Room 301,Prof. Alan Turing</pre>
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script id="educal-inline-js">
+  <script id="edutools-inline-js">
 /**
- * EduCal Web Application Logic
+ * Edutools Web Application Logic
  * Smart Academic Calendar, Holiday Conflict Resolver & Reminder System
  */
 
@@ -3751,13 +3751,13 @@ function saveStudentSession() {
       routineRange: state.routineRange,
       savedAt: new Date().toISOString(),
     };
-    localStorage.setItem('educal_student_session', JSON.stringify(data));
+    localStorage.setItem('edutools_student_session', JSON.stringify(data));
   } catch (_) {}
 }
 
 function restoreStudentSession() {
   try {
-    const raw = localStorage.getItem('educal_student_session');
+    const raw = localStorage.getItem('edutools_student_session');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.student) {
@@ -3841,7 +3841,7 @@ function startCrossPlatformAutoSync() {
 
 async function syncWithGoogleDriveWeb(push = true) {
   const payload = {
-    app: 'EduCal',
+    app: 'Edutools',
     version: Date.now(),
     lastModified: new Date().toISOString(),
     student: state.student,
@@ -3853,7 +3853,7 @@ async function syncWithGoogleDriveWeb(push = true) {
 
   if (state.googleAccessToken) {
     try {
-      const q = encodeURIComponent("name='educal_sync_data.json' and trashed=false");
+      const q = encodeURIComponent("name='edutools_sync_data.json' and trashed=false");
       const listRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime)`, {
         headers: { Authorization: `Bearer ${state.googleAccessToken}` }
       });
@@ -3870,11 +3870,11 @@ async function syncWithGoogleDriveWeb(push = true) {
             body: JSON.stringify(payload),
           });
         } else {
-          const boundary = '-------EduCalSyncBoundary';
+          const boundary = '-------EdutoolsSyncBoundary';
           const metadata = JSON.stringify({
-            name: 'educal_sync_data.json',
+            name: 'edutools_sync_data.json',
             mimeType: 'application/json',
-            description: 'EduCal Academic Schedule Cloud Sync snapshot',
+            description: 'Edutools Academic Schedule Cloud Sync snapshot',
           });
           const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(payload)}\r\n--${boundary}--`;
           await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
@@ -4755,15 +4755,15 @@ function generateIcsExport() {
   const sb = [];
   sb.push('BEGIN:VCALENDAR');
   sb.push('VERSION:2.0');
-  sb.push('PRODID:-//EduCal//Academic Calendar & Holiday Conflict Resolver//EN');
+  sb.push('PRODID:-//Edutools//Academic Calendar & Holiday Conflict Resolver//EN');
   sb.push('CALSCALE:GREGORIAN');
   sb.push('METHOD:PUBLISH');
-  sb.push('X-WR-CALNAME:EduCal Academic Schedule');
+  sb.push('X-WR-CALNAME:Edutools Academic Schedule');
 
   // 1. Export Academic Notices
   state.notices.forEach(n => {
     sb.push('BEGIN:VEVENT');
-    sb.push(`UID:NOT-${n.id}@educal.app`);
+    sb.push(`UID:NOT-${n.id}@edutools.app`);
     sb.push(`DTSTART;VALUE=DATE:${n.startDate.replace(/-/g, '')}`);
     sb.push(`DTEND;VALUE=DATE:${n.endDate.replace(/-/g, '')}`);
     sb.push(`SUMMARY:${n.title}`);
@@ -4786,7 +4786,7 @@ function generateIcsExport() {
           const startH = c.startTime.replace(':', '');
           const endH = c.endTime.replace(':', '');
           sb.push('BEGIN:VEVENT');
-          sb.push(`UID:CLS-${c.id}-${dateStr}@educal.app`);
+          sb.push(`UID:CLS-${c.id}-${dateStr}@edutools.app`);
           sb.push(`DTSTART:${dateStr}T${startH}00`);
           sb.push(`DTEND:${dateStr}T${endH}00`);
           sb.push(`SUMMARY:${c.courseCode}: ${c.subject}`);
@@ -5142,7 +5142,7 @@ function initEventListeners() {
     btnSignOut.addEventListener('click', () => {
       state.student = null;
       if (autoSyncTimer) clearInterval(autoSyncTimer);
-      localStorage.removeItem('educal_student_session');
+      localStorage.removeItem('edutools_student_session');
       if (googleDropdown) googleDropdown.classList.remove('show');
       renderAll();
       showToast('Signed out of University Account.', 'info');
@@ -5452,11 +5452,11 @@ function initEventListeners() {
     const blob = new Blob([val], { type: 'text/calendar;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', 'EduCal_Schedule_2026.ics');
+    link.setAttribute('download', 'Edutools_Schedule_2026.ics');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Downloaded EduCal_Schedule_2026.ics!', 'success');
+    showToast('Downloaded Edutools_Schedule_2026.ics!', 'success');
   });
 
   // Add Class Form

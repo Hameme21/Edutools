@@ -577,18 +577,31 @@ class _SetupScreenState extends State<SetupScreen> {
       return;
     }
 
-    final classRes = widget.state.importClassSchedule(content);
-    final noticeRes = widget.state.importAcademicCalendar(content);
+    final classRes = FileParserService.parseClassSchedule(content);
+    final noticeRes = FileParserService.parseAcademicCalendar(content);
 
     final classCount = classRes.isSuccess ? classRes.items.length : 0;
     final noticeCount = noticeRes.isSuccess ? noticeRes.items.length : 0;
 
     if (classCount > 0 || noticeCount > 0) {
+      if (classCount > 0) {
+        widget.state.calendarService.setClasses(classRes.items);
+        widget.state.autoApplyRoutineDates(referenceDate: widget.state.selectedDate);
+        widget.state.reminderService.refreshReminders(referenceDate: widget.state.selectedDate);
+      }
+
+      if (noticeCount > 0) {
+        widget.state.calendarService.setNotices(noticeRes.items);
+        widget.state.reminderService.refreshReminders(referenceDate: widget.state.selectedDate);
+      }
+
+      widget.state.refresh();
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Imported "${file.fileName}": '
-            '${classCount > 0 ? '$classCount courses' : ''}'
+            '${classCount > 0 ? '$classCount classes' : ''}'
             '${classCount > 0 && noticeCount > 0 ? ', ' : ''}'
             '${noticeCount > 0 ? '$noticeCount notices' : ''} loaded! 🚀',
           ),

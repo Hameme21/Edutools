@@ -186,25 +186,28 @@ class SampleDataService {
       final start = DateTime.parse(item['start'] as String);
       final end = DateTime.parse(item['end'] as String);
 
-      final isHoliday = type == 'holiday' || title.toLowerCase().contains('holiday:');
-      final isExam = type == 'exam' || title.toLowerCase().contains('exam');
-      final isFee = title.toLowerCase().contains('installment') || title.toLowerCase().contains('fine');
-      final isAdmin = title.toLowerCase().contains('registration') ||
-          title.toLowerCase().contains('drop') ||
-          title.toLowerCase().contains('grade') ||
-          title.toLowerCase().contains('advising') ||
-          title.toLowerCase().contains('withdrawal') ||
-          title.toLowerCase().contains('orientation');
+      final lowerTitle = title.toLowerCase();
+      final isHoliday = type == 'holiday' || lowerTitle.contains('holiday');
+      final isExam = type == 'exam' || lowerTitle.contains('exam');
+      final isAdmin = lowerTitle.contains('registration') ||
+          lowerTitle.contains('advising') ||
+          lowerTitle.contains('withdrawal') ||
+          lowerTitle.contains('evaluation') ||
+          lowerTitle.contains('drop') ||
+          lowerTitle.contains('grade');
+      final isFee = lowerTitle.contains('installment') ||
+          lowerTitle.contains('semester fee') ||
+          (lowerTitle.contains('fee') && !lowerTitle.contains('drop'));
 
       NoticeCategory category;
       if (isHoliday) {
         category = NoticeCategory.holiday;
       } else if (isExam) {
         category = NoticeCategory.exam;
-      } else if (isFee) {
-        category = NoticeCategory.semesterFee;
       } else if (isAdmin) {
         category = NoticeCategory.administrative;
+      } else if (isFee) {
+        category = NoticeCategory.semesterFee;
       } else {
         category = NoticeCategory.event;
       }

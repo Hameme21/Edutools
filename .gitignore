@@ -57,3 +57,4 @@ backend/node_modules/
 backend/uploads/
 .env
 backend/.env
+*.apk

@@ -57,8 +57,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Update Available! 🚀'), findsOneWidget);
-      expect(find.text('Version v1.0.1'), findsOneWidget);
-      expect(find.text('Update Now'), findsOneWidget);
+      expect(find.text('Edutools v1.0.1'), findsOneWidget);
+      expect(find.text('Download Latest Version'), findsOneWidget);
       expect(find.text('Later'), findsOneWidget);
       expect(find.textContaining('New update with trimester schedules'), findsOneWidget);
     });

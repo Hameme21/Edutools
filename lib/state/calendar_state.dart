@@ -80,7 +80,7 @@ class CalendarState extends ChangeNotifier {
   List<AcademicNotice> get upcomingNotices => _calendarService.getUpcomingNotices(
         category: _selectedNoticeFilter,
         query: _noticeSearchQuery,
-        includePast: _noticeSearchQuery.trim().isNotEmpty,
+        includePast: true,
       );
 
   Map<String, int> get dashboardStats => _calendarService.getDashboardStats(_selectedDate);

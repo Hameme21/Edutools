@@ -44,14 +44,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: build/app/outputs/flutter-apk/app-release.apk
-          name: EduCal ${{ github.ref_name }}
+          name: Edutools ${{ github.ref_name }}
           body: |
-            ### EduCal Mobile App Release ${{ github.ref_name }} 🚀
+            ### Edutools Mobile App Release ${{ github.ref_name }} 🚀
             
-            - **Trimester Academic Milestones**: Complete 2026-2027 UIU calendar notices with holiday conflict resolution.
-            - **UIU Degree Domain Verification**: Strict `@<degree_name>.uiu.ac.bd` domain filtering with recommendation chips.
-            - **Direct .ICS Calendar Export**: One-click device download to local storage.
-            - **In-App GitHub Update Notification**: Automatic release detection and one-click updates.
+            - **Renamed to Edutools**: Upgraded brand and app launcher identity.
+            - **Official Insight UI App Logo**: High-definition launcher icon on mobile.
+            - **Fall 2026 / Spring 2027 Academic Calendar**: Full trimester notices with holiday auto-conflict resolution.
+            - **Accurate Category Placement**: Semester fees, holidays, administrative milestones, and events properly sorted.
+            - **Strict .ICS Class Isolation**: Imported class schedules are only added to Classes, not duplicating into Events.
+            - **4-Second Auto-Dismiss Update Popup**: Streamlined notifications and popup boxes.
+            - **Responsive Dialog Boxes**: Fixed all layout and overflow issues on small mobile screens.
             
             Download `app-release.apk` below and install directly on your Android phone!
           draft: false

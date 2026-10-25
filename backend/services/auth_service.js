@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'educal-secure-jwt-secret-key-2026-academic';
+const JWT_SECRET = process.env.JWT_SECRET || 'edutools-secure-jwt-secret-key-2026-academic';
 const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes expiration
 
 // Gmail SMTP Credentials for OTP dispatch from hamimasir5@gmail.com
@@ -189,19 +189,19 @@ async function sendEmailOtp(email, otp) {
   console.log(`\n========================================`);
   console.log(`📧 [DISPATCHING LIVE OTP EMAIL FROM hamimasir5@gmail.com]`);
   console.log(`To: ${norm}`);
-  console.log(`Subject: EduCal UIU - Verification Code`);
+  console.log(`Subject: Edutools UIU - Verification Code`);
   console.log(`========================================\n`);
 
   const mailOptions = {
-    from: `"EduCal UIU Academic Portal" <${EMAIL_USER}>`,
+    from: `"Edutools UIU Academic Portal" <${EMAIL_USER}>`,
     to: norm,
     replyTo: EMAIL_USER,
-    subject: `EduCal UIU - Your Verification Code: ${otp}`,
-    text: `Welcome to EduCal (United International University)!\n\nYour 6-digit verification code is: ${otp}\n\nThis code will expire in 5 minutes.\nIf you did not request this code, please ignore this email.`,
+    subject: `Edutools UIU - Your Verification Code: ${otp}`,
+    text: `Welcome to Edutools (United International University)!\n\nYour 6-digit verification code is: ${otp}\n\nThis code will expire in 5 minutes.\nIf you did not request this code, please ignore this email.`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #fed7aa; border-radius: 16px; background-color: #ffffff;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <h1 style="color: #ea580c; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">EduCal • UIU</h1>
+          <h1 style="color: #ea580c; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Edutools • UIU</h1>
           <p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0;">United International University Academic Calendar & Routine Sync</p>
         </div>
         <div style="background: #fff7ed; border: 1px solid #fdba74; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 20px;">
@@ -360,7 +360,7 @@ async function verifyOtp(email, submittedOtp) {
   return {
     success: true,
     message: isRegistration
-      ? 'Registration complete! Welcome to EduCal UIU.'
+      ? 'Registration complete! Welcome to Edutools UIU.'
       : 'Authenticated successfully with UIU Portal.',
     token,
     student,

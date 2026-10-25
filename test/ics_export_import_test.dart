@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:educal/state/calendar_state.dart';
-import 'package:educal/services/calendar_service.dart';
-import 'package:educal/services/reminder_service.dart';
 import 'package:educal/screens/setup/setup_screen.dart';
 import 'package:educal/screens/setup/file_import_card.dart';
 
