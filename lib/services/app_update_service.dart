@@ -45,7 +45,7 @@ class ReleaseInfo {
 }
 
 class AppUpdateService {
-  static const String currentVersion = '1.0.4';
+  static const String currentVersion = '1.0.5';
   static const String repoOwner = 'Hameme21';
   static const String repoName = 'Edutools';
   static const String releasesUrl = 'https://github.com/Hameme21/Edutools/releases';
@@ -122,16 +122,33 @@ class AppUpdateService {
     }
   }
 
-  /// Launches the GitHub Release page of the new release
+  /// Launches the GitHub Release page of the new release directly in external browser / GitHub app
   static Future<void> openReleasePage(String url) async {
-    final targetUrl = url.isNotEmpty ? url : releasesUrl;
+    final targetUrl = url.trim().isNotEmpty ? url.trim() : releasesUrl;
     final uri = Uri.parse(targetUrl);
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      // First attempt externalApplication so Android launches external browser or GitHub App
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        // Fallback to platformDefault
+        await launchUrl(
+          uri,
+          mode: LaunchMode.platformDefault,
+        );
       }
     } catch (e) {
-      debugPrint('[AppUpdateService] Failed to open URL: $e');
+      debugPrint('[AppUpdateService] Failed to open external application: $e');
+      try {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.platformDefault,
+        );
+      } catch (inner) {
+        debugPrint('[AppUpdateService] Secondary platform launch failed: $inner');
+      }
     }
   }
 }

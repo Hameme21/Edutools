@@ -52,7 +52,10 @@ class _UpdateDialogState extends State<UpdateDialog> {
     _countdownTimer?.cancel();
     _autoDismissTimer?.cancel();
     Navigator.of(context).pop();
-    AppUpdateService.openReleasePage(widget.release.htmlUrl);
+    final targetUrl = widget.release.htmlUrl.trim().isNotEmpty
+        ? widget.release.htmlUrl.trim()
+        : AppUpdateService.releasesUrl;
+    AppUpdateService.openReleasePage(targetUrl);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -219,7 +222,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                       ),
                       icon: const Icon(Icons.download_rounded, size: 18),
                       label: const Text(
-                        'Download Latest Version',
+                        'Download Now',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                         overflow: TextOverflow.ellipsis,
                       ),

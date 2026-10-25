@@ -2319,6 +2319,25 @@ body {
             </div>
           </div>
         </div>
+
+        <!-- UPCOMING ACADEMIC NOTICES ON DASHBOARD -->
+        <div class="dashboard-notices-feed" style="margin-top: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; margin: 0;">
+                <i class="fa-solid fa-bullhorn text-blue"></i>
+                <span>Academic Notices & Upcoming Deadlines</span>
+              </h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0 0;">
+                Holidays, tuition fee installments, course withdrawal, registration and exam schedules.
+              </p>
+            </div>
+            <button class="btn btn-sm btn-outline" id="btnDashViewAllNotices" type="button" style="font-size: 12px;">
+              View All Academic Notices &rarr;
+            </button>
+          </div>
+          <div id="dashNoticesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;"></div>
+        </div>
       </section>
 
       <!-- ================= TAB 2: ACADEMIC NOTICES ================= -->
@@ -2343,6 +2362,7 @@ body {
             <button class="chip" data-filter="semesterFee">💳 Semester Fees</button>
             <button class="chip" data-filter="exam">📝 Exams</button>
             <button class="chip" data-filter="administrative">📑 Administrative</button>
+            <button class="chip" data-filter="event">📌 Events</button>
           </div>
         </div>
 
@@ -2559,7 +2579,7 @@ body {
           </div>
           <h3>Student Portal Sync</h3>
         </div>
-        <button class="modal-close" data-close="authModal">&times;</button>
+        <button class="modal-close" id="btnCloseAuthModal" data-close="authModal" onclick="closeAuthModal()" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body" id="authModalBody">
         <!-- Injected via app.js -->
@@ -3263,6 +3283,14 @@ const dom = {
   toastContainer: document.getElementById('toastContainer'),
 };
 
+
+// Global modal closer for student login
+function closeAuthModal() {
+  const modal = document.getElementById('authModal');
+  if (modal) modal.classList.remove('show');
+}
+window.closeAuthModal = closeAuthModal;
+
 // ===================== HELPER FUNCTIONS =====================
 
 function parseDateStr(str) {
@@ -3337,11 +3365,20 @@ function autoFigureRoutineDates(referenceDate) {
   const now = referenceDate || new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const beginNotices = state.notices.filter(n => {
+  const rawBegins = state.notices.filter(n => {
     const t = (n.title || '').toLowerCase();
-    return (t.includes('classes begin') || t.includes('begins') || t.includes('commencement')) &&
-      !t.includes('registration') && !t.includes('orientation');
+    return (t.includes('classes begin') || t.includes('trimester begins') || t.includes('semester begins') || t.includes('commencement') || t.includes('begins')) &&
+      !t.includes('registration') && !t.includes('advising') && !t.includes('orientation');
   }).sort((a, b) => parseDateStr(a.startDate) - parseDateStr(b.startDate));
+
+  // Deduplicate notices sharing the exact same begin calendar date
+  const beginNotices = [];
+  for (const b of rawBegins) {
+    const bTime = parseDateStr(b.startDate).getTime();
+    if (beginNotices.length === 0 || parseDateStr(beginNotices[beginNotices.length - 1].startDate).getTime() !== bTime) {
+      beginNotices.push(b);
+    }
+  }
 
   const suspensionNotices = state.notices.filter(n => {
     const t = (n.title || '').toLowerCase();
@@ -3354,7 +3391,7 @@ function autoFigureRoutineDates(referenceDate) {
   });
 
   if (beginNotices.length === 0) {
-    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const end = new Date(start.getTime() + 98 * 86400000);
     return {
       startDate: formatDateISO(start),
@@ -3405,8 +3442,20 @@ function autoFigureRoutineDates(referenceDate) {
   let matched = null;
   let isPastSuspension = false;
 
-  for (const sem of semesters) {
+  for (let i = 0; i < semesters.length; i++) {
+    const sem = semesters[i];
     if (today >= sem.startDate && today < sem.semesterEndDate) {
+      // If previous term's final exams are concluded or classes suspended,
+      // and we are approaching or in the orientation/advising window of the next trimester, match next term!
+      if (i + 1 < semesters.length) {
+        const nextSem = semesters[i + 1];
+        if ((sem.finalExamDate && today > sem.finalExamDate) ||
+            (today >= sem.effectiveSuspension && today >= new Date(nextSem.startDate.getTime() - 14 * 86400000))) {
+          matched = nextSem;
+          isPastSuspension = false;
+          break;
+        }
+      }
       matched = sem;
       isPastSuspension = today >= sem.effectiveSuspension;
       break;
@@ -3702,9 +3751,56 @@ function renderAll() {
   renderNextMilestone();
   renderCalendar();
   renderAgenda();
+  renderDashboardNotices();
   renderNotices();
   renderSetup();
   renderNotifications();
+}
+
+function renderDashboardNotices() {
+  const container = document.getElementById('dashNoticesGrid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const now = new Date();
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  let list = state.notices.filter(n => parseDateStr(n.endDate) >= todayOnly);
+  if (list.length === 0) list = [...state.notices];
+
+  list.sort((a, b) => parseDateStr(a.startDate) - parseDateStr(b.startDate));
+  const displayList = list.slice(0, 8); // Top 8 upcoming on dashboard
+
+  displayList.forEach(notice => {
+    const card = document.createElement('div');
+    card.className = `notice-card ${notice.category}`;
+    card.style.cursor = 'pointer';
+    card.style.transition = 'all 0.2s';
+    card.innerHTML = `
+      <div class="notice-card-top">
+        <span class="notice-badge ${notice.category}">${notice.category}</span>
+        <span class="notice-countdown">${formatCountdownText(notice.startDate, notice.endDate)}</span>
+      </div>
+      <div class="notice-card-body" style="padding: 10px 0;">
+        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--text-main);">${notice.title}</h4>
+        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${notice.description || 'Academic notice.'}</p>
+      </div>
+      <div class="notice-card-footer" style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+        <span class="notice-date-text"><i class="fa-regular fa-calendar"></i> ${notice.startDate} ${notice.startDate !== notice.endDate ? 'to ' + notice.endDate : ''}</span>
+        <span style="color: var(--primary); font-weight: 700;">View &rarr;</span>
+      </div>
+    `;
+
+    card.onclick = () => {
+      state.selectedDate = parseDateStr(notice.startDate);
+      state.currentMonth = state.selectedDate.getMonth();
+      state.currentYear = state.selectedDate.getFullYear();
+      renderAll();
+      showToast(`Selected ${notice.title} on calendar!`, 'info');
+    };
+
+    container.appendChild(card);
+  });
 }
 
 function renderStats() {
@@ -4514,7 +4610,7 @@ function openAuthModal() {
         </div>
         <div id="authErrorMsg" style="display: none; color: var(--danger); font-size: 12px; margin-bottom: 10px; font-weight: 600;"></div>
         <button type="button" class="btn btn-primary full-width" id="btnRequestOtp">
-          <i class="fa-solid fa-paper-plane"></i> Send 6-Digit OTP
+          <i class="fa-solid fa-paper-plane"></i> Send 6-Digit Code
         </button>
       </div>
 
@@ -4582,10 +4678,18 @@ function openAuthModal() {
       };
     });
 
+    // Bind cross close button explicitly
+    const modalCloseBtn = document.getElementById('btnCloseAuthModal');
+    if (modalCloseBtn) {
+      modalCloseBtn.onclick = closeAuthModal;
+    }
+
     // Step 1 Click Handler: Request OTP
     document.getElementById('btnRequestOtp').onclick = async () => {
-      const email = document.getElementById('authEmailInput').value.trim().toLowerCase();
+      const emailInput = document.getElementById('authEmailInput');
+      const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
       const errBox = document.getElementById('authErrorMsg');
+      const reqBtn = document.getElementById('btnRequestOtp');
 
       // Domain must end with .uiu.ac.bd and must NOT be plain uiu.ac.bd
       const domain = email.includes('@') ? email.split('@')[1] : '';
@@ -4598,19 +4702,32 @@ function openAuthModal() {
       }
       errBox.style.display = 'none';
 
+      // Visual progress feedback
+      reqBtn.disabled = true;
+      reqBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending 6-digit code...';
+
+      let devOtpVal = String(Math.floor(100000 + Math.random() * 900000));
       try {
-        // Attempt backend API call
-        let devOtpVal = String(Math.floor(100000 + Math.random() * 900000));
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
         try {
           const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email }),
+            signal: controller.signal,
           });
-          const data = await res.json();
-          if (data.devOtp) devOtpVal = data.devOtp;
-        } catch (_) {}
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.devOtp) devOtpVal = data.devOtp;
+          }
+        } catch (_) {
+          clearTimeout(timeoutId);
+        }
 
+        // Advance to Step 2 immediately so screen is NEVER static
         document.getElementById('authStep1').style.display = 'none';
         document.getElementById('authStep2').style.display = 'block';
         document.getElementById('otpTargetEmail').textContent = `OTP sent to: ${email}`;
@@ -4620,10 +4737,13 @@ function openAuthModal() {
         devBox.style.display = 'block';
 
         startOtpTimer();
-        showToast(`6-Digit OTP sent to ${email} (5-min expiration)!`, 'success');
+        showToast(`6-Digit OTP dispatched to ${email}!`, 'success');
       } catch (err) {
-        errBox.textContent = err.message;
+        errBox.textContent = err.message || 'Error sending code';
         errBox.style.display = 'block';
+      } finally {
+        reqBtn.disabled = false;
+        reqBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send 6-Digit Code';
       }
     };
 
@@ -5583,11 +5703,22 @@ function initEventListeners() {
     });
   }
 
+  const btnDashViewAll = document.getElementById('btnDashViewAllNotices');
+  if (btnDashViewAll) {
+    btnDashViewAll.onclick = () => {
+      state.activeTab = 'notices';
+      dom.navTabs.forEach(b => b.classList.toggle('active', b.dataset.tab === 'notices'));
+      dom.tabPanes.forEach(p => p.classList.toggle('active', p.id === 'tab-notices'));
+    };
+  }
+
   // Close modals on [data-close] or background click
   document.querySelectorAll('[data-close]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const modalId = btn.dataset.close;
-      document.getElementById(modalId).classList.remove('show');
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const modalId = btn.getAttribute('data-close') || btn.dataset.close;
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.remove('show');
     });
   });
 

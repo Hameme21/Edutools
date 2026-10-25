@@ -200,14 +200,14 @@ class SampleDataService {
           (lowerTitle.contains('fee') && !lowerTitle.contains('drop'));
 
       NoticeCategory category;
-      if (isHoliday) {
+      if (isFee) {
+        category = NoticeCategory.semesterFee;
+      } else if (isHoliday) {
         category = NoticeCategory.holiday;
-      } else if (isExam) {
-        category = NoticeCategory.exam;
       } else if (isAdmin) {
         category = NoticeCategory.administrative;
-      } else if (isFee) {
-        category = NoticeCategory.semesterFee;
+      } else if (isExam) {
+        category = NoticeCategory.exam;
       } else {
         category = NoticeCategory.event;
       }

@@ -280,4 +280,70 @@ router.get('/health', (req, res) => {
   });
 });
 
+
+// ===================== 5. GLOBAL & STUDENT CLOUD SYNC ENDPOINTS =====================
+
+let globalCalendarBroadcast = {
+  version: Date.now(),
+  source: 'Official Academic Server',
+  notices: [],
+  classes: [],
+  updatedAt: new Date().toISOString(),
+};
+
+const studentCloudStore = new Map(); // email -> { student, classes, updatedAt }
+
+/**
+ * GET /api/calendar/global-sync
+ * Retrieves latest synchronized global calendar state
+ */
+router.get('/calendar/global-sync', (req, res) => {
+  res.json(globalCalendarBroadcast);
+});
+
+/**
+ * POST /api/calendar/global-update
+ * Updates global broadcast schedule
+ */
+router.post('/calendar/global-update', (req, res) => {
+  const { source, notices, classes } = req.body;
+  if (Array.isArray(notices) && notices.length > 0) {
+    globalCalendarBroadcast.notices = notices;
+  }
+  if (Array.isArray(classes)) {
+    globalCalendarBroadcast.classes = classes;
+  }
+  globalCalendarBroadcast.version = Date.now();
+  globalCalendarBroadcast.source = source || 'PC Web Client';
+  globalCalendarBroadcast.updatedAt = new Date().toISOString();
+  res.json({ success: true, version: globalCalendarBroadcast.version });
+});
+
+/**
+ * GET /api/student/sync
+ * Retrieves student profile & schedule
+ */
+router.get('/student/sync', (req, res) => {
+  const email = (req.query.email || '').trim().toLowerCase();
+  const record = studentCloudStore.get(email) || { classes: [], student: null };
+  res.json({ success: true, classes: record.classes || [], student: record.student || null });
+});
+
+/**
+ * POST /api/student/sync
+ * Synchronizes student profile & schedule
+ */
+router.post('/student/sync', (req, res) => {
+  const { email, student, classes } = req.body;
+  const targetEmail = (email || student?.email || '').trim().toLowerCase();
+  if (targetEmail) {
+    studentCloudStore.set(targetEmail, {
+      student,
+      classes: Array.isArray(classes) ? classes : [],
+      updatedAt: new Date().toISOString(),
+    });
+  }
+  res.json({ success: true, classes: classes || [] });
+});
+
 module.exports = router;

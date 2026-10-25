@@ -115,23 +115,36 @@ class CalendarService {
   }
 
   /// Auto-figures routine dates based on official academic calendar notices.
-  /// If [referenceDate] is after classes are suspended, it identifies the full semester
-  /// routine span from semester begin to before classes are suspended / final exam.
+  /// When a notice says "semester begins" or "classes begin", the semester begins directly
+  /// from that date (e.g. Oct 27, 2026), never defaulting to the 1st of the month.
   RoutineDateRange autoFigureRoutineDates({DateTime? referenceDate}) {
     final now = referenceDate ?? DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
     // Identify candidate milestone notices
-    final beginNotices = _notices.where((n) {
+    final rawBeginNotices = _notices.where((n) {
       final t = n.title.toLowerCase();
       return (t.contains('classes begin') ||
-              t.contains('begins') ||
-              t.contains('commencement')) &&
+              t.contains('trimester begins') ||
+              t.contains('semester begins') ||
+              t.contains('commencement') ||
+              t.contains('begins')) &&
           !t.contains('registration') &&
+          !t.contains('advising') &&
           !t.contains('orientation');
     }).toList();
 
-    beginNotices.sort((a, b) => a.startDate.compareTo(b.startDate));
+    rawBeginNotices.sort((a, b) => a.startDate.compareTo(b.startDate));
+
+    // Deduplicate notices sharing the exact same begin calendar date
+    final List<AcademicNotice> beginNotices = [];
+    for (final b in rawBeginNotices) {
+      final bDay = DateTime(b.startDate.year, b.startDate.month, b.startDate.day);
+      if (beginNotices.isEmpty ||
+          !DateTime(beginNotices.last.startDate.year, beginNotices.last.startDate.month, beginNotices.last.startDate.day).isAtSameMomentAs(bDay)) {
+        beginNotices.add(b);
+      }
+    }
 
     final suspensionNotices = _notices.where((n) {
       final t = n.title.toLowerCase();
@@ -148,7 +161,7 @@ class CalendarService {
 
     // If no notices are available, return a 14-week fallback window
     if (beginNotices.isEmpty) {
-      final start = DateTime(today.year, today.month, 1);
+      final start = DateTime(today.year, today.month, today.day);
       final end = start.add(const Duration(days: 98)); // ~14 weeks
       return RoutineDateRange(
         startDate: start,
@@ -224,14 +237,29 @@ class CalendarService {
       ));
     }
 
-    // Match the semester that contains today
+    // Match the active semester
     _SemesterPeriod? matched;
     bool isPastSuspension = false;
 
-    for (final sem in semesters) {
+    for (int i = 0; i < semesters.length; i++) {
+      final sem = semesters[i];
       final termEnd = sem.semesterEndDate;
       if ((today.isAtSameMomentAs(sem.startDate) || today.isAfter(sem.startDate)) &&
           today.isBefore(termEnd)) {
+        // If prior semester's final examinations and routine have concluded (after exam week),
+        // and we are in the semester vacation or registration period before the next trimester begins,
+        // switch to the upcoming trimester!
+        if (i + 1 < semesters.length) {
+          final nextSem = semesters[i + 1];
+          final examConcluded = sem.finalExamDate != null
+              ? sem.finalExamDate!.add(const Duration(days: 8))
+              : sem.effectiveSuspension.add(const Duration(days: 10));
+          if (today.isAfter(examConcluded) || today.isAtSameMomentAs(examConcluded)) {
+            matched = nextSem;
+            isPastSuspension = false;
+            break;
+          }
+        }
         matched = sem;
         isPastSuspension = today.isAtSameMomentAs(sem.effectiveSuspension) ||
             today.isAfter(sem.effectiveSuspension);
