@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const fs = require('fs');
+const path = require('path');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'educal-secure-jwt-secret-key-2026-academic';
 const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes expiration
@@ -18,9 +20,48 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// In-memory persistent data stores (can be wired to PostgreSQL/MongoDB/SQLite)
+// Persistent data storage paths
+const DATA_DIR = path.join(__dirname, '..', 'data');
+const STUDENTS_DB_PATH = path.join(DATA_DIR, 'students_db.json');
+
+// In-memory data stores backed by disk persistence
 const otpStore = new Map(); // email -> { hash, salt, expiresAt, attempts, isRegistration, fullName, studentId, department, semester }
 const studentStore = new Map(); // email -> { id, studentId, fullName, email, department, semester, university, createdAt, lastLogin }
+
+function loadRegisteredStudents() {
+  try {
+    if (fs.existsSync(STUDENTS_DB_PATH)) {
+      const raw = fs.readFileSync(STUDENTS_DB_PATH, 'utf-8');
+      const data = JSON.parse(raw);
+      for (const [email, student] of Object.entries(data)) {
+        studentStore.set(email.toLowerCase(), student);
+      }
+      console.log(`[STUDENT DB] Loaded ${studentStore.size} registered student accounts.`);
+    }
+  } catch (err) {
+    console.warn('[STUDENT DB] Could not read students_db.json:', err.message);
+  }
+}
+
+function saveRegisteredStudents() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    const data = Object.fromEntries(studentStore.entries());
+    fs.writeFileSync(STUDENTS_DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[STUDENT DB] Failed to save students_db.json:', err.message);
+  }
+}
+
+// Load existing registered students into memory on server boot
+loadRegisteredStudents();
+
+function isEmailRegistered(email) {
+  if (!email) return false;
+  return studentStore.has(email.trim().toLowerCase());
+}
 
 /**
  * Validates whether an email format is valid.
@@ -280,8 +321,10 @@ async function verifyOtp(email, submittedOtp) {
       lastLogin: new Date().toISOString(),
     };
     studentStore.set(normalizedEmail, student);
+    saveRegisteredStudents();
   } else {
     student.lastLogin = new Date().toISOString();
+    saveRegisteredStudents();
   }
 
   // Sign JWT session token (7-day validity)
@@ -324,10 +367,12 @@ module.exports = {
   isValidEmail,
   isUiuEmail,
   isUniversityEmail,
+  isEmailRegistered,
   requestOtp,
   verifyOtp,
   verifySessionToken,
   formatNameFromEmail,
   studentStore,
   otpStore,
+  saveRegisteredStudents,
 };

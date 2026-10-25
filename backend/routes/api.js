@@ -70,6 +70,30 @@ function optionalAuth(req, res, next) {
 // ===================== 1. AUTHENTICATION ENDPOINTS =====================
 
 /**
+ * GET /api/auth/check-student?email=...
+ * Checks whether a student email is already registered in the system
+ */
+router.get('/auth/check-student', (req, res) => {
+  const email = req.query.email?.trim().toLowerCase();
+  if (!email) {
+    return res.status(400).json({ success: false, error: 'Email parameter is required.' });
+  }
+  const isRegistered = authService.isEmailRegistered(email);
+  const student = authService.studentStore.get(email);
+  res.json({
+    success: true,
+    email,
+    isRegistered,
+    student: student ? {
+      fullName: student.fullName,
+      studentId: student.studentId,
+      department: student.department,
+      semester: student.semester,
+    } : null,
+  });
+});
+
+/**
  * POST /api/auth/request-otp
  * Validates .edu university email, creates 6-digit OTP (5m TTL), and sends via email
  */
