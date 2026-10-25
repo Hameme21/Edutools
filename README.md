@@ -6,6 +6,15 @@ Designed specifically for students, faculty, and administrative departments (wit
 
 ---
 
+## 🌐 Live Production Deployments
+
+* **Frontend Web App (Vercel)**: [https://edutools-silk.vercel.app/](https://edutools-silk.vercel.app/)
+* **Backend API (Render)**: [https://edutools-y4xy.onrender.com](https://edutools-y4xy.onrender.com)
+* **GitHub Pages Web App**: [https://hameme21.github.io/Edutools/](https://hameme21.github.io/Edutools/)
+* **GitHub Repository**: [https://github.com/Hameme21/Edutools](https://github.com/Hameme21/Edutools)
+
+---
+
 ## 🌟 Evolution & Architecture Overview
 
 EduTools has grown from a local calendar viewer into an end-to-end multi-platform academic companion:
