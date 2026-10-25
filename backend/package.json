@@ -1,11 +1,14 @@
 {
-  "name": "educal-backend",
+  "name": "edutools-backend",
   "version": "1.0.0",
-  "description": "EduCal Academic Calendar Backend - Auth, File Upload & Calendar Sync Verification Engine",
+  "description": "EduTools Academic Calendar Backend - Auth, File Upload & Calendar Sync Verification Engine",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "test": "node test_suite.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "cors": "^2.8.5",

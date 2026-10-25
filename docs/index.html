@@ -3085,11 +3085,25 @@ const DEMO_CLASSES = [
 // ===================== DYNAMIC BACKEND API BASE URL =====================
 function getApiBaseUrl() {
   if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
-    if (window.location.port === '3000' || window.location.hostname.includes('onrender.com') || window.location.hostname.includes('railway.app')) {
+    // 1. Check window global override or saved localStorage backend
+    const saved = window.EDUTOOLS_API_URL || localStorage.getItem('edutools_backend_url');
+    if (saved) return saved.replace(/\/$/, '');
+
+    // 2. Check URL search param (e.g. ?backend=https://edutools.onrender.com)
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const b = params.get('backend') || params.get('api');
+      if (b) {
+        const clean = b.replace(/\/$/, '');
+        localStorage.setItem('edutools_backend_url', clean);
+        return clean;
+      }
+    } catch (_) {}
+
+    // 3. If hosted on Render, Railway, or Vercel (using Vercel rewrites to proxy /api)
+    if (window.location.hostname.includes('vercel.app') || window.location.port === '3000' || window.location.hostname.includes('onrender.com') || window.location.hostname.includes('railway.app')) {
       return '';
     }
-    const saved = localStorage.getItem('edutools_backend_url');
-    if (saved) return saved.replace(/\/$/, '');
     if (!window.location.hostname.includes('github.io')) {
       return window.location.origin;
     }

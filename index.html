@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduCal - Smart Academic Calendar & Reminder System</title>
+  <title>EduTools - Smart Academic Routine & Calendar Suite</title>
   <style id="educal-inline-css">
 :root {
   /* Light Theme Variables */
@@ -2097,7 +2097,7 @@ body {
             </svg>
           </div>
           <div class="logo-text-wrap">
-            <span class="logo-title">Edu<span class="logo-highlight">Cal</span></span>
+            <span class="logo-title">Edu<span class="logo-highlight">Tools</span></span>
             <span class="logo-subtitle">Smart Academic Routine</span>
           </div>
         </div>
@@ -3082,6 +3082,35 @@ const DEMO_CLASSES = [
   { id: 'CS107-SAT', subject: 'Discrete Mathematics', courseCode: 'MATH-102', dayOfWeek: 6, startTime: '09:30', endTime: '11:00', room: 'Room 102', instructor: 'Dr. John von Neumann', color: '#06B6D4', customReminderMinutes: null, reminderEnabled: true }
 ];
 
+// ===================== DYNAMIC BACKEND API BASE URL =====================
+function getApiBaseUrl() {
+  if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+    // 1. Check window global override or saved localStorage backend
+    const saved = window.EDUTOOLS_API_URL || localStorage.getItem('edutools_backend_url');
+    if (saved) return saved.replace(/\/$/, '');
+
+    // 2. Check URL search param (e.g. ?backend=https://edutools.onrender.com)
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const b = params.get('backend') || params.get('api');
+      if (b) {
+        const clean = b.replace(/\/$/, '');
+        localStorage.setItem('edutools_backend_url', clean);
+        return clean;
+      }
+    } catch (_) {}
+
+    // 3. If hosted on Render, Railway, or Vercel (using Vercel rewrites to proxy /api)
+    if (window.location.hostname.includes('vercel.app') || window.location.port === '3000' || window.location.hostname.includes('onrender.com') || window.location.hostname.includes('railway.app')) {
+      return '';
+    }
+    if (!window.location.hostname.includes('github.io')) {
+      return window.location.origin;
+    }
+  }
+  return localStorage.getItem('edutools_backend_url') || 'http://localhost:3000';
+}
+
 // ===================== APP STATE =====================
 const state = {
   classes: [], // Empty by default so user can import/set up their own classes
@@ -3845,7 +3874,7 @@ async function syncStudentWithServer(push = true) {
   try {
     if (push) {
       // 1. Broadcast global update to all users & devices
-      await fetch('http://localhost:3000/api/calendar/global-update', {
+      await fetch(`${getApiBaseUrl()}/api/calendar/global-update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3857,7 +3886,7 @@ async function syncStudentWithServer(push = true) {
 
       // 2. Push to student profile if logged in
       if (state.student) {
-        const res = await fetch('http://localhost:3000/api/student/sync', {
+        const res = await fetch(`${getApiBaseUrl()}/api/student/sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -3873,7 +3902,7 @@ async function syncStudentWithServer(push = true) {
       }
     } else {
       // 1. Pull global network broadcast
-      const gRes = await fetch('http://localhost:3000/api/calendar/global-sync');
+      const gRes = await fetch(`${getApiBaseUrl()}/api/calendar/global-sync`);
       const gData = await gRes.json();
       if (gData.version && gData.version > lastKnownGlobalVersion) {
         lastKnownGlobalVersion = gData.version;
@@ -3902,7 +3931,7 @@ async function syncStudentWithServer(push = true) {
 
       // 2. Pull student profile update if logged in
       if (state.student) {
-        const res = await fetch(`http://localhost:3000/api/student/sync?email=${encodeURIComponent(state.student.email)}`);
+        const res = await fetch(`${getApiBaseUrl()}/api/student/sync?email=${encodeURIComponent(state.student.email)}`);
         const data = await res.json();
         if (data.classes && Array.isArray(data.classes) && data.classes.length > 0) {
           if (JSON.stringify(data.classes) !== JSON.stringify(state.classes)) {
@@ -4510,7 +4539,7 @@ function openAuthModal() {
         // Attempt backend API call
         let devOtpVal = String(Math.floor(100000 + Math.random() * 900000));
         try {
-          const res = await fetch('http://localhost:3000/api/auth/request-otp', {
+          const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email }),
@@ -4560,7 +4589,7 @@ function openAuthModal() {
         const studentId = email.split('@')[0].toUpperCase();
 
         try {
-          const res = await fetch('http://localhost:3000/api/auth/verify-otp', {
+          const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, otp }),
@@ -4950,7 +4979,7 @@ function handleUploadedFile(file) {
 
       // Push to backend calendar sync
       try {
-        await fetch('http://localhost:3000/api/calendar/sync', {
+        await fetch(`${getApiBaseUrl()}/api/calendar/sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ rawSchedule: text, email: state.student?.email || 'student@university.edu' }),
@@ -5443,7 +5472,7 @@ function initEventListeners() {
     btnVerifySync.addEventListener('click', async () => {
       btnVerifySync.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
       try {
-        const res = await fetch(`http://localhost:3000/api/calendar/sync-status?email=${encodeURIComponent(state.student?.email || 'student@university.edu')}`);
+        const res = await fetch(`${getApiBaseUrl()}/api/calendar/sync-status?email=${encodeURIComponent(state.student?.email || 'student@university.edu')}`);
         const data = await res.json();
         updateSyncStatusUI();
         showToast(`Sync Check Completed: ${data.matchRatePercent || 100}% Match!`, 'success');
@@ -5472,7 +5501,7 @@ function initEventListeners() {
       const badge = document.getElementById('diagStatusBadge');
       
       try {
-        const res = await fetch('http://localhost:3000/api/health');
+        const res = await fetch(`${getApiBaseUrl()}/api/health`);
         const data = await res.json();
         if (badge) {
           badge.className = 'diag-status-badge healthy';
