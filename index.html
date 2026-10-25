@@ -2369,7 +2369,7 @@ body {
             <div class="verified-icon"><i class="fa-solid fa-certificate"></i></div>
             <div>
               <h4>Official 2026 Academic Calendar</h4>
-              <p id="officialSyncSubtitle">49 official milestones available (Holidays, fee deadlines, advising, exams).</p>
+              <p id="officialSyncSubtitle">76 official milestones available (Holidays, fee deadlines, advising, exams).</p>
             </div>
           </div>
           <div class="sync-right">
@@ -3014,7 +3014,7 @@ CSE-205,Database Systems,Monday,11:00,12:30,Room 301,Prof. Alan Turing</pre>
  * Smart Academic Calendar, Holiday Conflict Resolver & Reminder System
  */
 
-// ===================== OFFICIAL 2026 ACADEMIC CALENDAR DATA (49 Events) =====================
+// ===================== OFFICIAL 2026 ACADEMIC CALENDAR DATA (76 Events) =====================
 const OFFICIAL_2026_CALENDAR = [
   // Spring 2026
   { id: 'ACAD-01', title: 'Registration without Fine', description: 'Course registration window without surcharge.', startDate: '2026-02-23', endDate: '2026-02-25', category: 'administrative', isHoliday: false, priority: 'high' },
@@ -3069,7 +3069,35 @@ const OFFICIAL_2026_CALENDAR = [
   { id: 'ACAD-46B', title: 'Semester Break (Trimester Vacation)', description: 'Official trimester vacation break. Campus holiday for all students until Fall trimester begins.', startDate: '2026-10-18', endDate: '2026-10-26', category: 'holiday', isHoliday: true, priority: 'urgent' },
   { id: 'ACAD-47', title: 'Holiday: Durga Puja', description: 'Durga Puja Holiday. Campus closed. All classes cancelled.', startDate: '2026-10-20', endDate: '2026-10-21', category: 'holiday', isHoliday: true, priority: 'urgent' },
   { id: 'ACAD-48', title: 'Last day of Grade Submission (Including Self-Study courses)', description: 'Faculty final deadline for submitting Summer 2026 grades.', startDate: '2026-10-22', endDate: '2026-10-22', category: 'administrative', isHoliday: false, priority: 'medium' },
-  { id: 'ACAD-49', title: 'Fall 2026 Trimester Begins', description: 'Official start of Fall 2026 Trimester.', startDate: '2026-10-27', endDate: '2026-10-27', category: 'event', isHoliday: false, priority: 'high' }
+  { id: 'ACAD-49', title: 'Fall 2026 Trimester Begins', description: 'Official start of Fall 2026 Trimester.', startDate: '2026-10-27', endDate: '2026-10-27', category: 'event', isHoliday: false, priority: 'high' },
+  // Fall 2026 / Spring 2027 New Trimester
+  { id: 'ACAD-50', title: 'Course Advising and Registration', description: 'Course Advising and Registration window.', startDate: '2026-10-24', endDate: '2026-10-26', category: 'administrative', isHoliday: false, priority: 'high' },
+  { id: 'ACAD-51', title: 'Last day of Course Advising & Registration (No Fine)', description: 'Last day of Course Advising and Registration without Fine.', startDate: '2026-10-26', endDate: '2026-10-26', category: 'administrative', isHoliday: false, priority: 'high' },
+  { id: 'ACAD-52', title: 'Open Day Orientation', description: 'Open Day Orientation for new trimester students.', startDate: '2026-10-26', endDate: '2026-10-26', category: 'event', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-53', title: 'Classes Begin', description: 'Fall 2026 trimester academic classes begin.', startDate: '2026-10-27', endDate: '2026-10-27', category: 'event', isHoliday: false, priority: 'urgent' },
+  { id: 'ACAD-54', title: 'Last day to drop course(s) with 100% adjustable refund', description: 'Deadline to drop courses with 100% adjustable fee refund.', startDate: '2026-10-31', endDate: '2026-10-31', category: 'administrative', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-55', title: 'Last day to apply for Grade Change (Summer 2026)', description: 'Last day to apply for Grade Change of a course (if any) of Summer 2026 Trimester. No application considered after deadline.', startDate: '2026-11-04', endDate: '2026-11-04', category: 'administrative', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-56', title: 'Regular Saturday Class (online)', description: 'Makeup class: Regular Saturday classes held online on Thursday.', startDate: '2026-11-05', endDate: '2026-11-05', category: 'event', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-57', title: 'Holiday: National Revolution and Solidarity Day', description: 'National Holiday. Campus closed. All classes suspended.', startDate: '2026-11-07', endDate: '2026-11-07', category: 'holiday', isHoliday: true, priority: 'urgent' },
+  { id: 'ACAD-58', title: 'Last day of Grade Submission for Project/Thesis/Internship', description: 'Final deadline for Project/Thesis (Final Year Design Project)/Internship grade submission.', startDate: '2026-11-08', endDate: '2026-11-08', category: 'administrative', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-59', title: 'Last day to drop course(s) with 50% adjustable refund only', description: 'Deadline to drop courses with 50% adjustable refund.', startDate: '2026-11-09', endDate: '2026-11-09', category: 'administrative', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-60', title: 'Last day of Course Advising & Registration with Fine (Tk. 500)', description: 'Final late registration window with fine of Tk. 500.', startDate: '2026-11-09', endDate: '2026-11-09', category: 'administrative', isHoliday: false, priority: 'high' },
+  { id: 'ACAD-61', title: 'Last day of Grade Submission of Incomplete Grades (Summer 2026)', description: 'Department/Program Office submission deadline for Summer 2026 incomplete grades.', startDate: '2026-11-09', endDate: '2026-11-09', category: 'administrative', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-62', title: 'Regular Saturday Class (online)', description: 'Makeup class: Regular Saturday classes held online on Thursday.', startDate: '2026-11-12', endDate: '2026-11-12', category: 'event', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-63', title: 'Last date of 1st Installment', description: 'Tuition fee 1st installment payment deadline.', startDate: '2026-11-22', endDate: '2026-11-22', category: 'semesterFee', isHoliday: false, priority: 'urgent' },
+  { id: 'ACAD-64', title: 'Regular Sunday Class (online)', description: 'Makeup class: Regular Sunday classes held online on Thursday.', startDate: '2026-11-26', endDate: '2026-11-26', category: 'event', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-65', title: 'Mid-Term Exam', description: 'Fall 2026 Trimester Mid-Term Examinations.', startDate: '2026-12-05', endDate: '2026-12-12', category: 'exam', isHoliday: false, priority: 'urgent' },
+  { id: 'ACAD-66', title: 'Last date of 2nd Installment', description: 'Tuition fee 2nd installment payment deadline.', startDate: '2026-12-15', endDate: '2026-12-15', category: 'semesterFee', isHoliday: false, priority: 'urgent' },
+  { id: 'ACAD-67', title: 'Holiday: Victory Day', description: 'National Holiday. Campus closed. All classes cancelled.', startDate: '2026-12-16', endDate: '2026-12-16', category: 'holiday', isHoliday: true, priority: 'urgent' },
+  { id: 'ACAD-68', title: 'Regular Wednesday Class (online)', description: 'Makeup class: Regular Wednesday classes held online on Thursday.', startDate: '2026-12-17', endDate: '2026-12-17', category: 'event', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-69', title: 'Last Day of Course Withdrawal', description: 'Final deadline for course withdrawal with W grade.', startDate: '2026-12-23', endDate: '2026-12-23', category: 'administrative', isHoliday: false, priority: 'high' },
+  { id: 'ACAD-70', title: 'Holiday: Christmas Day', description: 'Public Holiday: Christmas Day. Campus closed.', startDate: '2026-12-25', endDate: '2026-12-25', category: 'holiday', isHoliday: true, priority: 'urgent' },
+  { id: 'ACAD-71', title: 'Regular Saturday Class (online)', description: 'Makeup class: Regular Saturday classes held online on Thursday.', startDate: '2026-12-31', endDate: '2026-12-31', category: 'event', isHoliday: false, priority: 'medium' },
+  { id: 'ACAD-72', title: 'Last date of 3rd Installment', description: 'Tuition fee 3rd installment final payment deadline.', startDate: '2027-01-13', endDate: '2027-01-13', category: 'semesterFee', isHoliday: false, priority: 'urgent' },
+  { id: 'ACAD-73', title: 'Classes will remain suspended', description: 'Exam preparation: classes remain suspended.', startDate: '2027-01-21', endDate: '2027-01-24', category: 'event', isHoliday: false, priority: 'high' },
+  { id: 'ACAD-74', title: 'Holiday: Shab-e-Barat', description: 'Religious Holiday: Shab-e-Barat. Campus closed.', startDate: '2027-01-24', endDate: '2027-01-24', category: 'holiday', isHoliday: true, priority: 'urgent' },
+  { id: 'ACAD-75', title: 'Final Exam', description: 'Fall 2026 Trimester Final Examinations.', startDate: '2027-01-25', endDate: '2027-02-01', category: 'exam', isHoliday: false, priority: 'urgent' },
+  { id: 'ACAD-76', title: 'Last day of Grade Submission (including Self-Study courses)', description: 'Final faculty deadline for submitting trimester grades.', startDate: '2027-02-04', endDate: '2027-02-04', category: 'administrative', isHoliday: false, priority: 'high' }
 ];
 
 const DEMO_CLASSES = [
@@ -5183,7 +5211,7 @@ function initEventListeners() {
   const loadOfficialHandler = () => {
     state.notices = [...OFFICIAL_2026_CALENDAR];
     renderAll();
-    showToast('Loaded 49 Official 2026 Academic Milestones!', 'success');
+    showToast('Loaded 76 Official Academic Milestones!', 'success');
   };
 
   const loadDemoHandler = () => {

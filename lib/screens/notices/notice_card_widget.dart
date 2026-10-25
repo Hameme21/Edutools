@@ -65,12 +65,16 @@ class NoticeCardWidget extends StatelessWidget {
                     children: [
                       Icon(notice.categoryIcon, size: 14, color: notice.categoryColor),
                       const SizedBox(width: 5),
-                      Text(
-                        notice.categoryName,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: notice.categoryColor,
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 160),
+                        child: Text(
+                          notice.categoryName,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: notice.categoryColor,
+                          ),
                         ),
                       ),
                     ],
@@ -137,12 +141,16 @@ class NoticeCardWidget extends StatelessWidget {
                       children: [
                         Icon(Icons.calendar_today_rounded, size: 14, color: Colors.grey[500]),
                         const SizedBox(width: 6),
-                        Text(
-                          formattedDate,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[600],
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 200),
+                          child: Text(
+                            formattedDate,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
+                            ),
                           ),
                         ),
                       ],

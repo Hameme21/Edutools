@@ -62,7 +62,11 @@ void main() {
       await tester.tap(find.text('Academic Notices'));
       await tester.pumpAndSettle();
       expect(find.text('All Notices'), findsOneWidget);
-      expect(tester.takeException(), isNull, reason: 'Notices tab had overflow');
+      final err = tester.takeException();
+      if (err is FlutterError) {
+        debugPrint(err.toStringDeep());
+      }
+      expect(err, isNull, reason: 'Notices tab had overflow');
 
       // 3. Setup Tab
       await tester.tap(find.text('Class Setup'));
