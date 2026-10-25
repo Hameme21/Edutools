@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: edutools-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: EMAIL_USER
+        value: hamimasir5@gmail.com
+      - key: EMAIL_PASS
+        value: faixfyjgwixzbisl

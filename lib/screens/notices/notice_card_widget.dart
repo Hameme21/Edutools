@@ -8,12 +8,12 @@ class NoticeCardWidget extends StatelessWidget {
   final Function(AcademicNotice)? onEdit;
 
   const NoticeCardWidget({
-    Key? key,
+    super.key,
     required this.notice,
     required this.onToggleReminder,
     required this.onDelete,
     this.onEdit,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +29,13 @@ class NoticeCardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isUrgent
-              ? notice.categoryColor.withOpacity(0.6)
+              ? notice.categoryColor.withValues(alpha: 0.6)
               : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
           width: isUrgent ? 1.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -47,14 +47,17 @@ class NoticeCardWidget extends StatelessWidget {
           // Header bar
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 // Category pill
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: notice.categoryColor.withOpacity(0.12),
+                    color: notice.categoryColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
@@ -79,7 +82,7 @@ class NoticeCardWidget extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: isUrgent
-                        ? const Color(0xFFEF4444).withOpacity(0.12)
+                        ? const Color(0xFFEF4444).withValues(alpha: 0.12)
                         : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -124,28 +127,33 @@ class NoticeCardWidget extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // Date and reminder row
-                Row(
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 6,
                   children: [
-                    Icon(Icons.calendar_today_rounded, size: 14, color: Colors.grey[500]),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        formattedDate,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.calendar_today_rounded, size: 14, color: Colors.grey[500]),
+                        const SizedBox(width: 6),
+                        Text(
+                          formattedDate,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
 
                     // Priority tag
                     if (notice.priority == NoticePriority.urgent || notice.priority == NoticePriority.high)
                       Container(
-                        margin: const EdgeInsets.only(right: 8),
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444).withOpacity(0.12),
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -166,8 +174,8 @@ class NoticeCardWidget extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: notice.reminderEnabled
-                              ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                              : Colors.grey.withOpacity(0.1),
+                              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                              : Colors.grey.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -198,7 +206,6 @@ class NoticeCardWidget extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(width: 4),
                     // Delete action
                     IconButton(
                       icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.grey),

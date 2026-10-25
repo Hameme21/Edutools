@@ -10,11 +10,11 @@ class DailyScheduleWidget extends StatelessWidget {
   final Function(AcademicNotice)? onCustomizeNoticeReminder;
 
   const DailyScheduleWidget({
-    Key? key,
+    super.key,
     required this.schedule,
     this.onCustomizeClassReminder,
     this.onCustomizeNoticeReminder,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,38 +29,49 @@ class DailyScheduleWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  formattedDate,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    letterSpacing: -0.5,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    formattedDate,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  schedule.isHoliday
-                      ? 'Academic Holiday • All Classes Removed'
-                      : '${schedule.activeClasses.length} ${schedule.activeClasses.length == 1 ? 'class' : 'classes'} scheduled',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: schedule.isHoliday ? const Color(0xFFEF4444) : Colors.grey,
+                  const SizedBox(height: 2),
+                  Text(
+                    schedule.isHoliday
+                        ? 'Academic Holiday • All Classes Removed'
+                        : (schedule.isOutsideRoutineRange
+                            ? (schedule.isAfterRoutineEnd
+                                ? 'Classes Suspended / Term Ended'
+                                : 'Term Not Started Yet')
+                            : '${schedule.activeClasses.length} ${schedule.activeClasses.length == 1 ? 'class' : 'classes'} scheduled'),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: schedule.isHoliday
+                          ? const Color(0xFFEF4444)
+                          : (schedule.isOutsideRoutineRange
+                              ? const Color(0xFFF59E0B)
+                              : Colors.grey),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            if (schedule.isHoliday)
+            if (schedule.isHoliday) ...[
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444).withOpacity(0.12),
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.3)),
+                  border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -78,9 +89,41 @@ class DailyScheduleWidget extends StatelessWidget {
                   ],
                 ),
               ),
+            ],
           ],
         ),
         const SizedBox(height: 16),
+
+        // Routine boundary status banner (outside semester / suspended)
+        if (schedule.isOutsideRoutineRange && !schedule.isHoliday)
+          Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.15 : 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.event_busy_rounded, color: Color(0xFFD97706), size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    schedule.routineStatusMessage ??
+                        (schedule.isAfterRoutineEnd
+                            ? 'Classes are suspended / semester completed. No routine classes.'
+                            : 'Semester has not begun yet. No routine classes.'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
 
         // 1. Holiday Banner
         if (schedule.isHoliday)
@@ -120,9 +163,12 @@ class DailyScheduleWidget extends StatelessWidget {
                 ),
               ),
               if (schedule.activeClasses.isNotEmpty)
-                Text(
-                  'Tap 🔔 on class to customize reminder',
-                  style: TextStyle(fontSize: 11, color: Colors.grey[500], fontStyle: FontStyle.italic),
+                Flexible(
+                  child: Text(
+                    'Tap 🔔 on class to customize reminder',
+                    style: TextStyle(fontSize: 11, color: Colors.grey[500], fontStyle: FontStyle.italic),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
             ],
           ),
@@ -141,10 +187,10 @@ class DailyScheduleWidget extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: notice.categoryColor.withOpacity(isDark ? 0.15 : 0.08),
+        color: notice.categoryColor.withValues(alpha: isDark ? 0.15 : 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: notice.categoryColor.withOpacity(0.35),
+          color: notice.categoryColor.withValues(alpha: 0.35),
           width: 1.0,
         ),
       ),
@@ -154,7 +200,7 @@ class DailyScheduleWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: notice.categoryColor.withOpacity(0.2),
+              color: notice.categoryColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(notice.categoryIcon, color: notice.categoryColor, size: 20),
@@ -164,36 +210,33 @@ class DailyScheduleWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: notice.categoryColor,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            notice.categoryName.toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: notice.categoryColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        notice.categoryName.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          notice.countdownText,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: notice.categoryColor,
-                          ),
-                        ),
-                      ],
+                      ),
+                    ),
+                    Text(
+                      notice.countdownText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: notice.categoryColor,
+                      ),
                     ),
                     if (onCustomizeNoticeReminder != null)
                       InkWell(
@@ -203,8 +246,8 @@ class DailyScheduleWidget extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
                             color: notice.reminderEnabled
-                                ? notice.categoryColor.withOpacity(0.15)
-                                : Colors.grey.withOpacity(0.15),
+                                ? notice.categoryColor.withValues(alpha: 0.15)
+                                : Colors.grey.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -270,7 +313,7 @@ class DailyScheduleWidget extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -303,7 +346,7 @@ class DailyScheduleWidget extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: cls.color.withOpacity(0.15),
+                            color: cls.color.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -315,54 +358,60 @@ class DailyScheduleWidget extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Row(
-                          children: [
-                            const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(
-                              cls.timeRangeFormatted,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            if (onCustomizeClassReminder != null) ...[
-                              const SizedBox(width: 8),
-                              InkWell(
-                                onTap: () => onCustomizeClassReminder!(cls),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: cls.reminderEnabled
-                                        ? const Color(0xFF3B82F6).withOpacity(0.12)
-                                        : Colors.grey.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(12),
+                        Flexible(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  cls.timeRangeFormatted,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey,
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        cls.reminderEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_outlined,
-                                        size: 12,
-                                        color: cls.reminderEnabled ? const Color(0xFF3B82F6) : Colors.grey,
-                                      ),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        cls.reminderEnabled ? '${minutes}m' : 'Off',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: cls.reminderEnabled ? const Color(0xFF3B82F6) : Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              if (onCustomizeClassReminder != null) ...[
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: () => onCustomizeClassReminder!(cls),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: cls.reminderEnabled
+                                          ? const Color(0xFF3B82F6).withValues(alpha: 0.12)
+                                          : Colors.grey.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          cls.reminderEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_outlined,
+                                          size: 12,
+                                          color: cls.reminderEnabled ? const Color(0xFF3B82F6) : Colors.grey,
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          cls.reminderEnabled ? '${minutes}m' : 'Off',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: cls.reminderEnabled ? const Color(0xFF3B82F6) : Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ],
                     ),

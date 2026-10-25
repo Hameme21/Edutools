@@ -8,11 +8,11 @@ class CalendarViewWidget extends StatefulWidget {
   final CalendarService calendarService;
 
   const CalendarViewWidget({
-    Key? key,
+    super.key,
     required this.selectedDate,
     required this.onDateSelected,
     required this.calendarService,
-  }) : super(key: key);
+  });
 
   @override
   State<CalendarViewWidget> createState() => _CalendarViewWidgetState();
@@ -20,6 +20,7 @@ class CalendarViewWidget extends StatefulWidget {
 
 class _CalendarViewWidgetState extends State<CalendarViewWidget> {
   late DateTime _displayedMonth;
+  double _dragDistance = 0;
 
   @override
   void initState() {
@@ -64,112 +65,129 @@ class _CalendarViewWidgetState extends State<CalendarViewWidget> {
     // Weekday of 1st day (1=Mon ... 7=Sun)
     final startingWeekday = firstDayOfMonth.weekday; // 1 to 7
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: (_) => _dragDistance = 0,
+      onHorizontalDragUpdate: (details) => _dragDistance += details.primaryDelta ?? 0,
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+        if (_dragDistance < -40 || velocity < -100) {
+          _nextMonth();
+        } else if (_dragDistance > 40 || velocity > 100) {
+          _previousMonth();
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
           ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Header: Month & Year + Prev/Next + Today
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    '$monthName $yearStr',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: _goToToday,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Today',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.primary,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Header: Month & Year + Prev/Next + Today
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          '$monthName $yearStr',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: _goToToday,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Today',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left_rounded, size: 22),
+                      onPressed: _previousMonth,
+                      splashRadius: 18,
+                      visualDensity: VisualDensity.compact,
                     ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left_rounded, size: 22),
-                    onPressed: _previousMonth,
-                    splashRadius: 18,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right_rounded, size: 22),
-                    onPressed: _nextMonth,
-                    splashRadius: 18,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right_rounded, size: 22),
+                      onPressed: _nextMonth,
+                      splashRadius: 18,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
 
-          // Day of week labels
-          Row(
-            children: const [
-              _WeekdayHeader('Mon'),
-              _WeekdayHeader('Tue'),
-              _WeekdayHeader('Wed'),
-              _WeekdayHeader('Thu'),
-              _WeekdayHeader('Fri'),
-              _WeekdayHeader('Sat'),
-              _WeekdayHeader('Sun'),
-            ],
-          ),
-          const SizedBox(height: 8),
+            // Day of week labels
+            Row(
+              children: const [
+                _WeekdayHeader('Mon'),
+                _WeekdayHeader('Tue'),
+                _WeekdayHeader('Wed'),
+                _WeekdayHeader('Thu'),
+                _WeekdayHeader('Fri'),
+                _WeekdayHeader('Sat'),
+                _WeekdayHeader('Sun'),
+              ],
+            ),
+            const SizedBox(height: 8),
 
-          // Calendar Grid
-          _buildCalendarGrid(daysInMonth, startingWeekday, today, isDark),
-          const SizedBox(height: 12),
+            // Calendar Grid
+            _buildCalendarGrid(daysInMonth, startingWeekday, today, isDark),
+            const SizedBox(height: 12),
 
-          // Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegendItem(const Color(0xFFEF4444), 'Holiday'),
-              const SizedBox(width: 14),
-              _buildLegendItem(const Color(0xFF3B82F6), 'Class'),
-              const SizedBox(width: 14),
-              _buildLegendItem(const Color(0xFFF59E0B), 'Fee Deadline'),
-              const SizedBox(width: 14),
-              _buildLegendItem(const Color(0xFF8B5CF6), 'Exam'),
-            ],
-          ),
-        ],
+            // Legend
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 14,
+              runSpacing: 6,
+              children: [
+                _buildLegendItem(const Color(0xFFEF4444), 'Holiday'),
+                _buildLegendItem(const Color(0xFF3B82F6), 'Class'),
+                _buildLegendItem(const Color(0xFFF59E0B), 'Fee Deadline'),
+                _buildLegendItem(const Color(0xFF8B5CF6), 'Exam'),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -210,7 +228,7 @@ class _CalendarViewWidgetState extends State<CalendarViewWidget> {
               color: isSelected
                   ? Theme.of(context).colorScheme.primary
                   : (isHoliday
-                      ? const Color(0xFFEF4444).withOpacity(isDark ? 0.25 : 0.12)
+                      ? const Color(0xFFEF4444).withValues(alpha: isDark ? 0.25 : 0.12)
                       : Colors.transparent),
               borderRadius: BorderRadius.circular(12),
               border: isToday && !isSelected

@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
 import '../models/reminder_notification.dart';
 import '../models/academic_notice.dart';
-import '../models/class_schedule.dart';
 import '../models/reminder_settings.dart';
 import 'calendar_service.dart';
 

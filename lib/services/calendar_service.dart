@@ -1,13 +1,28 @@
+import 'package:intl/intl.dart';
 import '../models/class_schedule.dart';
 import '../models/academic_notice.dart';
 import '../models/calendar_day_schedule.dart';
+import '../models/routine_date_range.dart';
 
 class CalendarService {
   final List<ClassSchedule> _classes = [];
   final List<AcademicNotice> _notices = [];
 
+  // Active routine date range window (optional or auto-figured)
+  DateTime? _routineStartDate;
+  DateTime? _routineEndDate;
+  bool _isRoutineAutoFigured = true;
+  String? _routineSourceDescription;
+  RoutineDateRange? _activeRoutineRange;
+
   List<ClassSchedule> get classes => List.unmodifiable(_classes);
   List<AcademicNotice> get notices => List.unmodifiable(_notices);
+
+  DateTime? get routineStartDate => _routineStartDate;
+  DateTime? get routineEndDate => _routineEndDate;
+  bool get isRoutineAutoFigured => _isRoutineAutoFigured;
+  String? get routineSourceDescription => _routineSourceDescription;
+  RoutineDateRange? get activeRoutineRange => _activeRoutineRange;
 
   void setClasses(List<ClassSchedule> newClasses) {
     _classes.clear();
@@ -49,14 +64,287 @@ class CalendarService {
     }
   }
 
-  /// Checks whether a given date is marked as a holiday in the academic calendar
+  /// Sets or updates the active routine schedule window
+  void setRoutineDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+    bool isAutoFigured = false,
+    String? title,
+    String? sourceDescription,
+    DateTime? classesSuspendedDate,
+    DateTime? finalExamDate,
+    DateTime? nextSemesterBeginDate,
+  }) {
+    _routineStartDate = DateTime(startDate.year, startDate.month, startDate.day);
+    _routineEndDate = DateTime(endDate.year, endDate.month, endDate.day);
+    _isRoutineAutoFigured = isAutoFigured;
+    _routineSourceDescription = sourceDescription ??
+        (isAutoFigured
+            ? 'Auto-figured from Academic Calendar'
+            : 'Customized by user');
+
+    _activeRoutineRange = RoutineDateRange(
+      startDate: _routineStartDate!,
+      endDate: _routineEndDate!,
+      title: title ?? 'Active Trimester Routine',
+      sourceDescription: _routineSourceDescription!,
+      isAutoFigured: isAutoFigured,
+      classesSuspendedDate: classesSuspendedDate,
+      finalExamDate: finalExamDate,
+      nextSemesterBeginDate: nextSemesterBeginDate,
+    );
+  }
+
+  /// Clears custom/auto-figured routine window constraints
+  void clearRoutineDateRange() {
+    _routineStartDate = null;
+    _routineEndDate = null;
+    _activeRoutineRange = null;
+    _routineSourceDescription = null;
+    _isRoutineAutoFigured = true;
+  }
+
+  /// Checks whether a specific date is within the routine's active start-to-end window
+  bool isDateWithinRoutine(DateTime date) {
+    if (_routineStartDate == null || _routineEndDate == null) return true;
+    final clean = DateTime(date.year, date.month, date.day);
+    return (clean.isAtSameMomentAs(_routineStartDate!) ||
+            clean.isAfter(_routineStartDate!)) &&
+        (clean.isAtSameMomentAs(_routineEndDate!) ||
+            clean.isBefore(_routineEndDate!));
+  }
+
+  /// Auto-figures routine dates based on official academic calendar notices.
+  /// If [referenceDate] is after classes are suspended, it identifies the full semester
+  /// routine span from semester begin to before classes are suspended / final exam.
+  RoutineDateRange autoFigureRoutineDates({DateTime? referenceDate}) {
+    final now = referenceDate ?? DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Identify candidate milestone notices
+    final beginNotices = _notices.where((n) {
+      final t = n.title.toLowerCase();
+      return (t.contains('classes begin') ||
+              t.contains('begins') ||
+              t.contains('commencement')) &&
+          !t.contains('registration') &&
+          !t.contains('orientation');
+    }).toList();
+
+    beginNotices.sort((a, b) => a.startDate.compareTo(b.startDate));
+
+    final suspensionNotices = _notices.where((n) {
+      final t = n.title.toLowerCase();
+      return t.contains('suspended') ||
+          t.contains('no classes') ||
+          t.contains('exam prep');
+    }).toList();
+
+    final examNotices = _notices.where((n) {
+      final t = n.title.toLowerCase();
+      return (t.contains('final exam') || t.contains('final exams')) &&
+          n.category == NoticeCategory.exam;
+    }).toList();
+
+    // If no notices are available, return a 14-week fallback window
+    if (beginNotices.isEmpty) {
+      final start = DateTime(today.year, today.month, 1);
+      final end = start.add(const Duration(days: 98)); // ~14 weeks
+      return RoutineDateRange(
+        startDate: start,
+        endDate: end,
+        title: 'Default Routine Window',
+        sourceDescription: 'Default 14-week academic cycle (No notices loaded)',
+        isAutoFigured: true,
+        isCurrentDatePastSuspension: false,
+      );
+    }
+
+    // Extract and structure all semesters defined in calendar notices
+    final List<_SemesterPeriod> semesters = [];
+
+    for (int i = 0; i < beginNotices.length; i++) {
+      final bNotice = beginNotices[i];
+      final bStart = DateTime(bNotice.startDate.year, bNotice.startDate.month, bNotice.startDate.day);
+
+      final correspondingSuspension = suspensionNotices.firstWhere(
+        (s) => s.startDate.isAfter(bStart),
+        orElse: () => AcademicNotice(
+          id: '',
+          title: '',
+          description: '',
+          startDate: DateTime(2099),
+          endDate: DateTime(2099),
+          category: NoticeCategory.other,
+        ),
+      );
+
+      final correspondingExam = examNotices.firstWhere(
+        (e) => e.startDate.isAfter(bStart),
+        orElse: () => AcademicNotice(
+          id: '',
+          title: '',
+          description: '',
+          startDate: DateTime(2099),
+          endDate: DateTime(2099),
+          category: NoticeCategory.exam,
+        ),
+      );
+
+      DateTime? susp = correspondingSuspension.id.isNotEmpty
+          ? DateTime(correspondingSuspension.startDate.year,
+              correspondingSuspension.startDate.month,
+              correspondingSuspension.startDate.day)
+          : null;
+
+      DateTime? ex = correspondingExam.id.isNotEmpty
+          ? DateTime(correspondingExam.startDate.year,
+              correspondingExam.startDate.month,
+              correspondingExam.startDate.day)
+          : null;
+
+      DateTime effectiveSuspension = susp ?? ex ?? bStart.add(const Duration(days: 90));
+      if (susp != null && ex != null && ex.isBefore(effectiveSuspension)) {
+        effectiveSuspension = ex;
+      }
+
+      DateTime? nextBegin;
+      if (i + 1 < beginNotices.length) {
+        nextBegin = DateTime(beginNotices[i + 1].startDate.year,
+            beginNotices[i + 1].startDate.month, beginNotices[i + 1].startDate.day);
+      }
+
+      semesters.add(_SemesterPeriod(
+        title: bNotice.title,
+        startDate: bStart,
+        effectiveSuspension: effectiveSuspension,
+        suspensionDate: susp,
+        finalExamDate: ex,
+        nextSemesterBegin: nextBegin,
+      ));
+    }
+
+    // Match the semester that contains today
+    _SemesterPeriod? matched;
+    bool isPastSuspension = false;
+
+    for (final sem in semesters) {
+      final termEnd = sem.semesterEndDate;
+      if ((today.isAtSameMomentAs(sem.startDate) || today.isAfter(sem.startDate)) &&
+          today.isBefore(termEnd)) {
+        matched = sem;
+        isPastSuspension = today.isAtSameMomentAs(sem.effectiveSuspension) ||
+            today.isAfter(sem.effectiveSuspension);
+        break;
+      }
+    }
+
+    // If today is past all semesters in the calendar
+    if (matched == null && semesters.isNotEmpty) {
+      if (today.isAfter(semesters.last.semesterEndDate) ||
+          today.isAtSameMomentAs(semesters.last.effectiveSuspension) ||
+          today.isAfter(semesters.last.effectiveSuspension)) {
+        matched = semesters.last;
+        isPastSuspension = true;
+      } else {
+        matched = semesters.first;
+        isPastSuspension = false;
+      }
+    }
+
+    matched ??= semesters.first;
+
+    final selectedStart = matched.startDate;
+    final selectedEnd = matched.routineEndDate;
+
+    final String reason = isPastSuspension
+        ? 'Current date is after classes were suspended (${matched.suspensionDate != null ? DateFormat('MMM d').format(matched.suspensionDate!) : 'Final Exams'}). Auto-figured full routine span from semester begin (${DateFormat('MMM d').format(selectedStart)}) until day before class suspension (${DateFormat('MMM d').format(selectedEnd)}).'
+        : 'Auto-figured active routine window from semester begin (${DateFormat('MMM d').format(selectedStart)}) until classes suspended / final exams (${DateFormat('MMM d').format(selectedEnd)}).';
+
+    return RoutineDateRange(
+      startDate: selectedStart,
+      endDate: selectedEnd,
+      title: matched.title,
+      sourceDescription: reason,
+      isAutoFigured: true,
+      isCurrentDatePastSuspension: isPastSuspension,
+      classesSuspendedDate: matched.suspensionDate,
+      finalExamDate: matched.finalExamDate,
+      nextSemesterBeginDate: matched.nextSemesterBegin,
+    );
+  }
+
+  /// Finds whether date falls into an official Semester Break (holiday between final exams and next trimester begin)
+  bool isSemesterBreak(DateTime date) {
+    final clean = DateTime(date.year, date.month, date.day);
+
+    final examNotices = _notices.where((n) {
+      final t = n.title.toLowerCase();
+      return (t.contains('final exam') || t.contains('final exams')) &&
+          n.category == NoticeCategory.exam;
+    }).toList();
+
+    final beginNotices = _notices.where((n) {
+      final t = n.title.toLowerCase();
+      return (t.contains('classes begin') ||
+              t.contains('begins') ||
+              t.contains('commencement')) &&
+          !t.contains('registration');
+    }).toList();
+
+    for (final exam in examNotices) {
+      final examEnd = DateTime(exam.endDate.year, exam.endDate.month, exam.endDate.day);
+      // Find the next semester begin notice that starts after this exam
+      final nextBegin = beginNotices.firstWhere(
+        (b) => b.startDate.isAfter(examEnd),
+        orElse: () => AcademicNotice(
+          id: '',
+          title: '',
+          description: '',
+          startDate: DateTime(2099),
+          endDate: DateTime(2099),
+          category: NoticeCategory.other,
+        ),
+      );
+
+      if (nextBegin.id.isNotEmpty) {
+        final breakStart = examEnd.add(const Duration(days: 1));
+        final breakEnd = DateTime(nextBegin.startDate.year,
+                nextBegin.startDate.month, nextBegin.startDate.day)
+            .subtract(const Duration(days: 1));
+
+        if ((clean.isAtSameMomentAs(breakStart) || clean.isAfter(breakStart)) &&
+            (clean.isAtSameMomentAs(breakEnd) || clean.isBefore(breakEnd))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /// Checks whether a given date is marked as a holiday in the academic calendar or is a Semester Break
   bool isHoliday(DateTime date) {
+    if (isSemesterBreak(date)) return true;
     return _notices.any((n) => n.isHoliday && n.coversDate(date));
   }
 
-  /// Returns holiday notices that cover the given date
+  /// Returns holiday notices that cover the given date, including auto-generated Semester Break notices
   List<AcademicNotice> getHolidayNotices(DateTime date) {
-    return _notices.where((n) => n.isHoliday && n.coversDate(date)).toList();
+    final list = _notices.where((n) => n.isHoliday && n.coversDate(date)).toList();
+
+    if (isSemesterBreak(date) && !list.any((n) => n.title.toLowerCase().contains('semester break'))) {
+      list.add(AcademicNotice(
+        id: 'HOL-SEMESTER-BREAK-${DateFormat('yyyyMMdd').format(date)}',
+        title: 'Semester Break (Holiday)',
+        description: 'Official university recess between final examinations and next trimester commencement. All classes suspended.',
+        startDate: date,
+        endDate: date,
+        category: NoticeCategory.holiday,
+        isHoliday: true,
+        priority: NoticePriority.high,
+      ));
+    }
+    return list;
   }
 
   /// Returns non-holiday academic notices active on that date (fees, exams, events)
@@ -71,20 +359,42 @@ class CalendarService {
     return list;
   }
 
-  /// Computes day schedule and enforces the Holiday Conflict Resolution Rule:
-  /// "holidays do not have class if a holiday and class at the same date then no classes will be notified"
+  /// Computes day schedule and enforces:
+  /// 1. Holiday Conflict Resolution: classes cancelled on holidays.
+  /// 2. Routine Active Date Range: classes suppressed before semester start or after classes suspended / final exams.
   CalendarDaySchedule getDaySchedule(DateTime date) {
-    final hol = isHoliday(date);
-    final holNotices = getHolidayNotices(date);
-    final otherNotices = getOtherNotices(date);
-    final scheduledClasses = getScheduledClassesForDayOfWeek(date.weekday);
+    final cleanDate = DateTime(date.year, date.month, date.day);
+    final hol = isHoliday(cleanDate);
+    final holNotices = getHolidayNotices(cleanDate);
+    final otherNotices = getOtherNotices(cleanDate);
+
+    final isWithinRoutine = isDateWithinRoutine(cleanDate);
+    final scheduledClasses = isWithinRoutine
+        ? getScheduledClassesForDayOfWeek(date.weekday)
+        : <ClassSchedule>[];
+
+    final isBefore = _routineStartDate != null && cleanDate.isBefore(_routineStartDate!);
+    final isAfter = _routineEndDate != null && cleanDate.isAfter(_routineEndDate!);
+
+    String? statusMsg;
+    if (!isWithinRoutine && _routineStartDate != null && _routineEndDate != null) {
+      if (isBefore) {
+        statusMsg = 'Classes have not begun yet for this term (Begins ${DateFormat('MMM d, yyyy').format(_routineStartDate!)}).';
+      } else if (isAfter) {
+        statusMsg = 'Classes ended / suspended for this term (Concluded ${DateFormat('MMM d, yyyy').format(_routineEndDate!)}).';
+      }
+    }
 
     return CalendarDaySchedule(
-      date: DateTime(date.year, date.month, date.day),
+      date: cleanDate,
       isHoliday: hol,
       holidayNotices: holNotices,
       otherNotices: otherNotices,
       scheduledClasses: scheduledClasses,
+      isOutsideRoutineRange: !isWithinRoutine && _routineStartDate != null,
+      isBeforeRoutineStart: isBefore,
+      isAfterRoutineEnd: isAfter,
+      routineStatusMessage: statusMsg,
     );
   }
 
@@ -149,3 +459,25 @@ class CalendarService {
     };
   }
 }
+
+class _SemesterPeriod {
+  final String title;
+  final DateTime startDate;
+  final DateTime effectiveSuspension;
+  final DateTime? suspensionDate;
+  final DateTime? finalExamDate;
+  final DateTime? nextSemesterBegin;
+
+  _SemesterPeriod({
+    required this.title,
+    required this.startDate,
+    required this.effectiveSuspension,
+    this.suspensionDate,
+    this.finalExamDate,
+    this.nextSemesterBegin,
+  });
+
+  DateTime get routineEndDate => effectiveSuspension.subtract(const Duration(days: 1));
+  DateTime get semesterEndDate => nextSemesterBegin ?? effectiveSuspension.add(const Duration(days: 30));
+}
+

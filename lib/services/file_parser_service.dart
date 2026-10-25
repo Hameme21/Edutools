@@ -252,10 +252,10 @@ class FileParserService {
           final endM = (endParts.length > 1 ? (int.tryParse(endParts[1]) ?? 0) : 0).toString().padLeft(2, '0');
 
           sb.writeln('BEGIN:VEVENT');
-          sb.writeln('UID:CLS-${cls.id}-${dateStr}@educal.app');
+          sb.writeln('UID:CLS-${cls.id}-$dateStr@educal.app');
           sb.writeln('DTSTAMP:${_formatIcsDate(DateTime.now())}T000000Z');
-          sb.writeln('DTSTART:${dateStr}T${startH}${startM}00');
-          sb.writeln('DTEND:${dateStr}T${endH}${endM}00');
+          sb.writeln('DTSTART:${dateStr}T$startH${startM}00');
+          sb.writeln('DTEND:${dateStr}T$endH${endM}00');
           sb.writeln('SUMMARY:${_escapeIcs('${cls.courseCode}: ${cls.subject}')}');
           sb.writeln('DESCRIPTION:${_escapeIcs('Instructor: ${cls.instructor}, Room: ${cls.room}')}');
           sb.writeln('LOCATION:${_escapeIcs(cls.room)}');

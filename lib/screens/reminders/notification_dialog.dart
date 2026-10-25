@@ -8,12 +8,12 @@ class NotificationDialog extends StatelessWidget {
   final VoidCallback onOpenSettings;
 
   const NotificationDialog({
-    Key? key,
+    super.key,
     required this.notifications,
     required this.onMarkRead,
     required this.onMarkAllRead,
     required this.onOpenSettings,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +119,7 @@ class NotificationDialog extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: Colors.grey.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -151,15 +151,15 @@ class NotificationDialog extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: n.isMutedDueToHoliday
-            ? (isDark ? Colors.white.withOpacity(0.04) : Colors.grey.withOpacity(0.08))
+            ? (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey.withValues(alpha: 0.08))
             : (n.isRead
                 ? (isDark ? const Color(0xFF1E293B) : Colors.white)
-                : n.color.withOpacity(isDark ? 0.15 : 0.06)),
+                : n.color.withValues(alpha: isDark ? 0.15 : 0.06)),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: n.isMutedDueToHoliday
               ? Colors.transparent
-              : (n.isRead ? (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)) : n.color.withOpacity(0.4)),
+              : (n.isRead ? (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)) : n.color.withValues(alpha: 0.4)),
         ),
       ),
       child: Row(
@@ -168,7 +168,7 @@ class NotificationDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: n.color.withOpacity(0.15),
+              color: n.color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(n.icon, color: n.color, size: 18),
@@ -195,7 +195,7 @@ class NotificationDialog extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: Colors.grey.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text('MUTED', style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold)),

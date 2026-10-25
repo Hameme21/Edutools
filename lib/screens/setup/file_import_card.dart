@@ -14,7 +14,7 @@ class FileImportCard extends StatefulWidget {
   final VoidCallback onClear;
 
   const FileImportCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.icon,
@@ -24,7 +24,7 @@ class FileImportCard extends StatefulWidget {
     required this.onImport,
     required this.onLoadSample,
     required this.onClear,
-  }) : super(key: key);
+  });
 
   @override
   State<FileImportCard> createState() => _FileImportCardState();
@@ -96,7 +96,7 @@ class _FileImportCardState extends State<FileImportCard> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -114,7 +114,7 @@ class _FileImportCardState extends State<FileImportCard> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: widget.themeColor.withOpacity(0.12),
+                    color: widget.themeColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(widget.icon, color: widget.themeColor, size: 24),
@@ -140,7 +140,7 @@ class _FileImportCardState extends State<FileImportCard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: widget.themeColor.withOpacity(0.12),
+                              color: widget.themeColor.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -216,7 +216,7 @@ class _FileImportCardState extends State<FileImportCard> {
             Container(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A).withOpacity(0.5) : const Color(0xFFF8FAFC),
+                color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(18),
                   bottomRight: Radius.circular(18),
@@ -259,7 +259,7 @@ class _FileImportCardState extends State<FileImportCard> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444).withOpacity(0.1),
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

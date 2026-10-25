@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:educal/models/class_schedule.dart';
 import 'package:educal/models/academic_notice.dart';
 import 'package:educal/models/reminder_notification.dart';
-import 'package:educal/models/reminder_settings.dart';
 import 'package:educal/services/calendar_service.dart';
 import 'package:educal/services/reminder_service.dart';
 
@@ -112,7 +111,6 @@ void main() {
 
     test('Customizing reminder for a single course only vs all courses', () {
       final monday = DateTime(2026, 8, 24);
-      final tuesday = DateTime(2026, 8, 25);
 
       // Customize only Monday class (CSE-201) to 20 minutes before, while Tuesday (CSE-301) stays default (10m)
       final monCls = calendarService.classes.firstWhere((c) => c.courseCode == 'CSE-201');

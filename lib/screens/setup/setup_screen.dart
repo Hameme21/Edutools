@@ -6,12 +6,13 @@ import '../../services/sample_data_service.dart';
 import '../../services/file_parser_service.dart';
 import 'file_import_card.dart';
 import 'manual_class_dialog.dart';
+import 'routine_date_config_dialog.dart';
 import '../reminders/class_reminder_dialog.dart';
 
 class SetupScreen extends StatefulWidget {
   final CalendarState state;
 
-  const SetupScreen({Key? key, required this.state}) : super(key: key);
+  const SetupScreen({super.key, required this.state});
 
   @override
   State<SetupScreen> createState() => _SetupScreenState();
@@ -46,6 +47,18 @@ class _SetupScreenState extends State<SetupScreen> {
     );
   }
 
+  void _openRoutineDateConfigDialog({bool isAfterUpload = false}) {
+    showDialog(
+      context: context,
+      builder: (ctx) => RoutineDateConfigDialog(
+        state: widget.state,
+        isAfterUpload: isAfterUpload,
+      ),
+    ).then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -64,11 +77,11 @@ class _SetupScreenState extends State<SetupScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: isDark
-                    ? [const Color(0xFF1E3A8A).withOpacity(0.4), const Color(0xFF0F172A)]
+                    ? [const Color(0xFF1E3A8A).withValues(alpha: 0.4), const Color(0xFF0F172A)]
                     : [const Color(0xFFDBEAFE), const Color(0xFFEFF6FF)],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.4)),
+              border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.4)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,7 +89,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3B82F6).withOpacity(0.2),
+                    color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF2563EB), size: 22),
@@ -121,71 +134,138 @@ class _SetupScreenState extends State<SetupScreen> {
                 color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 360;
+                final content = [
+                  Row(
                     children: [
-                      const Text(
-                        'Official 2026 Academic Calendar',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 22),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${notices.length} milestones loaded (Holidays, Fee deadlines, Exams)',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Official 2026 Academic Calendar',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${notices.length} milestones loaded (Holidays, Fee deadlines, Exams)',
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    widget.state.calendarService.setNotices(SampleDataService.getOfficialAcademicCalendar());
-                    widget.state.reminderService.refreshReminders(referenceDate: widget.state.selectedDate);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Academic Calendar synced to official 2026 schedule!')),
-                    );
-                  },
-                  child: const Text('Sync', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
+                  if (isNarrow) const SizedBox(height: 8),
+                  Align(
+                    alignment: isNarrow ? Alignment.centerRight : Alignment.center,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        widget.state.calendarService.setNotices(SampleDataService.getOfficialAcademicCalendar());
+                        widget.state.reminderService.refreshReminders(referenceDate: widget.state.selectedDate);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Academic Calendar synced to official 2026 schedule!')),
+                        );
+                      },
+                      icon: const Icon(Icons.sync_rounded, size: 16),
+                      label: const Text('Sync', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      ),
+                    ),
+                  ),
+                ];
+
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: content,
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Official 2026 Academic Calendar',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${notices.length} milestones loaded (Holidays, Fee deadlines, Exams)',
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () {
+                        widget.state.calendarService.setNotices(SampleDataService.getOfficialAcademicCalendar());
+                        widget.state.reminderService.refreshReminders(referenceDate: widget.state.selectedDate);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Academic Calendar synced to official 2026 schedule!')),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      ),
+                      child: const Text('Sync', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           const SizedBox(height: 16),
 
           // Quick preset action bar
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    widget.state.loadSampleData();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Loaded sample routine and official calendar!'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.flash_on_rounded, size: 16),
-                  label: const Text('Load Demo Routine'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E3A8A),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  widget.state.loadSampleData();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Loaded sample routine and official calendar!'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.flash_on_rounded, size: 16),
+                label: const Text('Load Demo Routine'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E3A8A),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
               ),
-              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () {
                   _exportIcsDialog();
@@ -197,7 +277,6 @@ class _SetupScreenState extends State<SetupScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 ),
               ),
-              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () {
                   _confirmClearClasses();
@@ -226,39 +305,53 @@ class _SetupScreenState extends State<SetupScreen> {
               if (!res.isSuccess) {
                 throw Exception(res.errorMessage ?? 'Failed to parse class schedule.');
               }
+              // Prompt user with detected auto-figured dates vs manual edit choice
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _openRoutineDateConfigDialog(isAfterUpload: true);
+              });
             },
             onLoadSample: () {
-              widget.state.calendarService.setClasses(SampleDataService.getSampleClasses());
-              widget.state.reminderService.refreshReminders(referenceDate: widget.state.selectedDate);
+              widget.state.loadSampleData();
               setState(() {});
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Loaded sample class schedule!'), behavior: SnackBarBehavior.floating),
+                const SnackBar(content: Text('Loaded UIU CSE 2026 routine & academic calendar!'), behavior: SnackBarBehavior.floating),
               );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _openRoutineDateConfigDialog(isAfterUpload: true);
+              });
             },
             onClear: () {
               widget.state.calendarService.setClasses([]);
+              widget.state.clearRoutineDateRange();
               setState(() {});
             },
           ),
+          const SizedBox(height: 8),
+
+          // Active Routine Schedule Window Card
+          _buildRoutineWindowCard(context, isDark),
           const SizedBox(height: 12),
 
           // Manage Class Routine List Section
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Configured Class Routine',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                  Text(
-                    '${classes.length} recurring slots registered',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Configured Class Routine',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      '${classes.length} recurring slots registered',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () => _openAddClassDialog(),
                 icon: const Icon(Icons.add_rounded, size: 16),
@@ -310,7 +403,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -323,9 +416,11 @@ class _SetupScreenState extends State<SetupScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '${dayClasses.length} ${dayClasses.length == 1 ? 'class' : 'classes'}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                Expanded(
+                  child: Text(
+                    '${dayClasses.length} ${dayClasses.length == 1 ? 'class' : 'classes'}',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ),
               ],
             ),
@@ -486,7 +581,7 @@ class _SetupScreenState extends State<SetupScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -510,7 +605,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                    border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                   ),
                   child: SelectableText(
                     icsText,
@@ -539,6 +634,192 @@ class _SetupScreenState extends State<SetupScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRoutineWindowCard(BuildContext context, bool isDark) {
+    final range = widget.state.routineRange;
+    final isConfigured = range != null;
+    final isAuto = widget.state.isRoutineAutoFigured;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isAuto
+              ? const Color(0xFF10B981).withValues(alpha: 0.5)
+              : const Color(0xFF3B82F6).withValues(alpha: 0.5),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (isAuto ? const Color(0xFF10B981) : const Color(0xFF3B82F6))
+                      .withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  isAuto ? Icons.auto_mode_rounded : Icons.edit_calendar_rounded,
+                  color: isAuto ? const Color(0xFF10B981) : const Color(0xFF3B82F6),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Routine Active Dates',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: (isAuto ? const Color(0xFF10B981) : const Color(0xFF3B82F6))
+                      .withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  isAuto ? '⚡ Auto' : '✏️ Custom',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: isAuto ? const Color(0xFF10B981) : const Color(0xFF3B82F6),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (isConfigured) ...[
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SEMESTER BEGINS',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                        color: isDark ? Colors.white54 : Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      range.formattedStartDate,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'CLASSES CONCLUDE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                        color: isDark ? Colors.white54 : Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      range.formattedEndDate,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              range.sourceDescription,
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark ? Colors.white60 : Colors.grey[600],
+                height: 1.3,
+              ),
+            ),
+          ] else ...[
+            Text(
+              'No active date boundaries set. Classes will repeat indefinitely unless constrained to semester dates.',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white60 : Colors.grey[600],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _openRoutineDateConfigDialog(),
+                icon: const Icon(Icons.edit_calendar_rounded, size: 15),
+                label: const Text('Edit Routine Dates'),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  widget.state.autoApplyRoutineDates();
+                  setState(() {});
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Auto-applied routine dates from Academic Calendar: ${widget.state.routineRange?.dateRangeFormatted ?? ""}'),
+                      backgroundColor: const Color(0xFF10B981),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.bolt_rounded, size: 16, color: Color(0xFF10B981)),
+                label: const Text('Auto-Figure by App', style: TextStyle(color: Color(0xFF10B981))),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

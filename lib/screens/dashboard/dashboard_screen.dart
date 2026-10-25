@@ -11,7 +11,7 @@ import '../reminders/notice_reminder_dialog.dart';
 class DashboardScreen extends StatelessWidget {
   final CalendarState state;
 
-  const DashboardScreen({Key? key, required this.state}) : super(key: key);
+  const DashboardScreen({super.key, required this.state});
 
   void _openClassReminderDialog(BuildContext context, ClassSchedule cls) {
     showDialog(
@@ -130,44 +130,88 @@ class DashboardScreen extends StatelessWidget {
     final upcomingHolidays = stats['upcomingHolidays'] ?? 0;
     final pendingFees = stats['pendingFees'] ?? 0;
 
-    return Row(
-      children: [
-        // Classes today
-        Expanded(
-          child: _buildStatCard(
-            title: 'Classes Today',
-            value: isHolidayToday ? 'No Class' : '$classesToday Active',
-            subtitle: isHolidayToday ? '$cancelledClasses cancelled (Holiday)' : 'Regular Schedule',
-            icon: isHolidayToday ? Icons.beach_access_rounded : Icons.school_rounded,
-            accentColor: isHolidayToday ? const Color(0xFFEF4444) : const Color(0xFF3B82F6),
-            isDark: isDark,
-          ),
-        ),
-        const SizedBox(width: 8),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 460;
+        if (isNarrow) {
+          return Column(
+            children: [
+              _buildStatCard(
+                title: 'Classes Today',
+                value: isHolidayToday ? 'No Class' : '$classesToday Active',
+                subtitle: isHolidayToday ? '$cancelledClasses cancelled (Holiday)' : 'Regular Schedule',
+                icon: isHolidayToday ? Icons.beach_access_rounded : Icons.school_rounded,
+                accentColor: isHolidayToday ? const Color(0xFFEF4444) : const Color(0xFF3B82F6),
+                isDark: isDark,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      title: 'Holidays Left',
+                      value: '$upcomingHolidays Days',
+                      icon: Icons.celebration_rounded,
+                      accentColor: const Color(0xFF10B981),
+                      isDark: isDark,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildStatCard(
+                      title: 'Fee Deadlines',
+                      value: '$pendingFees Pending',
+                      icon: Icons.account_balance_wallet_rounded,
+                      accentColor: const Color(0xFFF59E0B),
+                      isDark: isDark,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        }
 
-        // Upcoming holidays
-        Expanded(
-          child: _buildStatCard(
-            title: 'Holidays Left',
-            value: '$upcomingHolidays Days',
-            icon: Icons.celebration_rounded,
-            accentColor: const Color(0xFF10B981),
-            isDark: isDark,
-          ),
-        ),
-        const SizedBox(width: 8),
+        return Row(
+          children: [
+            // Classes today
+            Expanded(
+              child: _buildStatCard(
+                title: 'Classes Today',
+                value: isHolidayToday ? 'No Class' : '$classesToday Active',
+                subtitle: isHolidayToday ? '$cancelledClasses cancelled (Holiday)' : 'Regular Schedule',
+                icon: isHolidayToday ? Icons.beach_access_rounded : Icons.school_rounded,
+                accentColor: isHolidayToday ? const Color(0xFFEF4444) : const Color(0xFF3B82F6),
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 8),
 
-        // Pending Fees
-        Expanded(
-          child: _buildStatCard(
-            title: 'Fee Deadlines',
-            value: '$pendingFees Pending',
-            icon: Icons.account_balance_wallet_rounded,
-            accentColor: const Color(0xFFF59E0B),
-            isDark: isDark,
-          ),
-        ),
-      ],
+            // Upcoming holidays
+            Expanded(
+              child: _buildStatCard(
+                title: 'Holidays Left',
+                value: '$upcomingHolidays Days',
+                icon: Icons.celebration_rounded,
+                accentColor: const Color(0xFF10B981),
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Pending Fees
+            Expanded(
+              child: _buildStatCard(
+                title: 'Fee Deadlines',
+                value: '$pendingFees Pending',
+                icon: Icons.account_balance_wallet_rounded,
+                accentColor: const Color(0xFFF59E0B),
+                isDark: isDark,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -189,7 +233,7 @@ class DashboardScreen extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -201,24 +245,32 @@ class DashboardScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white60 : Colors.grey[600],
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white60 : Colors.grey[600],
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 4),
               Icon(icon, size: 16, color: accentColor),
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: accentColor,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: accentColor,
+              ),
             ),
           ),
           if (subtitle != null) ...[

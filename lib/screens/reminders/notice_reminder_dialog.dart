@@ -13,11 +13,11 @@ class NoticeReminderDialog extends StatefulWidget {
   }) onSave;
 
   const NoticeReminderDialog({
-    Key? key,
+    super.key,
     required this.notice,
     required this.defaultSettings,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<NoticeReminderDialog> createState() => _NoticeReminderDialogState();
@@ -84,7 +84,7 @@ class _NoticeReminderDialogState extends State<NoticeReminderDialog> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: widget.notice.categoryColor.withOpacity(0.12),
+                        color: widget.notice.categoryColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(widget.notice.categoryIcon, color: widget.notice.categoryColor, size: 20),
@@ -109,9 +109,9 @@ class _NoticeReminderDialogState extends State<NoticeReminderDialog> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: widget.notice.categoryColor.withOpacity(isDark ? 0.15 : 0.08),
+                color: widget.notice.categoryColor.withValues(alpha: isDark ? 0.15 : 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: widget.notice.categoryColor.withOpacity(0.3)),
+                border: Border.all(color: widget.notice.categoryColor.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

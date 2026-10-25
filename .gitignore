@@ -46,3 +46,14 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# EduTools runtime caches and session files
+session_storage.json
+google_drive_cache.json
+
+# Backend dependencies & environment
+node_modules/
+backend/node_modules/
+backend/uploads/
+.env
+backend/.env

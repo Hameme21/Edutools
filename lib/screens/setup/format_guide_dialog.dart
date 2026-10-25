@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 class FormatGuideDialog extends StatelessWidget {
   final bool isClassRoutine;
 
-  const FormatGuideDialog({Key? key, required this.isClassRoutine}) : super(key: key);
+  const FormatGuideDialog({super.key, required this.isClassRoutine});
 
   static const String classIcsSample = '''BEGIN:VCALENDAR
 VERSION:2.0
@@ -194,7 +194,7 @@ HOL-001,Holiday: Independence Day,Campus closed. Classes suspended.,2026-03-26,2
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.grey.withOpacity(0.2)),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
           ),
           child: SelectableText(
             code,

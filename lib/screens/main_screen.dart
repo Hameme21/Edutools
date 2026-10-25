@@ -6,18 +6,45 @@ import 'notices/notices_screen.dart';
 import 'setup/setup_screen.dart';
 import 'reminders/notification_dialog.dart';
 import 'reminders/reminder_settings_dialog.dart';
+import 'auth/student_login_dialog.dart';
+import 'auth/gmail_profile_dialog.dart';
 
 class MainScreen extends StatefulWidget {
   final CalendarState state;
 
-  const MainScreen({Key? key, required this.state}) : super(key: key);
+  const MainScreen({super.key, required this.state});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  @override
+  void initState() {
+    super.initState();
+    widget.state.addListener(_onStateChange);
+  }
+
+  @override
+  void didUpdateWidget(covariant MainScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.state != widget.state) {
+      oldWidget.state.removeListener(_onStateChange);
+      widget.state.addListener(_onStateChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.state.removeListener(_onStateChange);
+    super.dispose();
+  }
+
+  void _onStateChange() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   void _openReminderSettings() {
     showDialog(
@@ -52,6 +79,20 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  void _openAuthOrProfile() {
+    if (widget.state.isLoggedIn) {
+      showDialog(
+        context: context,
+        builder: (ctx) => GmailProfileDialog(state: widget.state),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (ctx) => StudentLoginDialog(state: widget.state),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -59,9 +100,13 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: EduCalLogo(
-          size: 34,
-          isDark: isDark,
+        titleSpacing: 12,
+        title: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 160),
+          child: EduCalLogo(
+            size: 32,
+            isDark: isDark,
+          ),
         ),
         actions: [
           // 3-Way Theme Mode Selector (Light, Dark, System)
@@ -157,7 +202,90 @@ class _MainScreenState extends State<MainScreen> {
                 ),
             ],
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
+
+          // University Account / Google Profile Avatar & Drive Sync Button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: widget.state.isLoggedIn
+                ? Tooltip(
+                    message: '${widget.state.currentStudent!.email} (Google Drive Synced)',
+                    child: InkWell(
+                      onTap: _openAuthOrProfile,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                widget.state.currentStudent!.avatarLetter,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : Tooltip(
+                    message: 'Login with University Gmail',
+                    child: OutlinedButton(
+                      onPressed: _openAuthOrProfile,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        visualDensity: VisualDensity.compact,
+                        side: BorderSide(color: const Color(0xFF2563EB).withValues(alpha: 0.4)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.network(
+                            'https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png',
+                            width: 14,
+                            height: 14,
+                            errorBuilder: (_, __, ___) => const Icon(Icons.account_circle_outlined, size: 14, color: Color(0xFF2563EB)),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text('Login', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 4),
         ],
       ),
       body: AnimatedSwitcher(
@@ -165,11 +293,9 @@ class _MainScreenState extends State<MainScreen> {
         child: _buildCurrentTab(),
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
+        selectedIndex: widget.state.currentTabIndex,
         onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          widget.state.setTabIndex(index);
         },
         destinations: const [
           NavigationDestination(
@@ -193,7 +319,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildCurrentTab() {
-    switch (_currentIndex) {
+    switch (widget.state.currentTabIndex) {
       case 0:
         return DashboardScreen(state: widget.state);
       case 1:

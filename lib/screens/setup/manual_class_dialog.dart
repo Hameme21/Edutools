@@ -5,7 +5,7 @@ class ManualClassDialog extends StatefulWidget {
   final ClassSchedule? initialClass;
   final Function(ClassSchedule) onSave;
 
-  const ManualClassDialog({Key? key, this.initialClass, required this.onSave}) : super(key: key);
+  const ManualClassDialog({super.key, this.initialClass, required this.onSave});
 
   @override
   State<ManualClassDialog> createState() => _ManualClassDialogState();
@@ -136,7 +136,7 @@ class _ManualClassDialogState extends State<ManualClassDialog> {
                     Expanded(
                       flex: 1,
                       child: DropdownButtonFormField<int>(
-                        value: _dayOfWeek,
+                        initialValue: _dayOfWeek,
                         decoration: const InputDecoration(labelText: 'Day of Week'),
                         items: const [
                           DropdownMenuItem(value: 1, child: Text('Monday')),
@@ -216,7 +216,7 @@ class _ManualClassDialogState extends State<ManualClassDialog> {
                           shape: BoxShape.circle,
                           border: isSelected ? Border.all(color: Colors.white, width: 3) : null,
                           boxShadow: isSelected
-                              ? [BoxShadow(color: color.withOpacity(0.6), blurRadius: 6, spreadRadius: 1)]
+                              ? [BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 6, spreadRadius: 1)]
                               : null,
                         ),
                         child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,

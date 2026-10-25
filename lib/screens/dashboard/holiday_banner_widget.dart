@@ -7,10 +7,10 @@ class HolidayBannerWidget extends StatelessWidget {
   final Function(AcademicNotice)? onCustomizeHolidayReminder;
 
   const HolidayBannerWidget({
-    Key? key,
+    super.key,
     required this.schedule,
     this.onCustomizeHolidayReminder,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,7 @@ class HolidayBannerWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFEF4444).withOpacity(0.3),
+            color: const Color(0xFFEF4444).withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -47,7 +47,7 @@ class HolidayBannerWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -96,7 +96,7 @@ class HolidayBannerWidget extends StatelessWidget {
             Text(
               holidayDescs,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 fontSize: 13,
                 height: 1.3,
               ),
@@ -105,13 +105,16 @@ class HolidayBannerWidget extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Bottom Bar with Silenced Tag & Custom Reminder Action
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.18),
+                  color: Colors.black.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -119,12 +122,15 @@ class HolidayBannerWidget extends StatelessWidget {
                   children: const [
                     Icon(Icons.notifications_off_rounded, color: Colors.white, size: 14),
                     SizedBox(width: 6),
-                    Text(
-                      'No classes held today',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        'No classes held today',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -137,7 +143,7 @@ class HolidayBannerWidget extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.25),
+                      color: Colors.white.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -145,12 +151,15 @@ class HolidayBannerWidget extends StatelessWidget {
                       children: const [
                         Icon(Icons.alarm_rounded, color: Colors.white, size: 14),
                         SizedBox(width: 4),
-                        Text(
-                          'Reminder settings',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                        Flexible(
+                          child: Text(
+                            'Reminder settings',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

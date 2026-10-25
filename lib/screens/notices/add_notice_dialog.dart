@@ -4,7 +4,7 @@ import '../../models/academic_notice.dart';
 class AddNoticeDialog extends StatefulWidget {
   final Function(AcademicNotice) onSave;
 
-  const AddNoticeDialog({Key? key, required this.onSave}) : super(key: key);
+  const AddNoticeDialog({super.key, required this.onSave});
 
   @override
   State<AddNoticeDialog> createState() => _AddNoticeDialogState();
@@ -124,7 +124,7 @@ class _AddNoticeDialogState extends State<AddNoticeDialog> {
 
                 // Category selector
                 DropdownButtonFormField<NoticeCategory>(
-                  value: _category,
+                  initialValue: _category,
                   decoration: const InputDecoration(labelText: 'Category'),
                   items: NoticeCategory.values.map((cat) {
                     final n = AcademicNotice(
@@ -191,7 +191,7 @@ class _AddNoticeDialogState extends State<AddNoticeDialog> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
@@ -216,7 +216,7 @@ class _AddNoticeDialogState extends State<AddNoticeDialog> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
@@ -239,7 +239,7 @@ class _AddNoticeDialogState extends State<AddNoticeDialog> {
 
                 // Priority
                 DropdownButtonFormField<NoticePriority>(
-                  value: _priority,
+                  initialValue: _priority,
                   decoration: const InputDecoration(labelText: 'Priority Level'),
                   items: NoticePriority.values.map((prio) {
                     return DropdownMenuItem(

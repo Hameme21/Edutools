@@ -11,11 +11,11 @@ class ClassReminderDialog extends StatefulWidget {
   }) onSave;
 
   const ClassReminderDialog({
-    Key? key,
+    super.key,
     required this.classSchedule,
     required this.defaultMinutes,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<ClassReminderDialog> createState() => _ClassReminderDialogState();
@@ -58,7 +58,7 @@ class _ClassReminderDialogState extends State<ClassReminderDialog> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6).withOpacity(0.12),
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.alarm_rounded, color: Color(0xFF3B82F6), size: 20),
@@ -83,9 +83,9 @@ class _ClassReminderDialogState extends State<ClassReminderDialog> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: widget.classSchedule.color.withOpacity(isDark ? 0.15 : 0.08),
+                color: widget.classSchedule.color.withValues(alpha: isDark ? 0.15 : 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: widget.classSchedule.color.withOpacity(0.3)),
+                border: Border.all(color: widget.classSchedule.color.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [

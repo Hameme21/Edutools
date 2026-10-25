@@ -7,11 +7,11 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
   final Function(AcademicNotice)? onCustomizeReminder;
 
   const UpcomingEventsCountdownWidget({
-    Key? key,
+    super.key,
     required this.notices,
     required this.onSelectDate,
     this.onCustomizeReminder,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -54,13 +54,13 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isUrgent
-                ? nextEvent.categoryColor.withOpacity(0.5)
+                ? nextEvent.categoryColor.withValues(alpha: 0.5)
                 : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
             width: isUrgent ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -71,20 +71,21 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
           children: [
             // Top Row: Section label & Countdown Badge ("3 days left")
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: nextEvent.categoryColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(nextEvent.categoryIcon, size: 16, color: nextEvent.categoryColor),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: nextEvent.categoryColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(nextEvent.categoryIcon, size: 16, color: nextEvent.categoryColor),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
                       'NEXT UPCOMING MILESTONE',
                       style: TextStyle(
                         fontSize: 11,
@@ -93,20 +94,23 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
                         color: isDark ? Colors.white70 : const Color(0xFF64748B),
                       ),
                     ),
-                  ],
+                  ),
                 ),
+                const SizedBox(width: 8),
 
-                Row(
-                  children: [
-                    // Countdown badge (e.g. "3 days left")
-                    Container(
+                // Countdown badge (e.g. "3 days left")
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: isUrgent
-                            ? const Color(0xFFEF4444).withOpacity(0.12)
+                            ? const Color(0xFFEF4444).withValues(alpha: 0.12)
                             : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
                         borderRadius: BorderRadius.circular(20),
-                        border: isUrgent ? Border.all(color: const Color(0xFFEF4444).withOpacity(0.3)) : null,
+                        border: isUrgent ? Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)) : null,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -128,7 +132,7 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -160,12 +164,15 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Footer: Date range + Category pill + Reminder action
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: nextEvent.categoryColor.withOpacity(0.12),
+                    color: nextEvent.categoryColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -177,50 +184,56 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Icon(Icons.calendar_today_rounded, size: 12, color: Colors.grey[500]),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    _formatEventDate(nextEvent.startDate, nextEvent.endDate),
-                    style: TextStyle(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w600),
-                    overflow: TextOverflow.ellipsis,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.calendar_today_rounded, size: 12, color: Colors.grey[500]),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatEventDate(nextEvent.startDate, nextEvent.endDate),
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
                 ),
                 if (onCustomizeReminder != null) ...[
-                  InkWell(
-                    onTap: () => onCustomizeReminder!(nextEvent),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: nextEvent.reminderEnabled
-                            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                            : Colors.grey.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            nextEvent.reminderEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_outlined,
-                            size: 13,
-                            color: nextEvent.reminderEnabled ? Theme.of(context).colorScheme.primary : Colors.grey,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            nextEvent.reminderEnabled ? 'Reminder' : 'Off',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: InkWell(
+                      onTap: () => onCustomizeReminder!(nextEvent),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: nextEvent.reminderEnabled
+                              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                              : Colors.grey.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              nextEvent.reminderEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_outlined,
+                              size: 13,
                               color: nextEvent.reminderEnabled ? Theme.of(context).colorScheme.primary : Colors.grey,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Text(
+                              nextEvent.reminderEnabled ? 'Reminder' : 'Off',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: nextEvent.reminderEnabled ? Theme.of(context).colorScheme.primary : Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                 ],
                 Text(
                   'Calendar →',

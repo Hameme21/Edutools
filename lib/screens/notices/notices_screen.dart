@@ -9,7 +9,7 @@ import '../reminders/notice_reminder_dialog.dart';
 class NoticesScreen extends StatefulWidget {
   final CalendarState state;
 
-  const NoticesScreen({Key? key, required this.state}) : super(key: key);
+  const NoticesScreen({super.key, required this.state});
 
   @override
   State<NoticesScreen> createState() => _NoticesScreenState();
@@ -214,7 +214,7 @@ class _NoticesScreenState extends State<NoticesScreen> {
       backgroundColor: Colors.transparent,
       selectedColor: color,
       side: BorderSide(
-        color: isSelected ? color : (accentColor?.withOpacity(0.4) ?? Colors.grey.withOpacity(0.3)),
+        color: isSelected ? color : (accentColor?.withValues(alpha: 0.4) ?? Colors.grey.withValues(alpha: 0.3)),
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       showCheckmark: false,

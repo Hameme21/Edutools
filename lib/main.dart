@@ -9,7 +9,7 @@ void main() {
 }
 
 class EduCalApp extends StatefulWidget {
-  const EduCalApp({Key? key}) : super(key: key);
+  const EduCalApp({super.key});
 
   @override
   State<EduCalApp> createState() => _EduCalAppState();
@@ -39,7 +39,7 @@ class _EduCalAppState extends State<EduCalApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'EduCal - Academic Calendar & Reminders',
+      title: 'EduTools - Academic Calendar & Reminders',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

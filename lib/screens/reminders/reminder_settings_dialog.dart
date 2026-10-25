@@ -6,10 +6,10 @@ class ReminderSettingsDialog extends StatefulWidget {
   final Function(ReminderSettings) onSave;
 
   const ReminderSettingsDialog({
-    Key? key,
+    super.key,
     required this.currentSettings,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<ReminderSettingsDialog> createState() => _ReminderSettingsDialogState();
@@ -135,7 +135,7 @@ class _ReminderSettingsDialogState extends State<ReminderSettingsDialog> {
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                       ),
                       child: Column(
                         children: [
@@ -183,7 +183,7 @@ class _ReminderSettingsDialogState extends State<ReminderSettingsDialog> {
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                       ),
                       child: Column(
                         children: [
@@ -235,7 +235,7 @@ class _ReminderSettingsDialogState extends State<ReminderSettingsDialog> {
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                       ),
                       child: Column(
                         children: [
