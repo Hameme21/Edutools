@@ -32,11 +32,36 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
 
     // Only take the single next immediate event
     final nextEvent = upcomingList.first;
+    final isHappening = nextEvent.isHappeningNow();
     final days = nextEvent.daysRemaining();
+    final remainingDays = isHappening ? nextEvent.endDate.difference(today).inDays : days;
     final isUrgent = nextEvent.isHoliday ||
         nextEvent.category == NoticeCategory.semesterFee ||
         nextEvent.category == NoticeCategory.exam ||
-        (days >= 0 && days <= 3);
+        remainingDays <= 3;
+
+    // Distinct, vibrant high-contrast color scheme for countdown badge
+    final Color badgeBg;
+    final Color badgeBorder;
+    final Color badgeContentColor;
+
+    if (nextEvent.isHoliday) {
+      badgeBg = isDark ? const Color(0xFF064E3B).withValues(alpha: 0.6) : const Color(0xFFD1FAE5);
+      badgeBorder = isDark ? const Color(0xFF10B981) : const Color(0xFF34D399);
+      badgeContentColor = isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46);
+    } else if (remainingDays <= 1 || isHappening || nextEvent.category == NoticeCategory.exam) {
+      badgeBg = isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.5) : const Color(0xFFFEE2E2);
+      badgeBorder = isDark ? const Color(0xFFEF4444) : const Color(0xFFF87171);
+      badgeContentColor = isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C);
+    } else if (remainingDays <= 3 || nextEvent.category == NoticeCategory.semesterFee) {
+      badgeBg = isDark ? const Color(0xFF78350F).withValues(alpha: 0.5) : const Color(0xFFFEF3C7);
+      badgeBorder = isDark ? const Color(0xFFF59E0B) : const Color(0xFFFBBF24);
+      badgeContentColor = isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E);
+    } else {
+      badgeBg = isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.5) : const Color(0xFFDBEAFE);
+      badgeBorder = isDark ? const Color(0xFF3B82F6) : const Color(0xFF60A5FA);
+      badgeContentColor = isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF);
+    }
 
     return InkWell(
       onTap: () => onSelectDate(nextEvent.startDate),
@@ -106,11 +131,9 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: isUrgent
-                            ? const Color(0xFFEF4444).withValues(alpha: 0.12)
-                            : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                        color: badgeBg,
                         borderRadius: BorderRadius.circular(20),
-                        border: isUrgent ? Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)) : null,
+                        border: Border.all(color: badgeBorder, width: 1.2),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -118,15 +141,15 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
                           Icon(
                             Icons.timer_outlined,
                             size: 13,
-                            color: isUrgent ? const Color(0xFFEF4444) : Colors.grey[700],
+                            color: badgeContentColor,
                           ),
                           const SizedBox(width: 5),
                           Text(
                             nextEvent.countdownText,
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: isUrgent ? const Color(0xFFEF4444) : Colors.grey[800],
+                              fontWeight: FontWeight.w800,
+                              color: badgeContentColor,
                             ),
                           ),
                         ],

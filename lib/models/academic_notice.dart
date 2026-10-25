@@ -83,7 +83,9 @@ class AcademicNotice {
         return 'Happening today!';
       }
       final remainingDays = end.difference(today).inDays;
-      return remainingDays == 0 ? 'Last day today!' : '$remainingDays days left';
+      if (remainingDays <= 0) return 'Last day today!';
+      if (remainingDays == 1) return '1 day left';
+      return '$remainingDays days left';
     }
 
     final days = daysRemaining();
