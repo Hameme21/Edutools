@@ -19,12 +19,24 @@ class UpcomingEventsCountdownWidget extends StatelessWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // Find the immediate next upcoming or ongoing notice
+    int getEffectiveDays(AcademicNotice n) {
+      if (n.isHappeningNow(today)) {
+        final rem = DateTime(n.endDate.year, n.endDate.month, n.endDate.day).difference(today).inDays;
+        return rem < 0 ? 0 : rem;
+      }
+      return DateTime(n.startDate.year, n.startDate.month, n.startDate.day).difference(today).inDays;
+    }
+
+    // Find the immediate next upcoming or ongoing notice (never past, least days left first)
     final upcomingList = notices.where((n) {
       final end = DateTime(n.endDate.year, n.endDate.month, n.endDate.day);
       return !end.isBefore(today);
     }).toList()
-      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+      ..sort((a, b) {
+        final cmp = getEffectiveDays(a).compareTo(getEffectiveDays(b));
+        if (cmp != 0) return cmp;
+        return a.startDate.compareTo(b.startDate);
+      });
 
     if (upcomingList.isEmpty) {
       return const SizedBox.shrink();

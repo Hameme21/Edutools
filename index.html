@@ -4079,9 +4079,24 @@ function renderNextMilestone() {
   const now = new Date();
   const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+  function getEffectiveDays(n, today) {
+    const sDate = parseDateStr(n.startDate);
+    const eDate = parseDateStr(n.endDate || n.startDate);
+    if (today >= sDate && today <= eDate) {
+      const rem = Math.round((eDate - today) / 86400000);
+      return rem < 0 ? 0 : rem;
+    }
+    return Math.round((sDate - today) / 86400000);
+  }
+
   const upcomingList = state.notices
-    .filter(n => parseDateStr(n.endDate) >= todayOnly)
-    .sort((a, b) => parseDateStr(a.startDate) - parseDateStr(b.startDate));
+    .filter(n => parseDateStr(n.endDate || n.startDate) >= todayOnly)
+    .sort((a, b) => {
+      const daysA = getEffectiveDays(a, todayOnly);
+      const daysB = getEffectiveDays(b, todayOnly);
+      if (daysA !== daysB) return daysA - daysB;
+      return parseDateStr(a.startDate) - parseDateStr(b.startDate);
+    });
 
   if (upcomingList.length === 0) {
     dom.nextMilestoneBanner.style.display = 'none';
@@ -4339,7 +4354,14 @@ function renderAgenda() {
 function renderNotices() {
   dom.noticesCardsGrid.innerHTML = '';
 
-  let filtered = [...state.notices];
+  const now = new Date();
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // Do not show past events in notices
+  let filtered = state.notices.filter(n => {
+    const eDate = parseDateStr(n.endDate || n.startDate);
+    return eDate >= todayOnly;
+  });
   if (state.noticeFilter !== 'all') {
     filtered = filtered.filter(n => n.category === state.noticeFilter || (state.noticeFilter === 'holiday' && n.isHoliday));
   }
@@ -4348,7 +4370,23 @@ function renderNotices() {
     filtered = filtered.filter(n => n.title.toLowerCase().includes(q) || n.description.toLowerCase().includes(q));
   }
 
-  filtered.sort((a, b) => parseDateStr(a.startDate) - parseDateStr(b.startDate));
+  function getEffectiveDays(n, today) {
+    const sDate = parseDateStr(n.startDate);
+    const eDate = parseDateStr(n.endDate || n.startDate);
+    if (today >= sDate && today <= eDate) {
+      const rem = Math.round((eDate - today) / 86400000);
+      return rem < 0 ? 0 : rem;
+    }
+    return Math.round((sDate - today) / 86400000);
+  }
+
+  // Least days left will be on the top
+  filtered.sort((a, b) => {
+    const daysA = getEffectiveDays(a, todayOnly);
+    const daysB = getEffectiveDays(b, todayOnly);
+    if (daysA !== daysB) return daysA - daysB;
+    return parseDateStr(a.startDate) - parseDateStr(b.startDate);
+  });
 
   if (filtered.length === 0) {
     dom.noticesCardsGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px;">No notices match the criteria. Click "Add Notice" or "Load Official 2026 Calendar".</div>';

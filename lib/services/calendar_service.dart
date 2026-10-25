@@ -457,7 +457,22 @@ class CalendarService {
       return true;
     }).toList();
 
-    filtered.sort((a, b) => a.startDate.compareTo(b.startDate));
+    int getEffectiveDays(AcademicNotice n) {
+      if (n.isHappeningNow(today)) {
+        final rem = DateTime(n.endDate.year, n.endDate.month, n.endDate.day).difference(today).inDays;
+        return rem < 0 ? 0 : rem;
+      }
+      final start = DateTime(n.startDate.year, n.startDate.month, n.startDate.day);
+      return start.difference(today).inDays;
+    }
+
+    filtered.sort((a, b) {
+      final daysA = getEffectiveDays(a);
+      final daysB = getEffectiveDays(b);
+      final diff = daysA.compareTo(daysB);
+      if (diff != 0) return diff;
+      return a.startDate.compareTo(b.startDate);
+    });
     return filtered;
   }
 
