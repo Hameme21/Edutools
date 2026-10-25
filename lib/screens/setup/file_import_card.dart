@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'format_guide_dialog.dart';
+import '../../services/device_file_service.dart';
 
 class FileImportCard extends StatefulWidget {
   final String title;
@@ -56,6 +57,29 @@ class _FileImportCardState extends State<FileImportCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${widget.title} imported successfully!'),
+          backgroundColor: widget.themeColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      setState(() => _errorMessage = e.toString());
+    }
+  }
+
+  Future<void> _pickFileFromDevice() async {
+    setState(() => _errorMessage = null);
+    final file = await DeviceFileService.pickFileFromDevice(
+      allowedExtensions: ['ics', 'json', 'csv', 'txt'],
+    );
+    if (file == null || !mounted) return;
+
+    try {
+      widget.onImport(file.content);
+      _textController.clear();
+      setState(() => _isExpanded = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Imported "${file.fileName}" successfully! 🚀'),
           backgroundColor: widget.themeColor,
           behavior: SnackBarBehavior.floating,
         ),
@@ -170,15 +194,26 @@ class _FileImportCardState extends State<FileImportCard> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
+                          ElevatedButton.icon(
+                            onPressed: _pickFileFromDevice,
+                            icon: const Icon(Icons.folder_open_rounded, size: 16),
+                            label: const Text('Pick from Device'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: widget.themeColor,
+                              foregroundColor: Colors.white,
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                          ),
                           OutlinedButton.icon(
                             onPressed: () {
                               setState(() => _isExpanded = !_isExpanded);
                             },
                             icon: Icon(
-                              _isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.file_upload_outlined,
+                              _isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.edit_note_rounded,
                               size: 16,
                             ),
-                            label: Text(_isExpanded ? 'Hide Input' : 'Paste / Import File'),
+                            label: Text(_isExpanded ? 'Hide Paste' : 'Or Paste Text'),
                             style: OutlinedButton.styleFrom(
                               visualDensity: VisualDensity.compact,
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -187,16 +222,16 @@ class _FileImportCardState extends State<FileImportCard> {
                           OutlinedButton.icon(
                             onPressed: widget.onLoadSample,
                             icon: const Icon(Icons.auto_fix_high_rounded, size: 16),
-                            label: const Text('Load Sample'),
+                            label: const Text('Sample'),
                             style: OutlinedButton.styleFrom(
                               visualDensity: VisualDensity.compact,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             ),
                           ),
                           TextButton.icon(
                             onPressed: _openFormatGuide,
                             icon: const Icon(Icons.help_outline_rounded, size: 16),
-                            label: const Text('Format Guide'),
+                            label: const Text('Guide'),
                             style: TextButton.styleFrom(
                               visualDensity: VisualDensity.compact,
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),

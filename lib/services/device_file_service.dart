@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
 
 class DevicePickedFile {
   final String fileName;
@@ -22,25 +23,35 @@ class DevicePickedFile {
 }
 
 class DeviceFileService {
-  static const MethodChannel _safChannel = MethodChannel('com.example.educal/saf_picker');
-
   /// Exports .ICS calendar data directly to device storage / Downloads folder
   static Future<String?> exportIcsToFile({
     required String icsContent,
     String fileName = 'edutools_schedule.ics',
   }) async {
-    final bytes = utf8.encode(icsContent);
-    final List<Directory> targetDirs = [];
+    final bytes = Uint8List.fromList(utf8.encode(icsContent));
 
+    // 1. Try prompt user with native Save File dialog if supported
     try {
-      if (Platform.isAndroid) {
+      final savedUri = await FilePicker.saveFile(
+        dialogTitle: 'Save Calendar (.ics) to Device',
+        fileName: fileName,
+        bytes: bytes,
+      );
+      if (savedUri != null) {
+        return savedUri.toFilePath();
+      }
+    } catch (_) {}
+
+    // 2. Direct directory writing (Downloads / Documents / App files)
+    final List<Directory> targetDirs = [];
+    try {
+      if (!kIsWeb && Platform.isAndroid) {
         targetDirs.add(Directory('/storage/emulated/0/Download'));
         targetDirs.add(Directory('/storage/emulated/0/Documents'));
         targetDirs.add(Directory('/sdcard/Download'));
-        targetDirs.add(Directory('/sdcard/Documents'));
         targetDirs.add(Directory('/storage/emulated/0/Android/data/com.example.educal/files'));
         targetDirs.add(Directory('/data/user/0/com.example.educal/files'));
-      } else if (Platform.isWindows) {
+      } else if (!kIsWeb && Platform.isWindows) {
         final userProfile = Platform.environment['USERPROFILE'];
         if (userProfile != null && userProfile.isNotEmpty) {
           targetDirs.add(Directory('$userProfile\\Downloads'));
@@ -50,7 +61,6 @@ class DeviceFileService {
       }
     } catch (_) {}
 
-    // Fallback current directory
     targetDirs.add(Directory('.'));
 
     for (final dir in targetDirs) {
@@ -63,17 +73,57 @@ class DeviceFileService {
         file.writeAsBytesSync(bytes, flush: true);
         return file.path;
       } catch (e) {
-        debugPrint('Could not write .ics to ${dir.path}: $e');
+        debugPrint('[DeviceFileService] Could not write to ${dir.path}: $e');
       }
+    }
+
+    return null;
+  }
+
+  /// Picks a calendar/routine file (.ics, .json, .csv, .txt) directly from mobile device files
+  static Future<DevicePickedFile?> pickFileFromDevice({
+    List<String> allowedExtensions = const ['ics', 'json', 'csv', 'txt'],
+  }) async {
+    try {
+      final files = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: allowedExtensions,
+      );
+
+      if (files.isNotEmpty) {
+        final platformFile = files.first;
+        final content = await platformFile.xFile.readAsString();
+        final size = await platformFile.length() ?? content.length;
+
+        if (content.isNotEmpty) {
+          return DevicePickedFile(
+            fileName: platformFile.name,
+            filePath: platformFile.path ?? platformFile.name,
+            content: content,
+            sizeInBytes: size,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[DeviceFileService] pickFileFromDevice error: $e');
     }
     return null;
   }
 
-  /// Requirement 1: UI Confirmation Dialog
-  /// Shows confirmation dialog before opening the system file picker:
-  /// - Title: "Import Calendar"
-  /// - Message: "Select an existing .ics or .json file from your storage to import your schedule."
-  /// - Actions: "Choose File" (positive) and "Cancel" (negative).
+  /// Launches the native system file explorer / document picker (backward compatible)
+  static Future<DevicePickedFile?> pickFileFromExplorer({
+    BuildContext? context,
+    String? title,
+    List<String> allowedExtensions = const ['ics', 'csv', 'json', 'txt'],
+  }) async {
+    if (context != null) {
+      final confirmed = await showImportConfirmationDialog(context);
+      if (!confirmed) return null;
+    }
+    return await pickFileFromDevice(allowedExtensions: allowedExtensions);
+  }
+
+  /// Shows confirmation dialog before opening the system file picker
   static Future<bool> showImportConfirmationDialog(BuildContext context) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -138,99 +188,5 @@ class DeviceFileService {
     );
 
     return result == true;
-  }
-
-  /// Launches the Storage Access Framework (SAF) or native OS document picker
-  /// without requesting obsolete READ/WRITE_EXTERNAL_STORAGE permissions.
-  static Future<DevicePickedFile?> pickFileFromExplorer({
-    required BuildContext context,
-    String? title,
-    List<String> allowedExtensions = const ['ics', 'csv', 'json', 'txt'],
-  }) async {
-    // 1. Show UI Confirmation Dialog
-    final confirmed = await showImportConfirmationDialog(context);
-    if (!confirmed) {
-      return null;
-    }
-
-    // 2. Launch Storage Access Framework (SAF) on Android or Native Picker on Desktop
-    if (Platform.isAndroid) {
-      return await _pickUsingAndroidSaf();
-    } else if (Platform.isWindows) {
-      return await _openWindowsOpenFileDialog(title: title);
-    } else {
-      return await _openFallbackFilePicker();
-    }
-  }
-
-  /// Android Storage Access Framework (SAF) invocation via MethodChannel
-  static Future<DevicePickedFile?> _pickUsingAndroidSaf() async {
-    try {
-      final dynamic result = await _safChannel.invokeMethod('launchSafPickerDirectly');
-      if (result != null && result is Map) {
-        final fileName = result['fileName'] as String? ?? 'imported_calendar.ics';
-        final filePath = result['filePath'] as String? ?? '';
-        final content = result['content'] as String? ?? '';
-        final size = (result['sizeInBytes'] as num?)?.toInt() ?? content.length;
-
-        if (content.isNotEmpty) {
-          return DevicePickedFile(
-            fileName: fileName,
-            filePath: filePath,
-            content: content,
-            sizeInBytes: size,
-          );
-        }
-      }
-    } on PlatformException catch (e) {
-      debugPrint('Android SAF Picker PlatformException: ${e.message}');
-    } catch (e) {
-      debugPrint('Android SAF Picker error: $e');
-    }
-    return null;
-  }
-
-  /// Launches the native Windows File Explorer OpenFileDialog
-  static Future<DevicePickedFile?> _openWindowsOpenFileDialog({String? title}) async {
-    try {
-      final dialogTitle = title ?? 'Select Class Routine or Academic Calendar File';
-      final script = '''
-Add-Type -AssemblyName System.Windows.Forms
-\$dlg = New-Object System.Windows.Forms.OpenFileDialog
-\$dlg.Title = "$dialogTitle"
-\$dlg.Filter = "Calendar & Routine Files (*.ics;*.csv;*.json;*.txt)|*.ics;*.csv;*.json;*.txt|iCalendar Files (*.ics)|*.ics|JSON Files (*.json)|*.json|CSV Files (*.csv)|*.csv|All Files (*.*)|*.*"
-\$dlg.RestoreDirectory = \$true
-if (\$dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-    Write-Output \$dlg.FileName
-}
-''';
-
-      final result = await Process.run('powershell', ['-NoProfile', '-Command', script]);
-      final output = result.stdout.toString().trim();
-
-      if (output.isNotEmpty) {
-        final filePath = output.split('\n').last.trim();
-        final file = File(filePath);
-        if (await file.exists()) {
-          final content = await file.readAsString();
-          final fileName = file.uri.pathSegments.last;
-          final size = await file.length();
-
-          return DevicePickedFile(
-            fileName: fileName,
-            filePath: filePath,
-            content: content,
-            sizeInBytes: size,
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('Windows File Explorer error: $e');
-    }
-    return null;
-  }
-
-  static Future<DevicePickedFile?> _openFallbackFilePicker() async {
-    return null;
   }
 }

@@ -1,12 +1,13 @@
 name: educal
 description: "EduCal - Smart Academic Calendar and Reminder App with Holiday Conflict Resolution"
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
+  file_picker: ^13.2.0
   flutter:
     sdk: flutter
   intl: ^0.20.3
