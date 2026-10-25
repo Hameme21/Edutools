@@ -1,0 +1,60 @@
+name: Build & Publish Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Run Static Analysis & Tests
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Publish Release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+          name: EduCal ${{ github.ref_name }}
+          body: |
+            ### EduCal Mobile App Release ${{ github.ref_name }} 🚀
+            
+            - **Trimester Academic Milestones**: Complete 2026-2027 UIU calendar notices with holiday conflict resolution.
+            - **UIU Degree Domain Verification**: Strict `@<degree_name>.uiu.ac.bd` domain filtering with recommendation chips.
+            - **Direct .ICS Calendar Export**: One-click device download to local storage.
+            - **In-App GitHub Update Notification**: Automatic release detection and one-click updates.
+            
+            Download `app-release.apk` below and install directly on your Android phone!
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

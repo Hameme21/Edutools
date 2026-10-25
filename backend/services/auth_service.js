@@ -74,15 +74,16 @@ function isValidEmail(email) {
 }
 
 /**
- * Validates whether an email belongs to United International University (UIU).
- * Official UIU student emails end with uiu.ac.bd (e.g. @bscse.uiu.ac.bd, @bseee.uiu.ac.bd, @uiu.ac.bd).
+ * Validates whether an email belongs to United International University (UIU) degree program.
+ * UIU student emails must end with @<degree_name>.uiu.ac.bd (e.g. @bscse.uiu.ac.bd, @bseee.uiu.ac.bd, @bsce.uiu.ac.bd, @bsds.uiu.ac.bd).
+ * Plain @uiu.ac.bd without degree name is NOT permitted.
  */
 function isUiuEmail(email) {
   if (!isValidEmail(email)) return false;
   const normalized = email.trim().toLowerCase();
   const domain = normalized.split('@')[1];
   if (!domain) return false;
-  return domain === 'uiu.ac.bd' || domain.endsWith('.uiu.ac.bd');
+  return domain.endsWith('.uiu.ac.bd') && domain !== 'uiu.ac.bd';
 }
 
 /**
@@ -217,15 +218,15 @@ async function requestOtp(email, options = {}) {
     throw new Error('Please enter a valid email address.');
   }
 
-  // Enforce uiu.ac.bd requirement for registration
+  // Enforce @<degree_name>.uiu.ac.bd requirement for registration
   if (options.isRegistration) {
     if (!isUiuEmail(normalizedEmail)) {
-      throw new Error('Registration is strictly restricted to UIU student emails ending with uiu.ac.bd (e.g. student@bscse.uiu.ac.bd).');
+      throw new Error('Registration is strictly restricted to UIU student emails with degree program (e.g. ahamim2510370@bscse.uiu.ac.bd). Plain @uiu.ac.bd is not allowed.');
     }
   } else {
-    // For sign in: allow uiu.ac.bd, university emails, or hamimasir5@gmail.com
+    // For sign in: allow @<degree>.uiu.ac.bd, valid university emails, or hamimasir5@gmail.com
     if (!isUiuEmail(normalizedEmail) && !isUniversityEmail(normalizedEmail) && normalizedEmail !== 'hamimasir5@gmail.com') {
-      throw new Error('Sign in is restricted to UIU student emails ending with uiu.ac.bd (e.g. student@bscse.uiu.ac.bd).');
+      throw new Error('Sign in is restricted to UIU student emails with degree program (e.g. ahamim2510370@bscse.uiu.ac.bd).');
     }
   }
 

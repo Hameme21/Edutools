@@ -8,6 +8,7 @@ import 'reminders/notification_dialog.dart';
 import 'reminders/reminder_settings_dialog.dart';
 import 'auth/student_login_dialog.dart';
 import 'auth/gmail_profile_dialog.dart';
+import '../services/app_update_service.dart';
 
 class MainScreen extends StatefulWidget {
   final CalendarState state;
@@ -23,6 +24,9 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     widget.state.addListener(_onStateChange);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppUpdateService.checkForUpdates(context, isManual: false);
+    });
   }
 
   @override
@@ -203,6 +207,13 @@ class _MainScreenState extends State<MainScreen> {
             ],
           ),
           const SizedBox(width: 4),
+
+          // Check for App Updates action
+          IconButton(
+            icon: const Icon(Icons.system_update_alt_rounded, size: 21),
+            tooltip: 'Check for Updates',
+            onPressed: () => AppUpdateService.checkForUpdates(context, isManual: true),
+          ),
 
           // University Account / Google Profile Avatar & Drive Sync Button
           Padding(

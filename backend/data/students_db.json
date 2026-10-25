@@ -1,1 +1,14 @@
-{}
+{
+  "alex.chen@stanford.edu": {
+    "id": "STD-1792936182427-723",
+    "studentId": "ALEX.CHEN",
+    "fullName": "Alex Chen",
+    "email": "alex.chen@stanford.edu",
+    "department": "Computer Science & Engineering",
+    "semester": "Spring 2026",
+    "university": "STANFORD University",
+    "domain": "stanford.edu",
+    "createdAt": "2026-10-25T13:49:42.427Z",
+    "lastLogin": "2026-10-25T13:49:42.427Z"
+  }
+}

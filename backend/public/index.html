@@ -4488,15 +4488,29 @@ function openAuthModal() {
     dom.authModalBody.innerHTML = `
       <div id="authStep1">
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-          Enter your official university email (e.g. <strong>.edu</strong>, <strong>.ac.bd</strong>). A 6-digit numeric OTP will be sent with a 5-minute expiration.
+          Enter your official UIU student email with your degree program (e.g. <strong>@bscse.uiu.ac.bd</strong>). A 6-digit numeric OTP will be sent with a 5-minute expiration.
         </p>
-        <div class="form-group">
-          <label>University Email *</label>
-          <input type="email" id="authEmailInput" class="form-input" placeholder="e.g. your_name@university.edu" value="student@university.edu" required>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label>University Email (UIU) *</label>
+          <input type="email" id="authEmailInput" class="form-input" placeholder="e.g. ahamim2510370@bscse.uiu.ac.bd" value="ahamim2510370@bscse.uiu.ac.bd" required>
+        </div>
+        <div style="margin-bottom: 12px;">
+          <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+            <i class="fa-solid fa-graduation-cap text-blue"></i>
+            <span>Recommended Degree Domains (must end with .uiu.ac.bd):</span>
+          </div>
+          <div id="degreeDomainPills" style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <button type="button" class="btn-pill" data-domain="@bscse.uiu.ac.bd" style="background: var(--bg-card); border: 1px solid var(--border); padding: 4px 10px; border-radius: 12px; font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 600; transition: all 0.2s;">@bscse.uiu.ac.bd</button>
+            <button type="button" class="btn-pill" data-domain="@bseee.uiu.ac.bd" style="background: var(--bg-card); border: 1px solid var(--border); padding: 4px 10px; border-radius: 12px; font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 600; transition: all 0.2s;">@bseee.uiu.ac.bd</button>
+            <button type="button" class="btn-pill" data-domain="@bsce.uiu.ac.bd" style="background: var(--bg-card); border: 1px solid var(--border); padding: 4px 10px; border-radius: 12px; font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 600; transition: all 0.2s;">@bsce.uiu.ac.bd</button>
+            <button type="button" class="btn-pill" data-domain="@bsds.uiu.ac.bd" style="background: var(--bg-card); border: 1px solid var(--border); padding: 4px 10px; border-radius: 12px; font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 600; transition: all 0.2s;">@bsds.uiu.ac.bd</button>
+            <button type="button" class="btn-pill" data-domain="@bba.uiu.ac.bd" style="background: var(--bg-card); border: 1px solid var(--border); padding: 4px 10px; border-radius: 12px; font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 600; transition: all 0.2s;">@bba.uiu.ac.bd</button>
+            <button type="button" class="btn-pill" data-domain="@mscse.uiu.ac.bd" style="background: var(--bg-card); border: 1px solid var(--border); padding: 4px 10px; border-radius: 12px; font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 600; transition: all 0.2s;">@mscse.uiu.ac.bd</button>
+          </div>
         </div>
         <div id="authDomainHint" style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 4px;">
           <i class="fa-solid fa-shield-halved text-blue"></i>
-          <span>Whitelist: .edu, .ac.bd, .edu.bd, .ac.uk</span>
+          <span>Requirement: Must end with <strong>@&lt;degree_name&gt;.uiu.ac.bd</strong>. Plain @uiu.ac.bd is not accepted.</span>
         </div>
         <div id="authErrorMsg" style="display: none; color: var(--danger); font-size: 12px; margin-bottom: 10px; font-weight: 600;"></div>
         <button type="button" class="btn btn-primary full-width" id="btnRequestOtp">
@@ -4550,14 +4564,35 @@ function openAuthModal() {
       }, 1000);
     };
 
+    // Click handler for Degree Domain recommendation pills
+    document.querySelectorAll('#degreeDomainPills .btn-pill').forEach(pill => {
+      pill.onclick = () => {
+        const emailInput = document.getElementById('authEmailInput');
+        const selectedDomain = pill.getAttribute('data-domain');
+        let currentVal = (emailInput.value || '').trim();
+        if (currentVal.includes('@')) {
+          const prefix = currentVal.split('@')[0];
+          emailInput.value = (prefix || 'ahamim2510370') + selectedDomain;
+        } else if (currentVal.length > 0) {
+          emailInput.value = currentVal + selectedDomain;
+        } else {
+          emailInput.value = 'ahamim2510370' + selectedDomain;
+        }
+        emailInput.focus();
+      };
+    });
+
     // Step 1 Click Handler: Request OTP
     document.getElementById('btnRequestOtp').onclick = async () => {
       const email = document.getElementById('authEmailInput').value.trim().toLowerCase();
       const errBox = document.getElementById('authErrorMsg');
 
-      const isEdu = email.endsWith('.edu') || email.includes('.edu.') || email.endsWith('.ac.bd') || email.includes('.ac.') || email.endsWith('.edu.bd');
-      if (!isEdu) {
-        errBox.textContent = 'Restricted to accredited university email addresses (.edu, .ac.bd, etc.).';
+      // Domain must end with .uiu.ac.bd and must NOT be plain uiu.ac.bd
+      const domain = email.includes('@') ? email.split('@')[1] : '';
+      const isDegreeUiu = domain.endsWith('.uiu.ac.bd') && domain !== 'uiu.ac.bd';
+
+      if (!isDegreeUiu) {
+        errBox.textContent = 'Email must end with @<degree_name>.uiu.ac.bd (e.g. ahamim2510370@bscse.uiu.ac.bd). Plain @uiu.ac.bd is not allowed.';
         errBox.style.display = 'block';
         return;
       }
