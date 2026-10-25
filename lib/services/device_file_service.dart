@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,6 +23,51 @@ class DevicePickedFile {
 
 class DeviceFileService {
   static const MethodChannel _safChannel = MethodChannel('com.example.educal/saf_picker');
+
+  /// Exports .ICS calendar data directly to device storage / Downloads folder
+  static Future<String?> exportIcsToFile({
+    required String icsContent,
+    String fileName = 'edutools_schedule.ics',
+  }) async {
+    final bytes = utf8.encode(icsContent);
+    final List<Directory> targetDirs = [];
+
+    try {
+      if (Platform.isAndroid) {
+        targetDirs.add(Directory('/storage/emulated/0/Download'));
+        targetDirs.add(Directory('/storage/emulated/0/Documents'));
+        targetDirs.add(Directory('/sdcard/Download'));
+        targetDirs.add(Directory('/sdcard/Documents'));
+        targetDirs.add(Directory('/storage/emulated/0/Android/data/com.example.educal/files'));
+        targetDirs.add(Directory('/data/user/0/com.example.educal/files'));
+      } else if (Platform.isWindows) {
+        final userProfile = Platform.environment['USERPROFILE'];
+        if (userProfile != null && userProfile.isNotEmpty) {
+          targetDirs.add(Directory('$userProfile\\Downloads'));
+          targetDirs.add(Directory('$userProfile\\Documents'));
+          targetDirs.add(Directory('$userProfile\\Desktop'));
+        }
+      }
+    } catch (_) {}
+
+    // Fallback current directory
+    targetDirs.add(Directory('.'));
+
+    for (final dir in targetDirs) {
+      try {
+        if (!dir.existsSync()) {
+          dir.createSync(recursive: true);
+        }
+        final separator = Platform.isWindows ? '\\' : '/';
+        final file = File('${dir.path}$separator$fileName');
+        file.writeAsBytesSync(bytes, flush: true);
+        return file.path;
+      } catch (e) {
+        debugPrint('Could not write .ics to ${dir.path}: $e');
+      }
+    }
+    return null;
+  }
 
   /// Requirement 1: UI Confirmation Dialog
   /// Shows confirmation dialog before opening the system file picker:

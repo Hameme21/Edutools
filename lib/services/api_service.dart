@@ -27,10 +27,13 @@ class ApiService {
   static const String _smtpPass = 'faixfyjgwixzbisl';
   static final Map<String, _DirectOtpRecord> _directOtpStore = {};
 
-  /// Optional production server URL when deployed to Render or Railway
-  static String? productionBaseUrl;
+  /// Deployed production server URL on Render
+  static String? productionBaseUrl = 'https://edutools-y4xy.onrender.com';
 
   static String get defaultBaseUrl {
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      return 'http://127.0.0.1:3000';
+    }
     if (productionBaseUrl != null && productionBaseUrl!.isNotEmpty) {
       return productionBaseUrl!;
     }

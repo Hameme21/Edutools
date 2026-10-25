@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://edutools-backend.onrender.com/api/:path*"
+      "destination": "https://edutools-y4xy.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",

@@ -4,6 +4,7 @@ import '../../state/calendar_state.dart';
 import '../../models/class_schedule.dart';
 import '../../services/sample_data_service.dart';
 import '../../services/file_parser_service.dart';
+import '../../services/device_file_service.dart';
 import 'file_import_card.dart';
 import 'manual_class_dialog.dart';
 import 'routine_date_config_dialog.dart';
@@ -543,98 +544,9 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   void _exportIcsDialog() {
-    final icsText = FileParserService.exportCalendarToIcs(widget.state.calendarService);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 550, maxHeight: 600),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: const [
-                      Icon(Icons.calendar_today_rounded, color: Color(0xFF3B82F6), size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'Exported .ICS Calendar',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 16),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Holiday conflict logic applied: Classes on all holidays are excluded from this .ics schedule.',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF10B981), fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-                  ),
-                  child: SelectableText(
-                    icsText,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 11, height: 1.35),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: icsText));
-                    Navigator.of(ctx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Copied .ICS calendar data to clipboard!'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.copy_rounded, size: 16),
-                  label: const Text('Copy .ICS to Clipboard'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      builder: (ctx) => ExportIcsDialog(state: widget.state),
     );
   }
 
@@ -850,6 +762,280 @@ class _SetupScreenState extends State<SetupScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+class ExportIcsDialog extends StatefulWidget {
+  final CalendarState state;
+
+  const ExportIcsDialog({super.key, required this.state});
+
+  @override
+  State<ExportIcsDialog> createState() => _ExportIcsDialogState();
+}
+
+class _ExportIcsDialogState extends State<ExportIcsDialog> {
+  late final String _icsText;
+  String? _savedPath;
+  bool _isSaving = false;
+  bool _showRawCode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _icsText = FileParserService.exportCalendarToIcs(widget.state.calendarService);
+  }
+
+  Future<void> _handleSaveToFile() async {
+    setState(() => _isSaving = true);
+    final path = await DeviceFileService.exportIcsToFile(
+      icsContent: _icsText,
+      fileName: 'edutools_schedule.ics',
+    );
+    if (!mounted) return;
+    setState(() {
+      _isSaving = false;
+      _savedPath = path;
+    });
+
+    if (path != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Saved edutools_schedule.ics to $path'),
+          backgroundColor: const Color(0xFF10B981),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      Clipboard.setData(ClipboardData(text: _icsText));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not write directly to storage. Copied .ICS to clipboard.'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 650),
+        padding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.file_download_rounded, color: Color(0xFF3B82F6), size: 22),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Export .ICS Calendar',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Holiday Conflict Resolution Callout
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Holiday conflict logic applied: Classes on all holidays are automatically excluded from this schedule.',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF10B981), fontWeight: FontWeight.w600, height: 1.35),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Calendar Metadata Details
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  children: [
+                    _buildMetaRow('File Name', 'edutools_schedule.ics', Icons.insert_drive_file_outlined),
+                    const Divider(height: 16),
+                    _buildMetaRow('Active Classes', '${widget.state.classes.length} recurring courses', Icons.school_outlined),
+                    const Divider(height: 16),
+                    _buildMetaRow('Official Notices', '${widget.state.notices.length} milestones & exams', Icons.event_note_outlined),
+                    const Divider(height: 16),
+                    _buildMetaRow('Format Compatibility', 'Google Calendar, Apple, Outlook', Icons.devices_rounded),
+                  ],
+                ),
+              ),
+
+              if (_savedPath != null) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF059669).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF059669).withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.task_alt_rounded, color: Color(0xFF059669), size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Saved to Device Storage!',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF059669), fontSize: 13),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      SelectableText(
+                        _savedPath!,
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 11, color: Color(0xFF059669)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 18),
+
+              // Primary Action: Save to Device Files / Downloads
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isSaving ? null : _handleSaveToFile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 1,
+                  ),
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.download_rounded, size: 20),
+                  label: Text(
+                    _savedPath != null ? 'Saved! Export Again' : 'Export .ICS to Mobile Files',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Secondary Actions Row
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: _icsText));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Copied .ICS data to clipboard!'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      icon: const Icon(Icons.copy_rounded, size: 15),
+                      label: const Text('Copy to Clipboard', style: TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: () => setState(() => _showRawCode = !_showRawCode),
+                    icon: Icon(_showRawCode ? Icons.expand_less : Icons.code_rounded, size: 16),
+                    label: Text(_showRawCode ? 'Hide Code' : 'View Code', style: const TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
+
+              // Optional Collapsed Raw Code View
+              if (_showRawCode) ...[
+                const SizedBox(height: 12),
+                Container(
+                  height: 150,
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                  ),
+                  child: SelectableText(
+                    _icsText,
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 10, height: 1.3),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetaRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[500]),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        const Spacer(),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+      ],
     );
   }
 }
