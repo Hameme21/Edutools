@@ -34,7 +34,9 @@ class _UniversityAuthDialogState extends State<UniversityAuthDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget.currentProfile != null) {
+    if (widget.currentProfile != null &&
+        widget.currentProfile!.email != 'student@uiu.ac.bd' &&
+        widget.currentProfile!.email != 'student@university.edu') {
       _emailController.text = widget.currentProfile!.email;
     }
   }

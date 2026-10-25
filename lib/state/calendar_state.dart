@@ -146,7 +146,14 @@ class CalendarState extends ChangeNotifier {
           if (content.isNotEmpty) {
             final data = jsonDecode(content) as Map<String, dynamic>;
             if (data['student'] != null) {
-              _currentStudent = StudentProfile.fromJson(Map<String, dynamic>.from(data['student']));
+              final profile = StudentProfile.fromJson(Map<String, dynamic>.from(data['student']));
+              // Discard legacy dummy placeholder accounts
+              if (profile.email != 'student@uiu.ac.bd' &&
+                  profile.email != 'student@university.edu' &&
+                  profile.fullName != 'Alex Chen') {
+                _currentStudent = profile;
+                _startAutoSync();
+              }
               if (data['classes'] != null && data['classes'] is List) {
                 final List<ClassSchedule> loaded = [];
                 for (var c in data['classes']) {
@@ -157,7 +164,6 @@ class CalendarState extends ChangeNotifier {
                   _reminderService.refreshReminders(referenceDate: _selectedDate);
                 }
               }
-              _startAutoSync();
               notifyListeners();
               return;
             }

@@ -36,10 +36,12 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
     super.initState();
     if (widget.state.isLoggedIn && widget.state.currentStudent != null) {
       final s = widget.state.currentStudent!;
-      _emailController.text = s.email;
-      _fullNameController.text = s.fullName;
-      _studentIdController.text = s.studentId;
-      _departmentController.text = s.department;
+      if (s.email != 'student@uiu.ac.bd' && s.email != 'student@university.edu') {
+        _emailController.text = s.email;
+        _fullNameController.text = s.fullName;
+        _studentIdController.text = s.studentId;
+        _departmentController.text = s.department;
+      }
     }
   }
 
@@ -331,6 +333,12 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
                         widget.state.logoutStudent();
                         setState(() {
                           _isOtpSent = false;
+                          _emailController.clear();
+                          _otpController.clear();
+                          _fullNameController.clear();
+                          _studentIdController.clear();
+                          _departmentController.clear();
+                          _errorMessage = null;
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Logged out of UIU student portal.')),
@@ -495,6 +503,30 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
                           prefixIcon: Icon(Icons.alternate_email_rounded, size: 20),
                           hintText: 'username@bscse.uiu.ac.bd',
                         ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          '@bscse.uiu.ac.bd',
+                          '@bseee.uiu.ac.bd',
+                          '@bsce.uiu.ac.bd',
+                          '@bsds.uiu.ac.bd',
+                          '@bba.uiu.ac.bd',
+                        ].map((domain) {
+                          return ActionChip(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            label: Text(domain, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFFEA580C))),
+                            backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFF7ED),
+                            side: BorderSide(color: const Color(0xFFEA580C).withValues(alpha: 0.3)),
+                            onPressed: () {
+                              final current = _emailController.text.trim();
+                              final prefix = current.contains('@') ? current.split('@').first : current;
+                              _emailController.text = (prefix.isNotEmpty ? prefix : 'username') + domain;
+                            },
+                          );
+                        }).toList(),
                       ),
                       const SizedBox(height: 6),
                       Row(

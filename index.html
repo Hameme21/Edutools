@@ -4492,7 +4492,7 @@ function openAuthModal() {
         </p>
         <div class="form-group" style="margin-bottom: 8px;">
           <label>University Email (UIU) *</label>
-          <input type="email" id="authEmailInput" class="form-input" placeholder="e.g. ahamim2510370@bscse.uiu.ac.bd" value="ahamim2510370@bscse.uiu.ac.bd" required>
+          <input type="email" id="authEmailInput" class="form-input" placeholder="username@bscse.uiu.ac.bd" value="" required>
         </div>
         <div style="margin-bottom: 12px;">
           <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
@@ -4572,11 +4572,11 @@ function openAuthModal() {
         let currentVal = (emailInput.value || '').trim();
         if (currentVal.includes('@')) {
           const prefix = currentVal.split('@')[0];
-          emailInput.value = (prefix || 'ahamim2510370') + selectedDomain;
+          emailInput.value = (prefix || 'username') + selectedDomain;
         } else if (currentVal.length > 0) {
           emailInput.value = currentVal + selectedDomain;
         } else {
-          emailInput.value = 'ahamim2510370' + selectedDomain;
+          emailInput.value = 'username' + selectedDomain;
         }
         emailInput.focus();
       };
