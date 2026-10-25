@@ -123,32 +123,31 @@ class FileParserService {
         final dtStartStr = ev['DTSTART'] ?? '';
         final dtEndStr = ev['DTEND'] ?? '';
         final rrule = ev['RRULE'] ?? '';
+        final duration = ev['DURATION'] ?? '';
 
-        // Extract day of week (from RRULE or DTSTART)
-        int dayOfWeek = 1;
+        // Extract day(s) of week (from RRULE BYDAY=SU,TU or DTSTART)
+        final List<int> daysOfWeek = [];
         if (rrule.contains('BYDAY=')) {
-          final byDay = rrule.split('BYDAY=')[1].split(';')[0].toUpperCase();
-          dayOfWeek = _dayCodeToWeekday(byDay);
-        } else if (dtStartStr.isNotEmpty) {
+          final byDaySection = rrule.split('BYDAY=')[1].split(';')[0].toUpperCase().trim();
+          final dayCodes = byDaySection.split(',');
+          for (var code in dayCodes) {
+            final d = _dayCodeToWeekday(code.trim());
+            if (!daysOfWeek.contains(d)) daysOfWeek.add(d);
+          }
+        }
+        if (daysOfWeek.isEmpty && dtStartStr.isNotEmpty) {
           final dt = _parseIcsDateTime(dtStartStr);
-          if (dt != null) dayOfWeek = dt.weekday;
+          if (dt != null) daysOfWeek.add(dt.weekday);
+        }
+        if (daysOfWeek.isEmpty) {
+          daysOfWeek.add(1); // Fallback to Monday
         }
 
-        // Extract start/end times (HH:mm)
-        String startTime = '09:00';
-        String endTime = '10:30';
-
-        if (dtStartStr.contains('T')) {
-          final timePart = dtStartStr.split('T')[1].replaceAll('Z', '');
-          if (timePart.length >= 4) {
-            startTime = '${timePart.substring(0, 2)}:${timePart.substring(2, 4)}';
-          }
-        }
-        if (dtEndStr.contains('T')) {
-          final timePart = dtEndStr.split('T')[1].replaceAll('Z', '');
-          if (timePart.length >= 4) {
-            endTime = '${timePart.substring(0, 2)}:${timePart.substring(2, 4)}';
-          }
+        // Extract start/end times with BST (UTC+6) precision
+        final startTime = _extractTimeFromIcs(dtStartStr, fallback: '09:00');
+        String endTime = _extractTimeFromIcs(dtEndStr, fallback: '');
+        if (endTime.isEmpty || endTime == startTime) {
+          endTime = _addDurationToTime(startTime, duration);
         }
 
         // Extract Course Code from summary (e.g. "CSE-201: Data Structures" or "Algorithms [CSE201]")
@@ -163,6 +162,12 @@ class FileParserService {
           final parts = summary.split(' - ');
           courseCode = parts[0].trim();
           subject = parts.sublist(1).join(' - ').trim();
+        } else if (summary.contains('[') && summary.contains(']')) {
+          final match = RegExp(r'\[(.*?)\]').firstMatch(summary);
+          if (match != null) {
+            courseCode = match.group(1)!.trim();
+            subject = summary.replaceAll(RegExp(r'\[.*?\]'), '').trim();
+          }
         }
 
         // Extract instructor from description if present
@@ -173,17 +178,20 @@ class FileParserService {
           instructor = description.split(RegExp(r'teacher:', caseSensitive: false))[1].split(',')[0].trim();
         }
 
-        results.add(ClassSchedule(
-          id: ev['UID'] ?? 'CLS-ICS-$counter',
-          subject: subject.isNotEmpty ? subject : summary,
-          courseCode: courseCode,
-          dayOfWeek: dayOfWeek,
-          startTime: startTime,
-          endTime: endTime,
-          room: location,
-          instructor: instructor,
-          colorHex: '#2563EB',
-        ));
+        final baseUid = ev['UID'] ?? 'CLS-ICS-$counter';
+        for (var dayOfWeek in daysOfWeek) {
+          results.add(ClassSchedule(
+            id: daysOfWeek.length > 1 ? '${baseUid}_d$dayOfWeek' : baseUid,
+            subject: subject.isNotEmpty ? subject : summary,
+            courseCode: courseCode,
+            dayOfWeek: dayOfWeek,
+            startTime: startTime,
+            endTime: endTime,
+            room: location,
+            instructor: instructor,
+            colorHex: '#2563EB',
+          ));
+        }
         counter++;
       }
 
@@ -553,9 +561,27 @@ class FileParserService {
 
   // ===================== HELPER METHODS =====================
 
+  static List<String> _unfoldIcsLines(String icsStr) {
+    final rawLines = const LineSplitter().convert(icsStr);
+    final List<String> unfolded = [];
+    for (var line in rawLines) {
+      if (line.isEmpty) continue;
+      if (line.startsWith(' ') || line.startsWith('\t')) {
+        if (unfolded.isNotEmpty) {
+          unfolded[unfolded.length - 1] += line.substring(1);
+        } else {
+          unfolded.add(line.trim());
+        }
+      } else {
+        unfolded.add(line);
+      }
+    }
+    return unfolded;
+  }
+
   static List<Map<String, String>> _extractIcsEvents(String icsStr) {
     final List<Map<String, String>> events = [];
-    final lines = const LineSplitter().convert(icsStr);
+    final lines = _unfoldIcsLines(icsStr);
     Map<String, String>? currentEvent;
 
     for (var line in lines) {
@@ -578,19 +604,73 @@ class FileParserService {
     return events;
   }
 
+  static String _extractTimeFromIcs(String dtStr, {required String fallback}) {
+    if (!dtStr.contains('T')) return fallback;
+    final isUtc = dtStr.toUpperCase().endsWith('Z');
+    final timeRaw = dtStr.split('T')[1].replaceAll('Z', '').trim();
+    if (timeRaw.length < 4) return fallback;
+    int hour = int.tryParse(timeRaw.substring(0, 2)) ?? 9;
+    final int minute = int.tryParse(timeRaw.substring(2, 4)) ?? 0;
+
+    // Bangladesh Standard Time (BST) is UTC+6
+    // If tagged as UTC 'Z' or hour is early AM (< 7), convert to BST
+    if (isUtc || hour < 7) {
+      hour = (hour + 6) % 24;
+    }
+    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+  }
+
+  static String _addDurationToTime(String startTime, String durationStr) {
+    final parts = startTime.split(':');
+    int h = int.tryParse(parts[0]) ?? 9;
+    int m = int.tryParse(parts[1]) ?? 0;
+    int addMinutes = 90; // Default 1 hour 30 mins
+
+    if (durationStr.isNotEmpty) {
+      final upper = durationStr.toUpperCase();
+      final hMatch = RegExp(r'(\d+)H').firstMatch(upper);
+      final mMatch = RegExp(r'(\d+)M').firstMatch(upper);
+      int parsedMins = 0;
+      if (hMatch != null) parsedMins += (int.tryParse(hMatch.group(1)!) ?? 0) * 60;
+      if (mMatch != null) parsedMins += int.tryParse(mMatch.group(1)!) ?? 0;
+      if (parsedMins > 0) addMinutes = parsedMins;
+    }
+
+    final totalMins = h * 60 + m + addMinutes;
+    final endH = (totalMins ~/ 60) % 24;
+    final endM = totalMins % 60;
+    return '${endH.toString().padLeft(2, '0')}:${endM.toString().padLeft(2, '0')}';
+  }
+
   static DateTime? _parseIcsDateTime(String str) {
+    if (str.isEmpty) return null;
+    final isUtc = str.toUpperCase().endsWith('Z');
     final clean = str.replaceAll('-', '').replaceAll(':', '').replaceAll('Z', '').trim();
     if (clean.length >= 8) {
       final year = int.tryParse(clean.substring(0, 4)) ?? 2026;
       final month = int.tryParse(clean.substring(4, 6)) ?? 1;
       final day = int.tryParse(clean.substring(6, 8)) ?? 1;
-      return DateTime(year, month, day);
+      int hour = 0;
+      int minute = 0;
+      if (clean.length >= 12 && clean.contains('T')) {
+        final tIdx = clean.indexOf('T');
+        if (clean.length >= tIdx + 5) {
+          hour = int.tryParse(clean.substring(tIdx + 1, tIdx + 3)) ?? 0;
+          minute = int.tryParse(clean.substring(tIdx + 3, tIdx + 5)) ?? 0;
+        }
+      }
+      var dt = DateTime(year, month, day, hour, minute);
+      if (isUtc) {
+        dt = dt.add(const Duration(hours: 6));
+      }
+      return dt;
     }
     return null;
   }
 
   static int _dayCodeToWeekday(String code) {
-    switch (code) {
+    final clean = code.replaceAll(RegExp(r'[^A-Z]'), '').trim();
+    switch (clean) {
       case 'MO':
         return 1;
       case 'TU':

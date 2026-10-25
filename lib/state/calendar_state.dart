@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/class_schedule.dart';
 import '../models/academic_notice.dart';
 import '../models/calendar_day_schedule.dart';
@@ -139,6 +140,37 @@ class CalendarState extends ChangeNotifier {
   }
 
   Future<void> _restoreSavedSession() async {
+    // 1. Primary update-proof persistence: SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final prefData = prefs.getString('edutools_session_data');
+      if (prefData != null && prefData.isNotEmpty) {
+        final data = jsonDecode(prefData) as Map<String, dynamic>;
+        if (data['student'] != null) {
+          final profile = StudentProfile.fromJson(Map<String, dynamic>.from(data['student']));
+          if (profile.email != 'student@uiu.ac.bd' &&
+              profile.email != 'student@university.edu' &&
+              profile.fullName != 'Alex Chen') {
+            _currentStudent = profile;
+            _startAutoSync();
+          }
+          if (data['classes'] != null && data['classes'] is List) {
+            final List<ClassSchedule> loaded = [];
+            for (var c in data['classes']) {
+              loaded.add(ClassSchedule.fromJson(Map<String, dynamic>.from(c)));
+            }
+            if (loaded.isNotEmpty) {
+              _calendarService.setClasses(loaded);
+              _reminderService.refreshReminders(referenceDate: _selectedDate);
+            }
+          }
+          notifyListeners();
+          return;
+        }
+      }
+    } catch (_) {}
+
+    // 2. Secondary fallback: Candidate disk files
     for (final file in _getCandidateSessionFiles()) {
       try {
         if (file.existsSync()) {
@@ -181,6 +213,13 @@ class CalendarState extends ChangeNotifier {
     };
     final jsonStr = jsonEncode(data);
 
+    // 1. SharedPreferences (survives app updates & APK reinstallation)
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('edutools_session_data', jsonStr);
+    } catch (_) {}
+
+    // 2. Candidate disk files
     for (final file in _getCandidateSessionFiles()) {
       try {
         file.parent.createSync(recursive: true);
@@ -190,6 +229,11 @@ class CalendarState extends ChangeNotifier {
   }
 
   Future<void> _deleteSessionFromDisk() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('edutools_session_data');
+    } catch (_) {}
+
     for (final file in _getCandidateSessionFiles()) {
       try {
         if (file.existsSync()) {

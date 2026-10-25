@@ -117,9 +117,15 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
       });
       _startTimer();
     } catch (e) {
+      final msg = e.toString().replaceAll('Exception: ', '');
+      final isAlreadyRegistered = msg.toLowerCase().contains('already registered');
       setState(() {
         _isLoading = false;
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _errorMessage = msg;
+        if (isAlreadyRegistered) {
+          _isRegisterMode = false;
+          _isOtpSent = false;
+        }
       });
     }
   }
@@ -183,9 +189,15 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
         );
       }
     } catch (e) {
+      final msg = e.toString().replaceAll('Exception: ', '');
+      final isAlreadyRegistered = msg.toLowerCase().contains('already registered');
       setState(() {
         _isLoading = false;
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _errorMessage = msg;
+        if (isAlreadyRegistered) {
+          _isRegisterMode = false;
+          _isOtpSent = false;
+        }
       });
     }
   }

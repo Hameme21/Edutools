@@ -231,6 +231,49 @@ async function sendEmailOtp(email, otp) {
  * Initiates email authentication or registration by creating and sending an OTP
  * Registered student emails MUST end with uiu.ac.bd
  */
+// Rate limiting store: email -> array of request timestamps (ms)
+const otpRateLimitStore = new Map();
+
+function checkOtpRateLimit(email) {
+  if (process.env.NODE_ENV === 'test') return;
+
+  const now = Date.now();
+  const history = otpRateLimitStore.get(email) || [];
+  // Retain only requests within the last 10 minutes (600,000 ms)
+  const recent = history.filter((t) => now - t < 10 * 60 * 1000);
+  otpRateLimitStore.set(email, recent);
+
+  if (recent.length > 0) {
+    const lastTime = recent[recent.length - 1];
+    const diff = now - lastTime;
+    if (diff < 60 * 1000) {
+      const waitSec = Math.ceil((60 * 1000 - diff) / 1000);
+      const err = new Error(`Please wait ${waitSec}s before requesting another verification code.`);
+      err.status = 429;
+      err.code = 'RATE_LIMITED';
+      throw err;
+    }
+  }
+
+  if (recent.length >= 4) {
+    const err = new Error('Too many verification requests. Please wait 10 minutes before requesting another code.');
+    err.status = 429;
+    err.code = 'RATE_LIMITED';
+    throw err;
+  }
+}
+
+function recordOtpRequest(email) {
+  const now = Date.now();
+  const history = otpRateLimitStore.get(email) || [];
+  history.push(now);
+  otpRateLimitStore.set(email, history);
+}
+
+/**
+ * Initiates email authentication or registration by creating and sending an OTP
+ * Registered student emails MUST end with uiu.ac.bd
+ */
 async function requestOtp(email, options = {}) {
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -238,8 +281,19 @@ async function requestOtp(email, options = {}) {
     throw new Error('Please enter a valid email address.');
   }
 
-  // Enforce @<degree_name>.uiu.ac.bd requirement for registration
+  // 1. Enforce rate limiting (60s cooldown, max 4 / 10m)
+  checkOtpRateLimit(normalizedEmail);
+
+  // 2. Check if already registered when registering
   if (options.isRegistration) {
+    if (isEmailRegistered(normalizedEmail)) {
+      const err = new Error('This account is already registered. Please sign in with your credentials.');
+      err.status = 400;
+      err.code = 'ALREADY_REGISTERED';
+      err.alreadyRegistered = true;
+      throw err;
+    }
+
     if (!isUiuEmail(normalizedEmail)) {
       throw new Error('Registration is strictly restricted to UIU student emails with degree program (e.g. ahamim2510370@bscse.uiu.ac.bd). Plain @uiu.ac.bd is not allowed.');
     }
@@ -249,6 +303,8 @@ async function requestOtp(email, options = {}) {
       throw new Error('Sign in is restricted to UIU student emails with degree program (e.g. ahamim2510370@bscse.uiu.ac.bd).');
     }
   }
+
+  recordOtpRequest(normalizedEmail);
 
   const otp = generate6DigitOtp();
   const salt = crypto.randomBytes(16).toString('hex');

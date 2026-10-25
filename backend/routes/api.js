@@ -113,7 +113,13 @@ router.post('/auth/request-otp', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    const status = err.status || 400;
+    res.status(status).json({
+      success: false,
+      error: err.message,
+      code: err.code || 'AUTH_ERROR',
+      alreadyRegistered: !!err.alreadyRegistered,
+    });
   }
 });
 
@@ -131,7 +137,13 @@ router.post('/auth/verify-otp', async (req, res) => {
     const result = await authService.verifyOtp(email, otp);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    const status = err.status || 400;
+    res.status(status).json({
+      success: false,
+      error: err.message,
+      code: err.code || 'AUTH_ERROR',
+      alreadyRegistered: !!err.alreadyRegistered,
+    });
   }
 });
 
@@ -241,7 +253,13 @@ router.post('/calendar/sync', optionalAuth, (req, res) => {
       syncStatus,
     });
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    const status = err.status || 400;
+    res.status(status).json({
+      success: false,
+      error: err.message,
+      code: err.code || 'AUTH_ERROR',
+      alreadyRegistered: !!err.alreadyRegistered,
+    });
   }
 });
 

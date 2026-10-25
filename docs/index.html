@@ -4546,6 +4546,8 @@ function openNoticeReminderModal(notice) {
   dom.noticeReminderModal.classList.add('show');
 }
 
+let lastWebOtpRequestTime = 0;
+
 function openAuthModal() {
   if (state.student) {
     dom.authModalBody.innerHTML = `
@@ -4691,7 +4693,16 @@ function openAuthModal() {
       const errBox = document.getElementById('authErrorMsg');
       const reqBtn = document.getElementById('btnRequestOtp');
 
-      // Domain must end with .uiu.ac.bd and must NOT be plain uiu.ac.bd
+      // 1. Client-side rate limiting (60s cooldown)
+      const nowMs = Date.now();
+      if (typeof lastWebOtpRequestTime !== 'undefined' && (nowMs - lastWebOtpRequestTime < 60000)) {
+        const waitSec = Math.ceil((60000 - (nowMs - lastWebOtpRequestTime)) / 1000);
+        errBox.textContent = `Please wait ${waitSec}s before requesting another verification code.`;
+        errBox.style.display = 'block';
+        return;
+      }
+
+      // 2. Domain must end with .uiu.ac.bd and must NOT be plain uiu.ac.bd
       const domain = email.includes('@') ? email.split('@')[1] : '';
       const isDegreeUiu = domain.endsWith('.uiu.ac.bd') && domain !== 'uiu.ac.bd';
 
@@ -4727,6 +4738,7 @@ function openAuthModal() {
           clearTimeout(timeoutId);
         }
 
+        lastWebOtpRequestTime = Date.now();
         // Advance to Step 2 immediately so screen is NEVER static
         document.getElementById('authStep1').style.display = 'none';
         document.getElementById('authStep2').style.display = 'block';
@@ -4923,8 +4935,129 @@ function generateIcsExport() {
   return sb.join('\r\n');
 }
 
+// Precise .ICS Parser with RFC 5545 line unfolding, BST (UTC+6) timezone adjustment & multi-day recurrence
+function unfoldIcsLines(text) {
+  const rawLines = text.split(/\r\n|\n|\r/);
+  const unfolded = [];
+  for (let line of rawLines) {
+    if (!line) continue;
+    if (line.startsWith(' ') || line.startsWith('\t')) {
+      if (unfolded.length > 0) {
+        unfolded[unfolded.length - 1] += line.substring(1);
+      } else {
+        unfolded.push(line.trim());
+      }
+    } else {
+      unfolded.push(line);
+    }
+  }
+  return unfolded;
+}
+
+function extractTimeFromIcs(dtStr, fallback = '09:00') {
+  if (!dtStr || !dtStr.includes('T')) return fallback;
+  const isUtc = dtStr.toUpperCase().endsWith('Z');
+  const timeRaw = dtStr.split('T')[1].replace(/Z/g, '').trim();
+  if (timeRaw.length < 4) return fallback;
+  let h = parseInt(timeRaw.substring(0, 2), 10) || 9;
+  const m = parseInt(timeRaw.substring(2, 4), 10) || 0;
+  // Bangladesh Standard Time (BST) is UTC+6
+  if (isUtc || h < 7) {
+    h = (h + 6) % 24;
+  }
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function addDurationToTime(startTime, durationStr) {
+  const parts = startTime.split(':');
+  let h = parseInt(parts[0], 10) || 9;
+  let m = parseInt(parts[1], 10) || 0;
+  let addMins = 90; // Default 1 hour 30 mins
+  if (durationStr) {
+    const upper = durationStr.toUpperCase();
+    const hMatch = upper.match(/(\d+)H/);
+    const mMatch = upper.match(/(\d+)M/);
+    let mins = 0;
+    if (hMatch) mins += parseInt(hMatch[1], 10) * 60;
+    if (mMatch) mins += parseInt(mMatch[1], 10);
+    if (mins > 0) addMins = mins;
+  }
+  const total = h * 60 + m + addMins;
+  const endH = Math.floor(total / 60) % 24;
+  const endM = total % 60;
+  return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+}
+
+function parseIcsDate(dtStr) {
+  if (!dtStr) return new Date();
+  const isUtc = dtStr.toUpperCase().endsWith('Z');
+  const clean = dtStr.replace(/[-:Z]/g, '').trim();
+  if (clean.length >= 8) {
+    const y = parseInt(clean.substring(0, 4), 10) || 2026;
+    const m = (parseInt(clean.substring(4, 6), 10) || 1) - 1;
+    const d = parseInt(clean.substring(6, 8), 10) || 1;
+    let h = 0, min = 0;
+    if (clean.length >= 12 && clean.includes('T')) {
+      const tIdx = clean.indexOf('T');
+      if (clean.length >= tIdx + 5) {
+        h = parseInt(clean.substring(tIdx + 1, tIdx + 3), 10) || 0;
+        min = parseInt(clean.substring(tIdx + 3, tIdx + 5), 10) || 0;
+      }
+    }
+    const dt = new Date(Date.UTC(y, m, d, h, min));
+    if (isUtc) {
+      dt.setUTCHours(dt.getUTCHours() + 6);
+    }
+    return dt;
+  }
+  return new Date();
+}
+
+function isIcsClassEvent(ev) {
+  const sum = (ev.SUMMARY || '').toLowerCase();
+  const desc = (ev.DESCRIPTION || '').toLowerCase();
+  const cat = (ev.CATEGORIES || '').toLowerCase();
+
+  if (
+    sum.includes('holiday') ||
+    sum.includes('last date of') ||
+    sum.includes('last day of') ||
+    sum.includes('installment') ||
+    sum.includes('semester fee') ||
+    sum.includes('advising and registration') ||
+    sum.includes('course advising') ||
+    sum.includes('course registration') ||
+    sum.includes('orientation') ||
+    sum.includes('classes begin') ||
+    sum.includes('mid-term') ||
+    sum.includes('final exam') ||
+    sum.includes('grade change') ||
+    sum.includes('grade submission') ||
+    sum.includes('course withdrawal') ||
+    sum.includes('course evaluation') ||
+    sum.includes('classes will remain suspended') ||
+    cat.includes('holiday') ||
+    cat.includes('fee') ||
+    cat.includes('exam') ||
+    cat.includes('administrative')
+  ) {
+    return false;
+  }
+
+  const rrule = ev.RRULE || '';
+  if (rrule.includes('FREQ=WEEKLY') || rrule.includes('BYDAY=')) return true;
+
+  const dtStart = ev.DTSTART || '';
+  const hasTime = dtStart.includes('T');
+  const hasLoc = (ev.LOCATION && ev.LOCATION.trim().length > 0);
+  const hasTeacher = desc.includes('instructor') || desc.includes('teacher');
+  const hasCodeFormat = sum.includes(':') || sum.includes(' - ') || (sum.includes('[') && sum.includes(']'));
+
+  return hasTime && (hasLoc || hasTeacher || hasCodeFormat);
+}
+
 function parseIcsContent(text) {
-  const lines = text.split(/\r\n|\n|\r/);
+  const lines = unfoldIcsLines(text);
   const events = [];
   let cur = null;
 
@@ -4951,36 +5084,116 @@ function parseIcsContent(text) {
     const loc = ev.LOCATION || 'TBA';
     const cat = (ev.CATEGORIES || '').toLowerCase();
     const dtStart = ev.DTSTART || '';
+    const dtEnd = ev.DTEND || '';
+    const rrule = ev.RRULE || '';
+    const duration = ev.DURATION || '';
 
-    if (cat.includes('class') || ev.RRULE) {
-      let dayOfWeek = 1;
-      if (ev.RRULE && ev.RRULE.includes('BYDAY=')) {
-        const dayCode = ev.RRULE.split('BYDAY=')[1].substring(0, 2);
-        const map = { MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6, SU: 7 };
-        dayOfWeek = map[dayCode] || 1;
+    if (isIcsClassEvent(ev)) {
+      // Extract days of week (support multi-day e.g. BYDAY=SU,TU)
+      const dayMap = { MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6, SU: 7 };
+      let daysOfWeek = [];
+
+      if (rrule.includes('BYDAY=')) {
+        const byDayPart = rrule.split('BYDAY=')[1].split(';')[0].toUpperCase();
+        const codes = byDayPart.split(',');
+        for (let code of codes) {
+          const cleanCode = code.replace(/[^A-Z]/g, '').trim();
+          if (dayMap[cleanCode] && !daysOfWeek.includes(dayMap[cleanCode])) {
+            daysOfWeek.push(dayMap[cleanCode]);
+          }
+        }
       }
-      state.classes.push({
-        id: `CLS-ICS-${idx}`,
-        courseCode: sum.split(':')[0] || 'COURSE',
-        subject: sum.includes(':') ? sum.split(':')[1].trim() : sum,
-        dayOfWeek,
-        startTime: '09:00',
-        endTime: '10:30',
-        room: loc,
-        instructor: desc.includes('Instructor:') ? desc.split('Instructor:')[1].split(',')[0].trim() : 'Instructor',
-        color: '#2563EB',
-        reminderEnabled: true,
-      });
-      classCount++;
+      if (daysOfWeek.length === 0 && dtStart) {
+        const d = parseIcsDate(dtStart);
+        const jsDay = d.getUTCDay(); // 0 is Sunday
+        daysOfWeek.push(jsDay === 0 ? 7 : jsDay);
+      }
+      if (daysOfWeek.length === 0) daysOfWeek.push(1);
+
+      // Precise start & end times with BST (UTC+6)
+      const startTime = extractTimeFromIcs(dtStart, '09:00');
+      let endTime = extractTimeFromIcs(dtEnd, '');
+      if (!endTime || endTime === startTime) {
+        endTime = addDurationToTime(startTime, duration);
+      }
+
+      // Course code and subject separation
+      let courseCode = 'COURSE';
+      let subject = sum;
+      if (sum.includes(':')) {
+        const parts = sum.split(':');
+        courseCode = parts[0].trim();
+        subject = parts.slice(1).join(':').trim();
+      } else if (sum.includes(' - ')) {
+        const parts = sum.split(' - ');
+        courseCode = parts[0].trim();
+        subject = parts.slice(1).join(' - ').trim();
+      } else if (sum.includes('[') && sum.includes(']')) {
+        const m = sum.match(/\[(.*?)\]/);
+        if (m) {
+          courseCode = m[1].trim();
+          subject = sum.replace(/\[.*?\]/, '').trim();
+        }
+      }
+
+      let instructor = 'Instructor';
+      if (desc.toLowerCase().includes('instructor:')) {
+        instructor = desc.split(/instructor:/i)[1].split(',')[0].trim();
+      } else if (desc.toLowerCase().includes('teacher:')) {
+        instructor = desc.split(/teacher:/i)[1].split(',')[0].trim();
+      }
+
+      for (let dayOfWeek of daysOfWeek) {
+        state.classes.push({
+          id: `CLS-ICS-${idx}-d${dayOfWeek}`,
+          courseCode: courseCode || 'COURSE',
+          subject: subject || sum,
+          dayOfWeek,
+          startTime,
+          endTime,
+          room: loc,
+          instructor,
+          color: '#2563EB',
+          reminderEnabled: true,
+        });
+        classCount++;
+      }
     } else {
-      const isHol = cat.includes('holiday') || sum.toLowerCase().includes('holiday');
+      // Academic Notice / Milestone
+      const lowerTitle = sum.toLowerCase();
+      const isHol = cat.includes('holiday') || lowerTitle.includes('holiday') || desc.toLowerCase().includes('holiday');
+      const isExam = cat.includes('exam') || lowerTitle.includes('exam') || lowerTitle.includes('mid-term');
+      const isAdmin = lowerTitle.includes('registration') ||
+        lowerTitle.includes('advising') ||
+        lowerTitle.includes('withdrawal') ||
+        lowerTitle.includes('evaluation') ||
+        lowerTitle.includes('drop') ||
+        lowerTitle.includes('grade') ||
+        cat.includes('administrative');
+      const isFee = lowerTitle.includes('installment') ||
+        lowerTitle.includes('semester fee') ||
+        (lowerTitle.includes('fee') && !lowerTitle.includes('drop')) ||
+        cat.includes('semesterfee') ||
+        cat.includes('fee');
+
+      let category = 'event';
+      if (isHol) category = 'holiday';
+      else if (isExam) category = 'exam';
+      else if (isAdmin) category = 'administrative';
+      else if (isFee) category = 'semesterFee';
+
+      const sDate = parseIcsDate(dtStart);
+      const eDate = parseIcsDate(dtEnd || dtStart);
+      const sStr = formatDateISO(sDate);
+      const eStr = formatDateISO(eDate);
+
       state.notices.push({
         id: `NOT-ICS-${idx}`,
         title: sum,
         description: desc,
-        startDate: dtStart.length >= 8 ? `${dtStart.substring(0, 4)}-${dtStart.substring(4, 6)}-${dtStart.substring(6, 8)}` : formatDateISO(new Date()),
-        endDate: dtStart.length >= 8 ? `${dtStart.substring(0, 4)}-${dtStart.substring(4, 6)}-${dtStart.substring(6, 8)}` : formatDateISO(new Date()),
-        category: isHol ? 'holiday' : 'administrative',
+        startDate: sStr,
+        endDate: eStr,
+        category,
         isHoliday: isHol,
         priority: isHol ? 'urgent' : 'medium',
       });

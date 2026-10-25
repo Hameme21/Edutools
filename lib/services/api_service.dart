@@ -26,6 +26,35 @@ class ApiService {
   static const String _smtpUser = 'hamimasir5@gmail.com';
   static const String _smtpPass = 'faixfyjgwixzbisl';
   static final Map<String, _DirectOtpRecord> _directOtpStore = {};
+  static final Map<String, List<DateTime>> _otpRateLimitStore = {};
+
+  static void _checkClientRateLimit(String email) {
+    if (Platform.environment.containsKey('FLUTTER_TEST')) return;
+    final now = DateTime.now();
+    final history = _otpRateLimitStore[email] ?? [];
+    final recent = history.where((dt) => now.difference(dt).inSeconds < 600).toList();
+    _otpRateLimitStore[email] = recent;
+
+    if (recent.isNotEmpty) {
+      final last = recent.last;
+      final diffSeconds = now.difference(last).inSeconds;
+      if (diffSeconds < 60) {
+        final waitSec = 60 - diffSeconds;
+        throw Exception('Please wait ${waitSec}s before requesting another verification code.');
+      }
+    }
+
+    if (recent.length >= 4) {
+      throw Exception('Too many verification requests. Please wait 10 minutes before requesting another code.');
+    }
+  }
+
+  static void _recordClientOtpRequest(String email) {
+    final now = DateTime.now();
+    final history = _otpRateLimitStore[email] ?? [];
+    history.add(now);
+    _otpRateLimitStore[email] = history;
+  }
 
   /// Deployed production server URL on Render
   static String? productionBaseUrl = 'https://edutools-y4xy.onrender.com';
@@ -223,6 +252,9 @@ class ApiService {
   }) async {
     final norm = email.trim().toLowerCase();
 
+    // Enforce rate limiting
+    _checkClientRateLimit(norm);
+
     // Client-side UIU domain enforcement for registration
     if (isRegistration && !isUiuEmail(norm)) {
       throw Exception('Registration is strictly restricted to UIU student emails ending with uiu.ac.bd (e.g. student@bscse.uiu.ac.bd).');
@@ -233,7 +265,7 @@ class ApiService {
     }
 
     try {
-      return await _postJson(
+      final res = await _postJson(
         '/api/auth/request-otp',
         {
           'email': norm,
@@ -244,14 +276,19 @@ class ApiService {
           if (semester != null && semester.isNotEmpty) 'semester': semester.trim(),
         },
       );
+      _recordClientOtpRequest(norm);
+      return res;
     } catch (e) {
       if (e.toString().contains('Registration is strictly restricted') ||
           e.toString().contains('Please enter a valid email') ||
           e.toString().contains('already registered') ||
+          e.toString().contains('Please wait') ||
+          e.toString().contains('Too many verification requests') ||
           e.toString().contains('Student account not found')) {
         rethrow;
       }
       if (Platform.environment.containsKey('FLUTTER_TEST')) {
+        _recordClientOtpRequest(norm);
         final mockOtp = (100000 + (norm.hashCode.abs() % 900000)).toString();
         return {
           'success': true,
@@ -282,6 +319,7 @@ class ApiService {
           studentId: studentId,
           department: department,
         );
+        _recordClientOtpRequest(norm);
         return {
           'success': true,
           'message': 'A 6-digit verification code has been dispatched from hamimasir5@gmail.com to your UIU email. Valid for 5 minutes.',
