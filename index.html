@@ -1726,6 +1726,301 @@ body {
   to { transform: translateX(0); opacity: 1; }
 }
 
+/* ===================== TOOLS SECTION ===================== */
+.tools-hero {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.tools-hero h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.tools-hero p {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.tool-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 22px 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--primary);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.tool-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+.tool-card:hover::before {
+  opacity: 1;
+}
+
+.tool-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.tool-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.tool-icon-box.blue { background: var(--primary-light); color: var(--primary); }
+.tool-icon-box.emerald { background: var(--emerald-light); color: var(--emerald); }
+.tool-icon-box.amber { background: var(--amber-light); color: var(--amber); }
+.tool-icon-box.purple { background: var(--purple-light); color: var(--purple); }
+.tool-icon-box.red { background: var(--danger-light); color: var(--danger); }
+.tool-icon-box.teal { background: rgba(20, 184, 166, 0.1); color: #14B8A6; }
+
+.tool-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--emerald-light);
+  color: var(--emerald);
+  text-transform: uppercase;
+}
+
+.tool-badge.coming { background: var(--amber-light); color: var(--amber); }
+
+.tool-card h3 {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.tool-card p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.tool-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tool-card-arrow {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.tool-card:hover .tool-card-arrow {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.tool-features {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tool-feat-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card-subtle);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+/* CGPA Calculator Styles */
+.cgpa-calc-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.cgpa-semester-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cgpa-semester-row:last-child { border-bottom: none; }
+
+.cgpa-semester-row label {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 90px;
+}
+
+.cgpa-semester-row input {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text-main);
+  width: 90px;
+}
+
+.cgpa-semester-row input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.cgpa-result-box {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--primary-light);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.cgpa-result-box .cgpa-value {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.cgpa-result-box .cgpa-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Tuition Calculator Styles */
+.tuition-calc-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.tuition-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .tuition-form-grid { grid-template-columns: 1fr; }
+}
+
+.tuition-form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tuition-form-group select,
+.tuition-form-group input {
+  width: 100%;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+.tuition-form-group select:focus,
+.tuition-form-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.tuition-breakdown {
+  margin-top: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.tuition-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tuition-breakdown-row:last-child { border-bottom: none; }
+
+.tuition-breakdown-row.total {
+  background: var(--primary-light);
+  font-weight: 800;
+  font-size: 15px;
+}
+
+@media (max-width: 600px) {
+  .tools-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* MOBILE BOTTOM NAV */
 .mobile-bottom-nav {
   display: none;
@@ -2657,6 +2952,9 @@ body {
         <button class="nav-tab" data-tab="setup">
           <i class="fa-solid fa-calendar-plus"></i> Routine Setup & .ICS
         </button>
+        <button class="nav-tab" data-tab="tools">
+          <i class="fa-solid fa-toolbox"></i> Tools
+        </button>
       </nav>
 
       <div class="header-right">
@@ -3087,6 +3385,207 @@ body {
         </div>
       </section>
 
+      <!-- ================= TAB 4: TOOLS ================= -->
+      <section class="tab-pane" id="tab-tools">
+        <div class="tools-hero">
+          <h2><i class="fa-solid fa-toolbox" style="color: var(--primary); margin-right: 8px;"></i>Academic Toolkit</h2>
+          <p>All your essential university tools in one place — plan courses, calculate GPA, track tuition fees, and manage your academic calendar.</p>
+        </div>
+
+        <div class="tools-grid" id="toolsGrid">
+          <!-- Academic Calendar -->
+          <div class="tool-card" data-tool-action="dashboard">
+            <div class="tool-card-top">
+              <div class="tool-icon-box blue"><i class="fa-solid fa-calendar-days"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Academic Calendar</h3>
+            <p>Interactive monthly calendar with holiday conflict resolution, class schedules, exam dates, and automated reminders.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">Holidays</span>
+                <span class="tool-feat-chip">Exams</span>
+                <span class="tool-feat-chip">Reminders</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- Academic Notices -->
+          <div class="tool-card" data-tool-action="notices">
+            <div class="tool-card-top">
+              <div class="tool-icon-box amber"><i class="fa-solid fa-bullhorn"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Academic Notices & Deadlines</h3>
+            <p>Track official university notices — holidays, fee payment dates, midterm & final exams, course withdrawal deadlines, and more.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">Fees</span>
+                <span class="tool-feat-chip">Exams</span>
+                <span class="tool-feat-chip">Drops</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- Routine Setup & .ICS -->
+          <div class="tool-card" data-tool-action="setup">
+            <div class="tool-card-top">
+              <div class="tool-icon-box emerald"><i class="fa-solid fa-calendar-plus"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Routine Setup & .ICS Export</h3>
+            <p>Build your weekly class timetable, import .ICS / JSON / CSV files, sync official calendar, and export holiday-conflict-free schedules.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">.ICS Export</span>
+                <span class="tool-feat-chip">Import</span>
+                <span class="tool-feat-chip">Sync</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- CGPA Calculator -->
+          <div class="tool-card" data-tool-action="cgpa">
+            <div class="tool-card-top">
+              <div class="tool-icon-box purple"><i class="fa-solid fa-calculator"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>CGPA Calculator</h3>
+            <p>Calculate your cumulative GPA across semesters. Add semester-wise GPA and credits to get an accurate CGPA instantly.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">Multi-Semester</span>
+                <span class="tool-feat-chip">UIU Scale</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- Tuition Fee Calculator -->
+          <div class="tool-card" data-tool-action="tuition">
+            <div class="tool-card-top">
+              <div class="tool-icon-box red"><i class="fa-solid fa-wallet"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Tuition Fee Calculator</h3>
+            <p>Estimate your semester tuition fees based on credits, department, and waiver percentage. Includes installment breakdown.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">Credits</span>
+                <span class="tool-feat-chip">Waivers</span>
+                <span class="tool-feat-chip">Installments</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- Holiday Planner -->
+          <div class="tool-card" data-tool-action="holidays">
+            <div class="tool-card-top">
+              <div class="tool-icon-box teal"><i class="fa-solid fa-umbrella-beach"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Holiday Planner</h3>
+            <p>View all official university holidays at a glance — plan trips, track remaining off-days, and set custom reminders for each one.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">2026 Calendar</span>
+                <span class="tool-feat-chip">Reminders</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CGPA Calculator Panel (initially hidden) -->
+        <div class="cgpa-calc-wrap" id="cgpaCalcPanel" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-calculator" style="color: var(--purple);"></i> CGPA Calculator
+              </h3>
+              <p style="font-size: 12px; color: var(--text-muted);">UIU 4.00 GPA Scale — add semesters below</p>
+            </div>
+            <button class="btn btn-sm btn-outline" id="btnCloseCgpa" type="button"><i class="fa-solid fa-xmark"></i> Close</button>
+          </div>
+
+          <div id="cgpaSemestersList">
+            <div class="cgpa-semester-row">
+              <label>Semester 1</label>
+              <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
+              <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
+            </div>
+            <div class="cgpa-semester-row">
+              <label>Semester 2</label>
+              <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
+              <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
+            </div>
+            <div class="cgpa-semester-row">
+              <label>Semester 3</label>
+              <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
+              <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button class="btn btn-sm btn-outline" id="btnAddCgpaSemester" type="button"><i class="fa-solid fa-plus"></i> Add Semester</button>
+            <button class="btn btn-sm btn-primary" id="btnCalcCgpa" type="button"><i class="fa-solid fa-equals"></i> Calculate CGPA</button>
+          </div>
+          <div class="cgpa-result-box" id="cgpaResultBox" style="display: none;">
+            <div class="cgpa-label">Cumulative GPA</div>
+            <div class="cgpa-value" id="cgpaResultValue">0.00</div>
+            <div class="cgpa-label" id="cgpaResultCredits">Total Credits: 0</div>
+          </div>
+        </div>
+
+        <!-- Tuition Calculator Panel (initially hidden) -->
+        <div class="tuition-calc-wrap" id="tuitionCalcPanel" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-wallet" style="color: var(--danger);"></i> Tuition Fee Calculator
+              </h3>
+              <p style="font-size: 12px; color: var(--text-muted);">Estimate your semester fees — UIU rate structure</p>
+            </div>
+            <button class="btn btn-sm btn-outline" id="btnCloseTuition" type="button"><i class="fa-solid fa-xmark"></i> Close</button>
+          </div>
+
+          <div class="tuition-form-grid">
+            <div class="tuition-form-group">
+              <label>Department</label>
+              <select id="tuitionDept">
+                <option value="cse">CSE / EEE / CE</option>
+                <option value="bba">BBA / Economics</option>
+                <option value="pharmacy">Pharmacy</option>
+              </select>
+            </div>
+            <div class="tuition-form-group">
+              <label>Credits This Semester</label>
+              <input type="number" id="tuitionCredits" placeholder="e.g. 12" min="1" max="24" value="12">
+            </div>
+            <div class="tuition-form-group">
+              <label>Tuition Waiver (%)</label>
+              <input type="number" id="tuitionWaiver" placeholder="0" min="0" max="100" value="0">
+            </div>
+            <div class="tuition-form-group">
+              <label>Installments</label>
+              <select id="tuitionInstallments">
+                <option value="3">3 Installments</option>
+                <option value="2">2 Installments</option>
+                <option value="1">Full Payment</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 12px;">
+            <button class="btn btn-sm btn-primary" id="btnCalcTuition" type="button"><i class="fa-solid fa-calculator"></i> Calculate Tuition</button>
+          </div>
+          <div class="tuition-breakdown" id="tuitionBreakdown" style="display: none; margin-top: 16px;">
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <!-- BOTTOM MOBILE NAVIGATION BAR -->
@@ -3101,7 +3600,11 @@ body {
       </button>
       <button class="mob-nav-btn" data-tab="setup">
         <i class="fa-solid fa-calendar-plus"></i>
-        <span>Setup & .ICS</span>
+        <span>Setup</span>
+      </button>
+      <button class="mob-nav-btn" data-tab="tools">
+        <i class="fa-solid fa-toolbox"></i>
+        <span>Tools</span>
       </button>
     </nav>
   </div>
@@ -6951,11 +7454,132 @@ function initAuthGate() {
   });
 }
 
+// ===================== TOOLS SECTION LOGIC =====================
+
+function switchToTab(tabName) {
+  state.activeTab = tabName;
+  dom.navTabs.forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+  dom.tabPanes.forEach(p => p.classList.toggle('active', p.id === `tab-${tabName}`));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function initToolsSection() {
+  document.querySelectorAll('.tool-card[data-tool-action]').forEach(card => {
+    card.addEventListener('click', () => {
+      const action = card.dataset.toolAction;
+      if (action === 'dashboard' || action === 'notices' || action === 'setup') {
+        switchToTab(action);
+      } else if (action === 'cgpa') {
+        document.getElementById('cgpaCalcPanel').style.display = 'block';
+        document.getElementById('tuitionCalcPanel').style.display = 'none';
+        document.getElementById('cgpaCalcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (action === 'tuition') {
+        document.getElementById('tuitionCalcPanel').style.display = 'block';
+        document.getElementById('cgpaCalcPanel').style.display = 'none';
+        document.getElementById('tuitionCalcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (action === 'holidays') {
+        switchToTab('notices');
+        setTimeout(() => {
+          const holidayChip = document.querySelector('.filter-chips .chip[data-filter="holiday"]');
+          if (holidayChip) holidayChip.click();
+        }, 200);
+      }
+    });
+  });
+
+  // CGPA Calculator
+  document.getElementById('btnAddCgpaSemester').addEventListener('click', () => {
+    const list = document.getElementById('cgpaSemestersList');
+    const count = list.querySelectorAll('.cgpa-semester-row').length + 1;
+    const row = document.createElement('div');
+    row.className = 'cgpa-semester-row';
+    row.innerHTML = `
+      <label>Semester ${count}</label>
+      <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
+      <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
+    `;
+    list.appendChild(row);
+  });
+
+  document.getElementById('btnCalcCgpa').addEventListener('click', () => {
+    const gpas = document.querySelectorAll('.cgpa-gpa-input');
+    const credits = document.querySelectorAll('.cgpa-credits-input');
+    let totalPoints = 0, totalCredits = 0;
+
+    gpas.forEach((gpaInput, i) => {
+      const gpa = parseFloat(gpaInput.value);
+      const cr = parseFloat(credits[i]?.value);
+      if (!isNaN(gpa) && !isNaN(cr) && cr > 0) {
+        totalPoints += gpa * cr;
+        totalCredits += cr;
+      }
+    });
+
+    const cgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
+    document.getElementById('cgpaResultValue').textContent = cgpa.toFixed(2);
+    document.getElementById('cgpaResultCredits').textContent = `Total Credits: ${totalCredits}`;
+    document.getElementById('cgpaResultBox').style.display = 'block';
+  });
+
+  document.getElementById('btnCloseCgpa').addEventListener('click', () => {
+    document.getElementById('cgpaCalcPanel').style.display = 'none';
+  });
+
+  // Tuition Fee Calculator
+  const tuitionRates = {
+    cse: { perCredit: 7750, labFee: 3000, devFee: 5000, regFee: 1500 },
+    bba: { perCredit: 6250, labFee: 0, devFee: 5000, regFee: 1500 },
+    pharmacy: { perCredit: 7000, labFee: 4000, devFee: 5000, regFee: 1500 },
+  };
+
+  document.getElementById('btnCalcTuition').addEventListener('click', () => {
+    const dept = document.getElementById('tuitionDept').value;
+    const credits = parseInt(document.getElementById('tuitionCredits').value) || 0;
+    const waiver = parseFloat(document.getElementById('tuitionWaiver').value) || 0;
+    const installments = parseInt(document.getElementById('tuitionInstallments').value) || 3;
+    const rates = tuitionRates[dept];
+
+    const tuitionBase = credits * rates.perCredit;
+    const waiverAmount = Math.round(tuitionBase * waiver / 100);
+    const tuitionAfterWaiver = tuitionBase - waiverAmount;
+    const totalFees = tuitionAfterWaiver + rates.labFee + rates.devFee + rates.regFee;
+    const perInstallment = Math.ceil(totalFees / installments);
+
+    const fmt = (n) => '৳ ' + n.toLocaleString('en-IN');
+    let html = `
+      <div class="tuition-breakdown-row"><span>Tuition (${credits} credits × ${fmt(rates.perCredit)})</span><span>${fmt(tuitionBase)}</span></div>
+    `;
+    if (waiver > 0) {
+      html += `<div class="tuition-breakdown-row"><span>Waiver (${waiver}%)</span><span style="color:var(--emerald);">- ${fmt(waiverAmount)}</span></div>`;
+    }
+    if (rates.labFee > 0) {
+      html += `<div class="tuition-breakdown-row"><span>Lab Fee</span><span>${fmt(rates.labFee)}</span></div>`;
+    }
+    html += `
+      <div class="tuition-breakdown-row"><span>Development Fee</span><span>${fmt(rates.devFee)}</span></div>
+      <div class="tuition-breakdown-row"><span>Registration Fee</span><span>${fmt(rates.regFee)}</span></div>
+      <div class="tuition-breakdown-row total"><span>Total Due</span><span>${fmt(totalFees)}</span></div>
+    `;
+    if (installments > 1) {
+      html += `<div class="tuition-breakdown-row"><span>Per Installment (${installments}×)</span><span>${fmt(perInstallment)}</span></div>`;
+    }
+
+    const el = document.getElementById('tuitionBreakdown');
+    el.innerHTML = html;
+    el.style.display = 'block';
+  });
+
+  document.getElementById('btnCloseTuition').addEventListener('click', () => {
+    document.getElementById('tuitionCalcPanel').style.display = 'none';
+  });
+}
+
 // ===================== APP START =====================
 document.addEventListener('DOMContentLoaded', () => {
   restoreStudentSession();
   initAuthGate();
   initEventListeners();
+  initToolsSection();
 
   if (state.student) {
     hideAuthGate();

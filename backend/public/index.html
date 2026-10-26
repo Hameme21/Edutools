@@ -1726,6 +1726,301 @@ body {
   to { transform: translateX(0); opacity: 1; }
 }
 
+/* ===================== TOOLS SECTION ===================== */
+.tools-hero {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.tools-hero h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.tools-hero p {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.tool-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 22px 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--primary);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.tool-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+.tool-card:hover::before {
+  opacity: 1;
+}
+
+.tool-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.tool-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.tool-icon-box.blue { background: var(--primary-light); color: var(--primary); }
+.tool-icon-box.emerald { background: var(--emerald-light); color: var(--emerald); }
+.tool-icon-box.amber { background: var(--amber-light); color: var(--amber); }
+.tool-icon-box.purple { background: var(--purple-light); color: var(--purple); }
+.tool-icon-box.red { background: var(--danger-light); color: var(--danger); }
+.tool-icon-box.teal { background: rgba(20, 184, 166, 0.1); color: #14B8A6; }
+
+.tool-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--emerald-light);
+  color: var(--emerald);
+  text-transform: uppercase;
+}
+
+.tool-badge.coming { background: var(--amber-light); color: var(--amber); }
+
+.tool-card h3 {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.tool-card p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.tool-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tool-card-arrow {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.tool-card:hover .tool-card-arrow {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.tool-features {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tool-feat-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card-subtle);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+/* CGPA Calculator Styles */
+.cgpa-calc-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.cgpa-semester-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cgpa-semester-row:last-child { border-bottom: none; }
+
+.cgpa-semester-row label {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 90px;
+}
+
+.cgpa-semester-row input {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text-main);
+  width: 90px;
+}
+
+.cgpa-semester-row input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.cgpa-result-box {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--primary-light);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.cgpa-result-box .cgpa-value {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.cgpa-result-box .cgpa-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Tuition Calculator Styles */
+.tuition-calc-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.tuition-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .tuition-form-grid { grid-template-columns: 1fr; }
+}
+
+.tuition-form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tuition-form-group select,
+.tuition-form-group input {
+  width: 100%;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+.tuition-form-group select:focus,
+.tuition-form-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.tuition-breakdown {
+  margin-top: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.tuition-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tuition-breakdown-row:last-child { border-bottom: none; }
+
+.tuition-breakdown-row.total {
+  background: var(--primary-light);
+  font-weight: 800;
+  font-size: 15px;
+}
+
+@media (max-width: 600px) {
+  .tools-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* MOBILE BOTTOM NAV */
 .mobile-bottom-nav {
   display: none;
@@ -2066,6 +2361,359 @@ body {
   color: var(--text-muted);
 }
 
+/* ===================== AUTH GATE (Full-Screen Login / Register) ===================== */
+
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.auth-gate.hidden { display: none; }
+
+.auth-gate-inner {
+  width: 100%;
+  max-width: 440px;
+  animation: authFadeIn 0.5s ease;
+}
+
+@keyframes authFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-brand {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.auth-brand .logo-icon-wrap {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+}
+
+.auth-brand h1 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+}
+
+.auth-brand h1 span { color: var(--primary); }
+
+.auth-brand p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.auth-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 28px 24px;
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-tabs {
+  display: flex;
+  background: var(--bg-card-subtle);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 24px;
+  gap: 4px;
+}
+
+.auth-tab-btn {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-tab-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.auth-tab-btn:not(.active):hover {
+  color: var(--text-main);
+  background: var(--primary-light);
+}
+
+.auth-form-section { display: none; }
+.auth-form-section.active { display: block; }
+
+.auth-field {
+  margin-bottom: 16px;
+}
+
+.auth-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.auth-field label .required { color: var(--danger); }
+
+.auth-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text-main);
+  background: var(--bg-card-subtle);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.auth-input::placeholder { color: var(--text-muted); opacity: 0.7; }
+
+.auth-input.otp-input {
+  font-size: 24px;
+  letter-spacing: 8px;
+  text-align: center;
+  font-family: monospace;
+  font-weight: 800;
+}
+
+.auth-domain-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.auth-domain-pill {
+  padding: 5px 12px;
+  background: var(--primary-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font);
+}
+
+.auth-domain-pill:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.auth-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.auth-hint i { color: var(--primary); font-size: 13px; }
+
+.auth-btn {
+  width: 100%;
+  padding: 13px 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.auth-btn-primary:hover { background: var(--primary-hover); }
+.auth-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.auth-btn-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 1.5px solid var(--border-color);
+}
+
+.auth-btn-outline:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+.auth-error {
+  display: none;
+  padding: 10px 14px;
+  background: var(--danger-light);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--danger);
+  margin-bottom: 14px;
+}
+
+.auth-error.show { display: flex; align-items: center; gap: 8px; }
+
+.auth-success {
+  display: none;
+  padding: 10px 14px;
+  background: var(--emerald-light);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--emerald);
+  margin-bottom: 14px;
+}
+
+.auth-success.show { display: flex; align-items: center; gap: 8px; }
+
+.auth-otp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.auth-otp-header span {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.auth-otp-header button {
+  font-size: 12px;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: var(--font);
+}
+
+.auth-otp-header button:hover { text-decoration: underline; }
+
+.auth-timer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0 16px;
+}
+
+.auth-timer .timer-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.auth-timer .resend-btn {
+  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.auth-timer .resend-btn:hover { text-decoration: underline; }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.auth-footer a {
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.auth-footer a:hover { text-decoration: underline; }
+
+.auth-reg-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.auth-or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.auth-or-divider::before, .auth-or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+@media (max-width: 480px) {
+  .auth-card { padding: 22px 18px; }
+  .auth-brand h1 { font-size: 24px; }
+  .auth-reg-row { grid-template-columns: 1fr; }
+}
 
 
 </style>
@@ -2075,7 +2723,191 @@ body {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <div class="app-container">
+  <!-- ===================== AUTH GATE: Login / Register Screen ===================== -->
+  <div class="auth-gate" id="authGate">
+    <div class="auth-gate-inner">
+      <div class="auth-brand">
+        <div class="logo-icon-wrap">
+          <svg class="logo-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="10" width="52" height="48" rx="14" fill="url(#ag_blue)"/>
+            <rect x="6" y="10" width="52" height="16" rx="14" fill="url(#ag_navy)"/>
+            <rect x="6" y="20" width="52" height="6" fill="#1E3A8A"/>
+            <rect x="17" y="5" width="6" height="10" rx="3" fill="#FFFFFF"/>
+            <rect x="41" y="5" width="6" height="10" rx="3" fill="#FFFFFF"/>
+            <path d="M32 30L44 36L32 42L20 36L32 30Z" fill="#F59E0B"/>
+            <path d="M26 39.5V45.5C26 47.5 28.5 49 32 49C35.5 49 38 47.5 38 45.5V39.5" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="44" cy="39" r="2" fill="#F59E0B"/>
+            <defs>
+              <linearGradient id="ag_blue" x1="6" y1="10" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#3B82F6"/><stop offset="1" stop-color="#1D4ED8"/>
+              </linearGradient>
+              <linearGradient id="ag_navy" x1="6" y1="10" x2="58" y2="26" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#1E3A8A"/><stop offset="1" stop-color="#0F172A"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h1>Edu<span>Tools</span></h1>
+        <p>Smart Academic Routine & Calendar Suite for UIU Students</p>
+      </div>
+
+      <div class="auth-card">
+        <!-- Tab Switcher: Sign In / Register -->
+        <div class="auth-tabs">
+          <button class="auth-tab-btn active" id="agTabSignIn" onclick="switchAuthGateTab('signin')">Sign In</button>
+          <button class="auth-tab-btn" id="agTabRegister" onclick="switchAuthGateTab('register')">Register</button>
+        </div>
+
+        <!-- ========== SIGN IN SECTION ========== -->
+        <div class="auth-form-section active" id="agSignIn">
+          <!-- Step 1: Email + Password or OTP -->
+          <div id="agSignInStep1">
+            <div class="auth-field">
+              <label>University Email <span class="required">*</span></label>
+              <input type="email" class="auth-input" id="agSignInEmail" placeholder="username@bscse.uiu.ac.bd">
+            </div>
+            <div class="auth-hint">
+              <i class="fa-solid fa-graduation-cap"></i>
+              <span>Quick domain select:</span>
+            </div>
+            <div class="auth-domain-pills" id="agSignInPills">
+              <button class="auth-domain-pill" data-domain="@bscse.uiu.ac.bd">@bscse.uiu.ac.bd</button>
+              <button class="auth-domain-pill" data-domain="@bseee.uiu.ac.bd">@bseee.uiu.ac.bd</button>
+              <button class="auth-domain-pill" data-domain="@bsce.uiu.ac.bd">@bsce.uiu.ac.bd</button>
+              <button class="auth-domain-pill" data-domain="@bba.uiu.ac.bd">@bba.uiu.ac.bd</button>
+              <button class="auth-domain-pill" data-domain="@mscse.uiu.ac.bd">@mscse.uiu.ac.bd</button>
+            </div>
+            <div class="auth-field" id="agSignInPasswordField">
+              <label>Password <span class="required">*</span></label>
+              <input type="password" class="auth-input" id="agSignInPassword" placeholder="Enter your password">
+            </div>
+            <div class="auth-error" id="agSignInError"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
+            <button class="auth-btn auth-btn-primary" id="agSignInPasswordBtn">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+            </button>
+            <div class="auth-or-divider"><span>or</span></div>
+            <button class="auth-btn auth-btn-outline" id="agSignInSendBtn">
+              <i class="fa-solid fa-paper-plane"></i> Sign In with OTP Email
+            </button>
+          </div>
+          <!-- Step 2: OTP -->
+          <div id="agSignInStep2" style="display:none;">
+            <div class="auth-otp-header">
+              <span id="agSignInOtpTarget">Code sent to:</span>
+              <button id="agSignInChangeEmail">Change email</button>
+            </div>
+            <div class="auth-success show" id="agSignInEmailSent" style="margin-bottom: 14px;">
+              <i class="fa-solid fa-envelope-circle-check"></i>
+              <span>Check your inbox (and spam/junk folder) for the 6-digit code from <strong>hamimasir5@gmail.com</strong></span>
+            </div>
+            <div class="auth-error" id="agSignInEmailFail" style="margin-bottom: 14px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Email delivery failed. Check your email address and try again, or check spam/junk folder.</span>
+            </div>
+            <div class="auth-field">
+              <label>Enter 6-Digit Code <span class="required">*</span></label>
+              <input type="text" class="auth-input otp-input" id="agSignInOtp" maxlength="6" placeholder="------">
+            </div>
+            <div class="auth-timer">
+              <span class="timer-text" id="agSignInTimer">Expires in: 05:00</span>
+              <button class="resend-btn" id="agSignInResend">Resend Code</button>
+            </div>
+            <div class="auth-error" id="agSignInOtpError"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
+            <button class="auth-btn auth-btn-primary" id="agSignInVerifyBtn">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i> Verify & Sign In
+            </button>
+          </div>
+
+          <div class="auth-footer">
+            Don't have an account? <a onclick="switchAuthGateTab('register')">Register here</a>
+          </div>
+        </div>
+
+        <!-- ========== REGISTER SECTION ========== -->
+        <div class="auth-form-section" id="agRegister">
+          <!-- Step 1: Details -->
+          <div id="agRegStep1">
+            <div class="auth-field">
+              <label>University Email <span class="required">*</span></label>
+              <input type="email" class="auth-input" id="agRegEmail" placeholder="username@bscse.uiu.ac.bd">
+            </div>
+            <div class="auth-domain-pills" id="agRegPills">
+              <button class="auth-domain-pill" data-domain="@bscse.uiu.ac.bd">@bscse.uiu.ac.bd</button>
+              <button class="auth-domain-pill" data-domain="@bseee.uiu.ac.bd">@bseee.uiu.ac.bd</button>
+              <button class="auth-domain-pill" data-domain="@bsce.uiu.ac.bd">@bsce.uiu.ac.bd</button>
+              <button class="auth-domain-pill" data-domain="@bba.uiu.ac.bd">@bba.uiu.ac.bd</button>
+              <button class="auth-domain-pill" data-domain="@mscse.uiu.ac.bd">@mscse.uiu.ac.bd</button>
+            </div>
+            <div class="auth-reg-row">
+              <div class="auth-field">
+                <label>Full Name <span class="required">*</span></label>
+                <input type="text" class="auth-input" id="agRegName" placeholder="Your full name">
+              </div>
+              <div class="auth-field">
+                <label>Student ID <span class="required">*</span></label>
+                <input type="text" class="auth-input" id="agRegStudentId" placeholder="e.g. 011251234">
+              </div>
+            </div>
+            <div class="auth-reg-row">
+              <div class="auth-field">
+                <label>Department</label>
+                <input type="text" class="auth-input" id="agRegDept" placeholder="e.g. CSE" value="Computer Science & Engineering">
+              </div>
+              <div class="auth-field">
+                <label>Semester</label>
+                <input type="text" class="auth-input" id="agRegSemester" placeholder="e.g. Spring 2026" value="Spring 2026">
+              </div>
+            </div>
+            <div class="auth-field">
+              <label>Create Password <span class="required">*</span></label>
+              <input type="password" class="auth-input" id="agRegPassword" placeholder="Min 6 characters" minlength="6">
+            </div>
+            <div class="auth-hint" style="margin-bottom: 14px;">
+              <i class="fa-solid fa-lock"></i>
+              <span>Password lets you sign in without waiting for OTP email</span>
+            </div>
+            <div class="auth-error" id="agRegError"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
+            <button class="auth-btn auth-btn-primary" id="agRegSendBtn">
+              <i class="fa-solid fa-user-plus"></i> Register & Verify Email
+            </button>
+          </div>
+          <!-- Step 2: OTP -->
+          <div id="agRegStep2" style="display:none;">
+            <div class="auth-otp-header">
+              <span id="agRegOtpTarget">Code sent to:</span>
+              <button id="agRegChangeEmail">Change details</button>
+            </div>
+            <div class="auth-success show" id="agRegEmailSent" style="margin-bottom: 14px;">
+              <i class="fa-solid fa-envelope-circle-check"></i>
+              <span>Check your inbox (and spam/junk folder) for the 6-digit code from <strong>hamimasir5@gmail.com</strong></span>
+            </div>
+            <div class="auth-error" id="agRegEmailFail" style="margin-bottom: 14px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Email delivery failed. Check your email address and try again, or check spam/junk folder.</span>
+            </div>
+            <div class="auth-field">
+              <label>Enter 6-Digit Code <span class="required">*</span></label>
+              <input type="text" class="auth-input otp-input" id="agRegOtp" maxlength="6" placeholder="------">
+            </div>
+            <div class="auth-timer">
+              <span class="timer-text" id="agRegTimer">Expires in: 05:00</span>
+              <button class="resend-btn" id="agRegResend">Resend Code</button>
+            </div>
+            <div class="auth-error" id="agRegOtpError"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
+            <button class="auth-btn auth-btn-primary" id="agRegVerifyBtn">
+              <i class="fa-solid fa-circle-check"></i> Verify & Complete Registration
+            </button>
+          </div>
+
+          <div class="auth-footer">
+            Already have an account? <a onclick="switchAuthGateTab('signin')">Sign in</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container" id="appContainer" style="display:none;">
     <!-- TOP APP BAR -->
     <header class="app-header">
       <div class="header-left">
@@ -2119,6 +2951,9 @@ body {
         </button>
         <button class="nav-tab" data-tab="setup">
           <i class="fa-solid fa-calendar-plus"></i> Routine Setup & .ICS
+        </button>
+        <button class="nav-tab" data-tab="tools">
+          <i class="fa-solid fa-toolbox"></i> Tools
         </button>
       </nav>
 
@@ -2550,6 +3385,207 @@ body {
         </div>
       </section>
 
+      <!-- ================= TAB 4: TOOLS ================= -->
+      <section class="tab-pane" id="tab-tools">
+        <div class="tools-hero">
+          <h2><i class="fa-solid fa-toolbox" style="color: var(--primary); margin-right: 8px;"></i>Academic Toolkit</h2>
+          <p>All your essential university tools in one place — plan courses, calculate GPA, track tuition fees, and manage your academic calendar.</p>
+        </div>
+
+        <div class="tools-grid" id="toolsGrid">
+          <!-- Academic Calendar -->
+          <div class="tool-card" data-tool-action="dashboard">
+            <div class="tool-card-top">
+              <div class="tool-icon-box blue"><i class="fa-solid fa-calendar-days"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Academic Calendar</h3>
+            <p>Interactive monthly calendar with holiday conflict resolution, class schedules, exam dates, and automated reminders.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">Holidays</span>
+                <span class="tool-feat-chip">Exams</span>
+                <span class="tool-feat-chip">Reminders</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- Academic Notices -->
+          <div class="tool-card" data-tool-action="notices">
+            <div class="tool-card-top">
+              <div class="tool-icon-box amber"><i class="fa-solid fa-bullhorn"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Academic Notices & Deadlines</h3>
+            <p>Track official university notices — holidays, fee payment dates, midterm & final exams, course withdrawal deadlines, and more.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">Fees</span>
+                <span class="tool-feat-chip">Exams</span>
+                <span class="tool-feat-chip">Drops</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- Routine Setup & .ICS -->
+          <div class="tool-card" data-tool-action="setup">
+            <div class="tool-card-top">
+              <div class="tool-icon-box emerald"><i class="fa-solid fa-calendar-plus"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Routine Setup & .ICS Export</h3>
+            <p>Build your weekly class timetable, import .ICS / JSON / CSV files, sync official calendar, and export holiday-conflict-free schedules.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">.ICS Export</span>
+                <span class="tool-feat-chip">Import</span>
+                <span class="tool-feat-chip">Sync</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- CGPA Calculator -->
+          <div class="tool-card" data-tool-action="cgpa">
+            <div class="tool-card-top">
+              <div class="tool-icon-box purple"><i class="fa-solid fa-calculator"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>CGPA Calculator</h3>
+            <p>Calculate your cumulative GPA across semesters. Add semester-wise GPA and credits to get an accurate CGPA instantly.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">Multi-Semester</span>
+                <span class="tool-feat-chip">UIU Scale</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- Tuition Fee Calculator -->
+          <div class="tool-card" data-tool-action="tuition">
+            <div class="tool-card-top">
+              <div class="tool-icon-box red"><i class="fa-solid fa-wallet"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Tuition Fee Calculator</h3>
+            <p>Estimate your semester tuition fees based on credits, department, and waiver percentage. Includes installment breakdown.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">Credits</span>
+                <span class="tool-feat-chip">Waivers</span>
+                <span class="tool-feat-chip">Installments</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- Holiday Planner -->
+          <div class="tool-card" data-tool-action="holidays">
+            <div class="tool-card-top">
+              <div class="tool-icon-box teal"><i class="fa-solid fa-umbrella-beach"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Holiday Planner</h3>
+            <p>View all official university holidays at a glance — plan trips, track remaining off-days, and set custom reminders for each one.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">2026 Calendar</span>
+                <span class="tool-feat-chip">Reminders</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CGPA Calculator Panel (initially hidden) -->
+        <div class="cgpa-calc-wrap" id="cgpaCalcPanel" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-calculator" style="color: var(--purple);"></i> CGPA Calculator
+              </h3>
+              <p style="font-size: 12px; color: var(--text-muted);">UIU 4.00 GPA Scale — add semesters below</p>
+            </div>
+            <button class="btn btn-sm btn-outline" id="btnCloseCgpa" type="button"><i class="fa-solid fa-xmark"></i> Close</button>
+          </div>
+
+          <div id="cgpaSemestersList">
+            <div class="cgpa-semester-row">
+              <label>Semester 1</label>
+              <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
+              <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
+            </div>
+            <div class="cgpa-semester-row">
+              <label>Semester 2</label>
+              <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
+              <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
+            </div>
+            <div class="cgpa-semester-row">
+              <label>Semester 3</label>
+              <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
+              <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button class="btn btn-sm btn-outline" id="btnAddCgpaSemester" type="button"><i class="fa-solid fa-plus"></i> Add Semester</button>
+            <button class="btn btn-sm btn-primary" id="btnCalcCgpa" type="button"><i class="fa-solid fa-equals"></i> Calculate CGPA</button>
+          </div>
+          <div class="cgpa-result-box" id="cgpaResultBox" style="display: none;">
+            <div class="cgpa-label">Cumulative GPA</div>
+            <div class="cgpa-value" id="cgpaResultValue">0.00</div>
+            <div class="cgpa-label" id="cgpaResultCredits">Total Credits: 0</div>
+          </div>
+        </div>
+
+        <!-- Tuition Calculator Panel (initially hidden) -->
+        <div class="tuition-calc-wrap" id="tuitionCalcPanel" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-wallet" style="color: var(--danger);"></i> Tuition Fee Calculator
+              </h3>
+              <p style="font-size: 12px; color: var(--text-muted);">Estimate your semester fees — UIU rate structure</p>
+            </div>
+            <button class="btn btn-sm btn-outline" id="btnCloseTuition" type="button"><i class="fa-solid fa-xmark"></i> Close</button>
+          </div>
+
+          <div class="tuition-form-grid">
+            <div class="tuition-form-group">
+              <label>Department</label>
+              <select id="tuitionDept">
+                <option value="cse">CSE / EEE / CE</option>
+                <option value="bba">BBA / Economics</option>
+                <option value="pharmacy">Pharmacy</option>
+              </select>
+            </div>
+            <div class="tuition-form-group">
+              <label>Credits This Semester</label>
+              <input type="number" id="tuitionCredits" placeholder="e.g. 12" min="1" max="24" value="12">
+            </div>
+            <div class="tuition-form-group">
+              <label>Tuition Waiver (%)</label>
+              <input type="number" id="tuitionWaiver" placeholder="0" min="0" max="100" value="0">
+            </div>
+            <div class="tuition-form-group">
+              <label>Installments</label>
+              <select id="tuitionInstallments">
+                <option value="3">3 Installments</option>
+                <option value="2">2 Installments</option>
+                <option value="1">Full Payment</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 12px;">
+            <button class="btn btn-sm btn-primary" id="btnCalcTuition" type="button"><i class="fa-solid fa-calculator"></i> Calculate Tuition</button>
+          </div>
+          <div class="tuition-breakdown" id="tuitionBreakdown" style="display: none; margin-top: 16px;">
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <!-- BOTTOM MOBILE NAVIGATION BAR -->
@@ -2564,7 +3600,11 @@ body {
       </button>
       <button class="mob-nav-btn" data-tab="setup">
         <i class="fa-solid fa-calendar-plus"></i>
-        <span>Setup & .ICS</span>
+        <span>Setup</span>
+      </button>
+      <button class="mob-nav-btn" data-tab="tools">
+        <i class="fa-solid fa-toolbox"></i>
+        <span>Tools</span>
       </button>
     </nav>
   </div>
@@ -4003,15 +5043,16 @@ async function syncWithGoogleDriveWeb(push = true) {
 async function syncStudentWithServer(push = true) {
   try {
     if (push) {
-      // 1. Broadcast global update to all users & devices
+      // 1. Broadcast global update to all users & devices (never push empty notices to avoid wiping others)
+      const globalPayload = {
+        source: state.student ? state.student.email : 'PC Web User',
+        classes: state.classes,
+      };
+      if (state.notices.length > 0) globalPayload.notices = state.notices;
       await fetch(`${getApiBaseUrl()}/api/calendar/global-update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          source: state.student ? state.student.email : 'PC Web User',
-          notices: state.notices,
-          classes: state.classes,
-        }),
+        body: JSON.stringify(globalPayload),
       });
 
       // 2. Push to student profile if logged in
@@ -4059,16 +5100,30 @@ async function syncStudentWithServer(push = true) {
         }
       }
 
-      // 2. Pull student profile update if logged in
+      // 2. Pull student profile & schedule if logged in
       if (state.student) {
         const res = await fetch(`${getApiBaseUrl()}/api/student/sync?email=${encodeURIComponent(state.student.email)}`);
         const data = await res.json();
+        let changed = false;
+
+        if (data.student && data.student.fullName && data.student.email) {
+          const remote = data.student;
+          if (remote.fullName !== state.student.fullName || remote.studentId !== state.student.studentId || remote.department !== state.student.department) {
+            state.student = { ...state.student, fullName: remote.fullName, studentId: remote.studentId || state.student.studentId, department: remote.department || state.student.department };
+            changed = true;
+          }
+        }
+
         if (data.classes && Array.isArray(data.classes) && data.classes.length > 0) {
           if (JSON.stringify(data.classes) !== JSON.stringify(state.classes)) {
             state.classes = data.classes;
-            renderAll();
-            saveStudentSession();
+            changed = true;
           }
+        }
+
+        if (changed) {
+          renderAll();
+          saveStudentSession();
         }
       }
     }
@@ -4469,7 +5524,9 @@ function renderSetup() {
       const delBtn = box.querySelector(`[data-setup-del="${cls.id}"]`);
       if (delBtn) delBtn.onclick = () => {
         state.classes = state.classes.filter(c => c.id !== cls.id);
+        saveStudentSession();
         renderAll();
+        syncStudentWithServer(true);
         showToast(`Removed class ${cls.courseCode}`, 'info');
       };
     });
@@ -4621,8 +5678,10 @@ function openAuthModal() {
 
     document.getElementById('btnWebLogout').onclick = () => {
       state.student = null;
+      if (autoSyncTimer) clearInterval(autoSyncTimer);
+      localStorage.removeItem('edutools_student_session');
       dom.authModal.classList.remove('show');
-      renderAll();
+      showAuthGate();
       showToast('Logged out of student portal.', 'info');
     };
   } else {
@@ -4761,41 +5820,28 @@ function openAuthModal() {
       reqBtn.disabled = true;
       reqBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending 6-digit code...';
 
-      let devOtpVal = String(Math.floor(100000 + Math.random() * 900000));
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-        try {
-          const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.devOtp) devOtpVal = data.devOtp;
-          }
-        } catch (_) {
-          clearTimeout(timeoutId);
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to send verification code.');
         }
 
         lastWebOtpRequestTime = Date.now();
-        // Advance to Step 2 immediately so screen is NEVER static
         document.getElementById('authStep1').style.display = 'none';
         document.getElementById('authStep2').style.display = 'block';
-        document.getElementById('otpTargetEmail').textContent = `OTP sent to: ${email}`;
+        document.getElementById('otpTargetEmail').textContent = `A 6-digit code has been sent to: ${email}`;
 
-        const devBox = document.getElementById('authDevOtpBox');
-        document.getElementById('devOtpSpan').textContent = devOtpVal;
-        devBox.style.display = 'block';
+        document.getElementById('authDevOtpBox').style.display = 'none';
 
         startOtpTimer();
-        showToast(`6-Digit OTP dispatched to ${email}!`, 'success');
+        showToast(`Verification code sent to ${email}. Check your inbox!`, 'success');
       } catch (err) {
-        errBox.textContent = err.message || 'Error sending code';
+        errBox.textContent = err.message || 'Could not reach server. Please try again.';
         errBox.style.display = 'block';
       } finally {
         reqBtn.disabled = false;
@@ -4823,35 +5869,36 @@ function openAuthModal() {
       errBox.style.display = 'none';
 
       try {
-        let token = 'session_jwt_' + Date.now();
-        const domain = email.split('@')[1];
-        const studentId = email.split('@')[0].toUpperCase();
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, otp }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Invalid verification code. Please try again.');
+        }
 
-        try {
-          const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, otp }),
-          });
-          const data = await res.json();
-          if (data.token) token = data.token;
-        } catch (_) {}
-
+        const studentData = data.student || {};
         state.student = {
-          email,
-          studentId,
-          fullName: `${domain.split('.')[0].toUpperCase()} Student`,
-          token,
+          email: studentData.email || email,
+          studentId: studentData.studentId || email.split('@')[0].toUpperCase(),
+          fullName: studentData.fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          department: studentData.department || 'Computer Science & Engineering',
+          token: data.token,
           lastSyncTime: new Date().toISOString(),
         };
 
         clearInterval(otpCountdownInterval);
         dom.authModal.classList.remove('show');
+        saveStudentSession();
+        startCrossPlatformAutoSync();
+        syncStudentWithServer(false);
         renderAll();
         updateSyncStatusUI();
-        showToast(`Welcome! Verified & synced with ${email}`, 'success');
+        showToast(`Welcome, ${state.student.fullName}! Verified & synced.`, 'success');
       } catch (err) {
-        errBox.textContent = err.message;
+        errBox.textContent = err.message || 'Verification failed. Please check your code.';
         errBox.style.display = 'block';
       }
     };
@@ -5425,6 +6472,8 @@ function handleUploadedFile(file) {
           body: JSON.stringify({ rawSchedule: text, email: state.student?.email || 'student@university.edu' }),
         });
       } catch (_) {}
+      saveStudentSession();
+      syncStudentWithServer(true);
     } catch (err) {
       dom.droppedFileStatus.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message}</span>`;
       showToast(err.message, 'warning');
@@ -5521,7 +6570,7 @@ function initEventListeners() {
       if (autoSyncTimer) clearInterval(autoSyncTimer);
       localStorage.removeItem('edutools_student_session');
       if (googleDropdown) googleDropdown.classList.remove('show');
-      renderAll();
+      showAuthGate();
       showToast('Signed out of University Account.', 'info');
     });
   }
@@ -5633,6 +6682,7 @@ function initEventListeners() {
     state.routineRange = detected;
     saveStudentSession();
     renderAll();
+    syncStudentWithServer(true);
     showToast('Loaded Demo Class Routine & Official Calendar!', 'success');
     openRoutineConfigModal(true);
   };
@@ -5646,7 +6696,9 @@ function initEventListeners() {
     if (confirm('Clear all loaded classes and academic notices?')) {
       state.classes = [];
       state.notices = [];
+      saveStudentSession();
       renderAll();
+      syncStudentWithServer(true);
       showToast('All calendar data cleared.', 'info');
     }
   });
@@ -5986,11 +7038,555 @@ function initEventListeners() {
   });
 }
 
+// ===================== AUTH GATE LOGIC =====================
+
+function switchAuthGateTab(tab) {
+  const siBtn = document.getElementById('agTabSignIn');
+  const regBtn = document.getElementById('agTabRegister');
+  const siSec = document.getElementById('agSignIn');
+  const regSec = document.getElementById('agRegister');
+
+  if (tab === 'register') {
+    siBtn.classList.remove('active');
+    regBtn.classList.add('active');
+    siSec.classList.remove('active');
+    regSec.classList.add('active');
+  } else {
+    siBtn.classList.add('active');
+    regBtn.classList.remove('active');
+    siSec.classList.add('active');
+    regSec.classList.remove('active');
+  }
+}
+
+function showAuthGate() {
+  document.getElementById('authGate').classList.remove('hidden');
+  document.getElementById('appContainer').style.display = 'none';
+}
+
+function hideAuthGate() {
+  document.getElementById('authGate').classList.add('hidden');
+  document.getElementById('appContainer').style.display = '';
+}
+
+function initAuthGate() {
+  // Domain pill handlers for both forms
+  document.querySelectorAll('#agSignInPills .auth-domain-pill, #agRegPills .auth-domain-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const domain = pill.dataset.domain;
+      const isReg = pill.closest('#agRegPills') !== null;
+      const input = document.getElementById(isReg ? 'agRegEmail' : 'agSignInEmail');
+      const val = input.value.trim();
+      const handle = val.includes('@') ? val.split('@')[0] : val;
+      input.value = handle + domain;
+      input.focus();
+    });
+  });
+
+  // ---- SIGN IN FLOW ----
+  let signInTimerInterval = null;
+
+  function startSignInTimer() {
+    let sec = 300;
+    const timerEl = document.getElementById('agSignInTimer');
+    const resendEl = document.getElementById('agSignInResend');
+    resendEl.style.display = 'none';
+    if (signInTimerInterval) clearInterval(signInTimerInterval);
+    signInTimerInterval = setInterval(() => {
+      sec--;
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      timerEl.textContent = `Expires in: ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      if (sec <= 0) {
+        clearInterval(signInTimerInterval);
+        timerEl.textContent = 'Code expired';
+        resendEl.style.display = 'inline';
+      }
+    }, 1000);
+  }
+
+  // Password Sign In handler
+  document.getElementById('agSignInPasswordBtn').addEventListener('click', async () => {
+    const email = document.getElementById('agSignInEmail').value.trim().toLowerCase();
+    const password = document.getElementById('agSignInPassword').value;
+    const errEl = document.getElementById('agSignInError');
+    const errSpan = errEl.querySelector('span');
+    const btn = document.getElementById('agSignInPasswordBtn');
+    errEl.classList.remove('show');
+
+    if (!email || !email.includes('@')) {
+      errSpan.textContent = 'Please enter a valid email address.';
+      errEl.classList.add('show');
+      return;
+    }
+    if (!password) {
+      errSpan.textContent = 'Please enter your password.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in...';
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/login-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        if (data.notRegistered) {
+          errSpan.textContent = 'No account found. Please register first.';
+          errEl.classList.add('show');
+          setTimeout(() => switchAuthGateTab('register'), 2000);
+          return;
+        }
+        if (data.noPassword) {
+          errSpan.textContent = 'No password set. Use OTP email sign in below.';
+          errEl.classList.add('show');
+          return;
+        }
+        throw new Error(data.error || 'Sign in failed.');
+      }
+
+      const s = data.student || {};
+      state.student = {
+        email: s.email || email,
+        studentId: s.studentId || email.split('@')[0].toUpperCase(),
+        fullName: s.fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        department: s.department || 'Computer Science & Engineering',
+        token: data.token,
+        lastSyncTime: new Date().toISOString(),
+      };
+
+      saveStudentSession();
+      startCrossPlatformAutoSync();
+      syncStudentWithServer(false);
+      hideAuthGate();
+      renderAll();
+      updateSyncStatusUI();
+      showToast(`Welcome back, ${state.student.fullName}!`, 'success');
+    } catch (err) {
+      errSpan.textContent = err.message;
+      errEl.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In';
+    }
+  });
+
+  // OTP Sign In handler
+  document.getElementById('agSignInSendBtn').addEventListener('click', async () => {
+    const email = document.getElementById('agSignInEmail').value.trim().toLowerCase();
+    const errEl = document.getElementById('agSignInError');
+    const errSpan = errEl.querySelector('span');
+    const btn = document.getElementById('agSignInSendBtn');
+    errEl.classList.remove('show');
+
+    if (!email || !email.includes('@')) {
+      errSpan.textContent = 'Please enter a valid email address.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending code...';
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        if (data.notRegistered) {
+          errSpan.textContent = 'No account found. Please register first.';
+          errEl.classList.add('show');
+          setTimeout(() => switchAuthGateTab('register'), 2000);
+          return;
+        }
+        throw new Error(data.error || 'Failed to send code.');
+      }
+
+      document.getElementById('agSignInStep1').style.display = 'none';
+      document.getElementById('agSignInStep2').style.display = 'block';
+      document.getElementById('agSignInOtpTarget').textContent = `Code sent to: ${email}`;
+
+      const emailDelivered = data.emailResult && data.emailResult.delivered;
+      document.getElementById('agSignInEmailSent').style.display = emailDelivered ? '' : 'none';
+      document.getElementById('agSignInEmailSent').classList.toggle('show', !!emailDelivered);
+      document.getElementById('agSignInEmailFail').style.display = emailDelivered ? 'none' : '';
+      document.getElementById('agSignInEmailFail').classList.toggle('show', !emailDelivered);
+
+      startSignInTimer();
+    } catch (err) {
+      errSpan.textContent = err.message;
+      errEl.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Verification Code';
+    }
+  });
+
+  document.getElementById('agSignInChangeEmail').addEventListener('click', () => {
+    clearInterval(signInTimerInterval);
+    document.getElementById('agSignInStep2').style.display = 'none';
+    document.getElementById('agSignInStep1').style.display = 'block';
+  });
+
+  document.getElementById('agSignInResend').addEventListener('click', () => {
+    document.getElementById('agSignInChangeEmail').click();
+    document.getElementById('agSignInSendBtn').click();
+  });
+
+  document.getElementById('agSignInVerifyBtn').addEventListener('click', async () => {
+    const email = document.getElementById('agSignInEmail').value.trim().toLowerCase();
+    const otp = document.getElementById('agSignInOtp').value.trim();
+    const errEl = document.getElementById('agSignInOtpError');
+    const errSpan = errEl.querySelector('span');
+    const btn = document.getElementById('agSignInVerifyBtn');
+    errEl.classList.remove('show');
+
+    if (otp.length !== 6) {
+      errSpan.textContent = 'Please enter the 6-digit code.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Invalid code.');
+
+      clearInterval(signInTimerInterval);
+      const s = data.student || {};
+      state.student = {
+        email: s.email || email,
+        studentId: s.studentId || email.split('@')[0].toUpperCase(),
+        fullName: s.fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        department: s.department || 'Computer Science & Engineering',
+        token: data.token,
+        lastSyncTime: new Date().toISOString(),
+      };
+
+      saveStudentSession();
+      startCrossPlatformAutoSync();
+      syncStudentWithServer(false);
+      hideAuthGate();
+      renderAll();
+      updateSyncStatusUI();
+      showToast(`Welcome back, ${state.student.fullName}!`, 'success');
+    } catch (err) {
+      errSpan.textContent = err.message;
+      errEl.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Verify & Sign In';
+    }
+  });
+
+  // ---- REGISTER FLOW ----
+  let regTimerInterval = null;
+
+  function startRegTimer() {
+    let sec = 300;
+    const timerEl = document.getElementById('agRegTimer');
+    const resendEl = document.getElementById('agRegResend');
+    resendEl.style.display = 'none';
+    if (regTimerInterval) clearInterval(regTimerInterval);
+    regTimerInterval = setInterval(() => {
+      sec--;
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      timerEl.textContent = `Expires in: ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      if (sec <= 0) {
+        clearInterval(regTimerInterval);
+        timerEl.textContent = 'Code expired';
+        resendEl.style.display = 'inline';
+      }
+    }, 1000);
+  }
+
+  document.getElementById('agRegSendBtn').addEventListener('click', async () => {
+    const email = document.getElementById('agRegEmail').value.trim().toLowerCase();
+    const fullName = document.getElementById('agRegName').value.trim();
+    const studentId = document.getElementById('agRegStudentId').value.trim();
+    const department = document.getElementById('agRegDept').value.trim();
+    const semester = document.getElementById('agRegSemester').value.trim();
+    const password = document.getElementById('agRegPassword').value;
+    const errEl = document.getElementById('agRegError');
+    const errSpan = errEl.querySelector('span');
+    const btn = document.getElementById('agRegSendBtn');
+    errEl.classList.remove('show');
+
+    if (!email || !email.includes('@')) {
+      errSpan.textContent = 'Please enter a valid UIU email address.';
+      errEl.classList.add('show');
+      return;
+    }
+    if (!fullName) {
+      errSpan.textContent = 'Full name is required.';
+      errEl.classList.add('show');
+      return;
+    }
+    if (!studentId) {
+      errSpan.textContent = 'Student ID is required.';
+      errEl.classList.add('show');
+      return;
+    }
+    if (!password || password.length < 6) {
+      errSpan.textContent = 'Password must be at least 6 characters.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering...';
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, isRegistration: true, fullName, studentId, department, semester, password }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        if (data.alreadyRegistered) {
+          errSpan.textContent = 'This account is already registered. Switching to Sign In...';
+          errEl.classList.add('show');
+          setTimeout(() => switchAuthGateTab('signin'), 2000);
+          return;
+        }
+        throw new Error(data.error || 'Registration failed.');
+      }
+
+      document.getElementById('agRegStep1').style.display = 'none';
+      document.getElementById('agRegStep2').style.display = 'block';
+      document.getElementById('agRegOtpTarget').textContent = `Code sent to: ${email}`;
+
+      const emailDelivered = data.emailResult && data.emailResult.delivered;
+      document.getElementById('agRegEmailSent').style.display = emailDelivered ? '' : 'none';
+      document.getElementById('agRegEmailSent').classList.toggle('show', !!emailDelivered);
+      document.getElementById('agRegEmailFail').style.display = emailDelivered ? 'none' : '';
+      document.getElementById('agRegEmailFail').classList.toggle('show', !emailDelivered);
+
+      startRegTimer();
+    } catch (err) {
+      errSpan.textContent = err.message;
+      errEl.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Register & Send Code';
+    }
+  });
+
+  document.getElementById('agRegChangeEmail').addEventListener('click', () => {
+    clearInterval(regTimerInterval);
+    document.getElementById('agRegStep2').style.display = 'none';
+    document.getElementById('agRegStep1').style.display = 'block';
+  });
+
+  document.getElementById('agRegResend').addEventListener('click', () => {
+    document.getElementById('agRegChangeEmail').click();
+    document.getElementById('agRegSendBtn').click();
+  });
+
+  document.getElementById('agRegVerifyBtn').addEventListener('click', async () => {
+    const email = document.getElementById('agRegEmail').value.trim().toLowerCase();
+    const otp = document.getElementById('agRegOtp').value.trim();
+    const errEl = document.getElementById('agRegOtpError');
+    const errSpan = errEl.querySelector('span');
+    const btn = document.getElementById('agRegVerifyBtn');
+    errEl.classList.remove('show');
+
+    if (otp.length !== 6) {
+      errSpan.textContent = 'Please enter the 6-digit code.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Invalid code.');
+
+      clearInterval(regTimerInterval);
+      const s = data.student || {};
+      state.student = {
+        email: s.email || email,
+        studentId: s.studentId || document.getElementById('agRegStudentId').value.trim(),
+        fullName: s.fullName || document.getElementById('agRegName').value.trim(),
+        department: s.department || document.getElementById('agRegDept').value.trim() || 'Computer Science & Engineering',
+        token: data.token,
+        lastSyncTime: new Date().toISOString(),
+      };
+
+      saveStudentSession();
+      startCrossPlatformAutoSync();
+      syncStudentWithServer(false);
+      hideAuthGate();
+      renderAll();
+      updateSyncStatusUI();
+      showToast(`Welcome, ${state.student.fullName}! Registration complete.`, 'success');
+    } catch (err) {
+      errSpan.textContent = err.message;
+      errEl.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verify & Complete Registration';
+    }
+  });
+}
+
+// ===================== TOOLS SECTION LOGIC =====================
+
+function switchToTab(tabName) {
+  state.activeTab = tabName;
+  dom.navTabs.forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+  dom.tabPanes.forEach(p => p.classList.toggle('active', p.id === `tab-${tabName}`));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function initToolsSection() {
+  document.querySelectorAll('.tool-card[data-tool-action]').forEach(card => {
+    card.addEventListener('click', () => {
+      const action = card.dataset.toolAction;
+      if (action === 'dashboard' || action === 'notices' || action === 'setup') {
+        switchToTab(action);
+      } else if (action === 'cgpa') {
+        document.getElementById('cgpaCalcPanel').style.display = 'block';
+        document.getElementById('tuitionCalcPanel').style.display = 'none';
+        document.getElementById('cgpaCalcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (action === 'tuition') {
+        document.getElementById('tuitionCalcPanel').style.display = 'block';
+        document.getElementById('cgpaCalcPanel').style.display = 'none';
+        document.getElementById('tuitionCalcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (action === 'holidays') {
+        switchToTab('notices');
+        setTimeout(() => {
+          const holidayChip = document.querySelector('.filter-chips .chip[data-filter="holiday"]');
+          if (holidayChip) holidayChip.click();
+        }, 200);
+      }
+    });
+  });
+
+  // CGPA Calculator
+  document.getElementById('btnAddCgpaSemester').addEventListener('click', () => {
+    const list = document.getElementById('cgpaSemestersList');
+    const count = list.querySelectorAll('.cgpa-semester-row').length + 1;
+    const row = document.createElement('div');
+    row.className = 'cgpa-semester-row';
+    row.innerHTML = `
+      <label>Semester ${count}</label>
+      <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
+      <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
+    `;
+    list.appendChild(row);
+  });
+
+  document.getElementById('btnCalcCgpa').addEventListener('click', () => {
+    const gpas = document.querySelectorAll('.cgpa-gpa-input');
+    const credits = document.querySelectorAll('.cgpa-credits-input');
+    let totalPoints = 0, totalCredits = 0;
+
+    gpas.forEach((gpaInput, i) => {
+      const gpa = parseFloat(gpaInput.value);
+      const cr = parseFloat(credits[i]?.value);
+      if (!isNaN(gpa) && !isNaN(cr) && cr > 0) {
+        totalPoints += gpa * cr;
+        totalCredits += cr;
+      }
+    });
+
+    const cgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
+    document.getElementById('cgpaResultValue').textContent = cgpa.toFixed(2);
+    document.getElementById('cgpaResultCredits').textContent = `Total Credits: ${totalCredits}`;
+    document.getElementById('cgpaResultBox').style.display = 'block';
+  });
+
+  document.getElementById('btnCloseCgpa').addEventListener('click', () => {
+    document.getElementById('cgpaCalcPanel').style.display = 'none';
+  });
+
+  // Tuition Fee Calculator
+  const tuitionRates = {
+    cse: { perCredit: 7750, labFee: 3000, devFee: 5000, regFee: 1500 },
+    bba: { perCredit: 6250, labFee: 0, devFee: 5000, regFee: 1500 },
+    pharmacy: { perCredit: 7000, labFee: 4000, devFee: 5000, regFee: 1500 },
+  };
+
+  document.getElementById('btnCalcTuition').addEventListener('click', () => {
+    const dept = document.getElementById('tuitionDept').value;
+    const credits = parseInt(document.getElementById('tuitionCredits').value) || 0;
+    const waiver = parseFloat(document.getElementById('tuitionWaiver').value) || 0;
+    const installments = parseInt(document.getElementById('tuitionInstallments').value) || 3;
+    const rates = tuitionRates[dept];
+
+    const tuitionBase = credits * rates.perCredit;
+    const waiverAmount = Math.round(tuitionBase * waiver / 100);
+    const tuitionAfterWaiver = tuitionBase - waiverAmount;
+    const totalFees = tuitionAfterWaiver + rates.labFee + rates.devFee + rates.regFee;
+    const perInstallment = Math.ceil(totalFees / installments);
+
+    const fmt = (n) => '৳ ' + n.toLocaleString('en-IN');
+    let html = `
+      <div class="tuition-breakdown-row"><span>Tuition (${credits} credits × ${fmt(rates.perCredit)})</span><span>${fmt(tuitionBase)}</span></div>
+    `;
+    if (waiver > 0) {
+      html += `<div class="tuition-breakdown-row"><span>Waiver (${waiver}%)</span><span style="color:var(--emerald);">- ${fmt(waiverAmount)}</span></div>`;
+    }
+    if (rates.labFee > 0) {
+      html += `<div class="tuition-breakdown-row"><span>Lab Fee</span><span>${fmt(rates.labFee)}</span></div>`;
+    }
+    html += `
+      <div class="tuition-breakdown-row"><span>Development Fee</span><span>${fmt(rates.devFee)}</span></div>
+      <div class="tuition-breakdown-row"><span>Registration Fee</span><span>${fmt(rates.regFee)}</span></div>
+      <div class="tuition-breakdown-row total"><span>Total Due</span><span>${fmt(totalFees)}</span></div>
+    `;
+    if (installments > 1) {
+      html += `<div class="tuition-breakdown-row"><span>Per Installment (${installments}×)</span><span>${fmt(perInstallment)}</span></div>`;
+    }
+
+    const el = document.getElementById('tuitionBreakdown');
+    el.innerHTML = html;
+    el.style.display = 'block';
+  });
+
+  document.getElementById('btnCloseTuition').addEventListener('click', () => {
+    document.getElementById('tuitionCalcPanel').style.display = 'none';
+  });
+}
+
 // ===================== APP START =====================
 document.addEventListener('DOMContentLoaded', () => {
   restoreStudentSession();
+  initAuthGate();
   initEventListeners();
-  renderAll();
+  initToolsSection();
+
+  if (state.student) {
+    hideAuthGate();
+    renderAll();
+  } else {
+    showAuthGate();
+  }
 });
 
 </script>

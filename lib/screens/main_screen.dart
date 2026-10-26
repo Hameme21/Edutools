@@ -4,6 +4,7 @@ import '../widgets/educal_logo.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'notices/notices_screen.dart';
 import 'setup/setup_screen.dart';
+import 'tools/tools_screen.dart';
 import 'reminders/notification_dialog.dart';
 import 'reminders/reminder_settings_dialog.dart';
 import 'auth/student_login_dialog.dart';
@@ -324,6 +325,11 @@ class _MainScreenState extends State<MainScreen> {
             selectedIcon: Icon(Icons.tune_rounded),
             label: 'Class Setup',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.construction_outlined),
+            selectedIcon: Icon(Icons.construction_rounded),
+            label: 'Tools',
+          ),
         ],
       ),
     );
@@ -337,6 +343,8 @@ class _MainScreenState extends State<MainScreen> {
         return NoticesScreen(state: widget.state);
       case 2:
         return SetupScreen(state: widget.state);
+      case 3:
+        return ToolsScreen(state: widget.state);
       default:
         return DashboardScreen(state: widget.state);
     }
