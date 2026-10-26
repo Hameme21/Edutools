@@ -4003,15 +4003,16 @@ async function syncWithGoogleDriveWeb(push = true) {
 async function syncStudentWithServer(push = true) {
   try {
     if (push) {
-      // 1. Broadcast global update to all users & devices
+      // 1. Broadcast global update to all users & devices (never push empty notices to avoid wiping others)
+      const globalPayload = {
+        source: state.student ? state.student.email : 'PC Web User',
+        classes: state.classes,
+      };
+      if (state.notices.length > 0) globalPayload.notices = state.notices;
       await fetch(`${getApiBaseUrl()}/api/calendar/global-update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          source: state.student ? state.student.email : 'PC Web User',
-          notices: state.notices,
-          classes: state.classes,
-        }),
+        body: JSON.stringify(globalPayload),
       });
 
       // 2. Push to student profile if logged in
@@ -4763,41 +4764,28 @@ function openAuthModal() {
       reqBtn.disabled = true;
       reqBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending 6-digit code...';
 
-      let devOtpVal = String(Math.floor(100000 + Math.random() * 900000));
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-        try {
-          const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.devOtp) devOtpVal = data.devOtp;
-          }
-        } catch (_) {
-          clearTimeout(timeoutId);
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to send verification code.');
         }
 
         lastWebOtpRequestTime = Date.now();
-        // Advance to Step 2 immediately so screen is NEVER static
         document.getElementById('authStep1').style.display = 'none';
         document.getElementById('authStep2').style.display = 'block';
-        document.getElementById('otpTargetEmail').textContent = `OTP sent to: ${email}`;
+        document.getElementById('otpTargetEmail').textContent = `A 6-digit code has been sent to: ${email}`;
 
-        const devBox = document.getElementById('authDevOtpBox');
-        document.getElementById('devOtpSpan').textContent = devOtpVal;
-        devBox.style.display = 'block';
+        document.getElementById('authDevOtpBox').style.display = 'none';
 
         startOtpTimer();
-        showToast(`6-Digit OTP dispatched to ${email}!`, 'success');
+        showToast(`Verification code sent to ${email}. Check your inbox!`, 'success');
       } catch (err) {
-        errBox.textContent = err.message || 'Error sending code';
+        errBox.textContent = err.message || 'Could not reach server. Please try again.';
         errBox.style.display = 'block';
       } finally {
         reqBtn.disabled = false;
@@ -4825,25 +4813,23 @@ function openAuthModal() {
       errBox.style.display = 'none';
 
       try {
-        let token = 'session_jwt_' + Date.now();
-        const domain = email.split('@')[1];
-        const studentId = email.split('@')[0].toUpperCase();
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, otp }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Invalid verification code. Please try again.');
+        }
 
-        try {
-          const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, otp }),
-          });
-          const data = await res.json();
-          if (data.token) token = data.token;
-        } catch (_) {}
-
+        const studentData = data.student || {};
         state.student = {
-          email,
-          studentId,
-          fullName: `${domain.split('.')[0].toUpperCase()} Student`,
-          token,
+          email: studentData.email || email,
+          studentId: studentData.studentId || email.split('@')[0].toUpperCase(),
+          fullName: studentData.fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          department: studentData.department || 'Computer Science & Engineering',
+          token: data.token,
           lastSyncTime: new Date().toISOString(),
         };
 
@@ -4854,9 +4840,9 @@ function openAuthModal() {
         syncStudentWithServer(false);
         renderAll();
         updateSyncStatusUI();
-        showToast(`Welcome! Verified & synced with ${email}`, 'success');
+        showToast(`Welcome, ${state.student.fullName}! Verified & synced.`, 'success');
       } catch (err) {
-        errBox.textContent = err.message;
+        errBox.textContent = err.message || 'Verification failed. Please check your code.';
         errBox.style.display = 'block';
       }
     };

@@ -355,11 +355,12 @@ class CalendarState extends ChangeNotifier {
       final globalUri = Uri.parse('$_serverBaseUrl/api/calendar/global-update');
       final gReq = await client.postUrl(globalUri);
       gReq.headers.set('content-type', 'application/json');
-      final gPayload = {
+      final noticesList = _calendarService.notices.map((n) => n.toJson()).toList();
+      final gPayload = <String, dynamic>{
         'source': _currentStudent?.email ?? 'PC Client',
         'classes': _calendarService.classes.map((c) => c.toJson()).toList(),
-        'notices': _calendarService.notices.map((n) => n.toJson()).toList(),
       };
+      if (noticesList.isNotEmpty) gPayload['notices'] = noticesList;
       gReq.add(utf8.encode(jsonEncode(gPayload)));
       await gReq.close();
 

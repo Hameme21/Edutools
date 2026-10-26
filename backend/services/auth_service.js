@@ -339,11 +339,10 @@ async function requestOtp(email, options = {}) {
   const responsePayload = {
     success: true,
     message: options.isRegistration
-      ? 'A 6-digit registration code has been sent from hamimasir5@gmail.com to your UIU email. Valid for 5 minutes.'
-      : 'A 6-digit login verification code has been sent from hamimasir5@gmail.com to your email. Valid for 5 minutes.',
+      ? 'A 6-digit registration code has been sent to your UIU email. Valid for 5 minutes.'
+      : 'A 6-digit login verification code has been sent to your email. Valid for 5 minutes.',
     email: normalizedEmail,
     expiresInSeconds: 300,
-    devOtp: otp,
     emailResult,
   };
 
