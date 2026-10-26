@@ -20,8 +20,9 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   port: 465,
   secure: true,
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
+  family: 4,
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
   socketTimeout: 15000,
   auth: {
     user: EMAIL_USER,
@@ -384,19 +385,24 @@ async function requestOtp(email, options = {}) {
   });
 
   // SMTP email dispatch from hamimasir5@gmail.com with fallback timeout
+  // Race timeout (20s) is higher than Nodemailer's connectionTimeout (10s)
+  // so the real SMTP error code surfaces instead of a generic timeout
   let emailResult = null;
   try {
     emailResult = await Promise.race([
       sendEmailOtp(normalizedEmail, otp),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (15s)')), 15000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (20s) — server could not reach Gmail')), 20000))
     ]);
     console.log(`✅ [SMTP OK] Email delivered to ${normalizedEmail} | MessageId: ${emailResult.messageId}`);
   } catch (err) {
     console.error(`❌ [SMTP DISPATCH FAILED] To: ${normalizedEmail}`);
     console.error(`   Error: ${err.message}`);
-    console.error(`   Code: ${err.code || 'none'} | ResponseCode: ${err.responseCode || 'none'}`);
+    console.error(`   err.code: ${err.code || 'none'}`);
+    console.error(`   err.command: ${err.command || 'none'}`);
+    console.error(`   err.responseCode: ${err.responseCode || 'none'}`);
+    console.error(`   err.response: ${err.response || 'none'}`);
     console.error(`   Stack: ${err.stack}`);
-    console.error(`   OTP was: ${otp} (saved in store, expires in 5 min)`);
+    console.error(`   OTP was: ${otp} (generated for ${normalizedEmail})`);
 
     // Delete the OTP since user cannot receive it
     otpStore.delete(normalizedEmail);
