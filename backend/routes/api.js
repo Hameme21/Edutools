@@ -300,68 +300,135 @@ router.get('/health', (req, res) => {
 
 
 // ===================== 5. GLOBAL & STUDENT CLOUD SYNC ENDPOINTS =====================
+// Uses MongoDB for persistence with in-memory fallback if DB is unavailable
 
-let globalCalendarBroadcast = {
+const { isConnected } = require('../db');
+const StudentSchedule = require('../models/StudentSchedule');
+const GlobalBroadcast = require('../models/GlobalBroadcast');
+
+// In-memory fallback stores (used only when MongoDB is unavailable)
+let memGlobalBroadcast = {
   version: Date.now(),
   source: 'Official Academic Server',
   notices: [],
   classes: [],
   updatedAt: new Date().toISOString(),
 };
-
-const studentCloudStore = new Map(); // email -> { student, classes, updatedAt }
+const memStudentStore = new Map();
 
 /**
  * GET /api/calendar/global-sync
  * Retrieves latest synchronized global calendar state
  */
-router.get('/calendar/global-sync', (req, res) => {
-  res.json(globalCalendarBroadcast);
+router.get('/calendar/global-sync', async (req, res) => {
+  try {
+    if (isConnected()) {
+      const doc = await GlobalBroadcast.findOne({ key: 'global' }).lean();
+      if (doc) {
+        return res.json({
+          version: doc.version,
+          source: doc.source,
+          notices: doc.notices,
+          classes: doc.classes,
+          updatedAt: doc.updatedAt,
+        });
+      }
+    }
+    res.json(memGlobalBroadcast);
+  } catch (err) {
+    res.json(memGlobalBroadcast);
+  }
 });
 
 /**
  * POST /api/calendar/global-update
- * Updates global broadcast schedule
+ * Updates global broadcast schedule (persisted to MongoDB)
  */
-router.post('/calendar/global-update', (req, res) => {
+router.post('/calendar/global-update', async (req, res) => {
   const { source, notices, classes } = req.body;
-  if (Array.isArray(notices) && notices.length > 0) {
-    globalCalendarBroadcast.notices = notices;
+  const version = Date.now();
+  const now = new Date().toISOString();
+
+  const update = {};
+  if (Array.isArray(notices) && notices.length > 0) update.notices = notices;
+  if (Array.isArray(classes)) update.classes = classes;
+  update.version = version;
+  update.source = source || 'PC Web Client';
+  update.updatedAt = now;
+
+  // Always update in-memory for fast reads
+  Object.assign(memGlobalBroadcast, update);
+
+  try {
+    if (isConnected()) {
+      await GlobalBroadcast.findOneAndUpdate(
+        { key: 'global' },
+        { $set: update },
+        { upsert: true, new: true }
+      );
+    }
+  } catch (err) {
+    console.warn('[SYNC] MongoDB global-update write failed, in-memory only:', err.message);
   }
-  if (Array.isArray(classes)) {
-    globalCalendarBroadcast.classes = classes;
-  }
-  globalCalendarBroadcast.version = Date.now();
-  globalCalendarBroadcast.source = source || 'PC Web Client';
-  globalCalendarBroadcast.updatedAt = new Date().toISOString();
-  res.json({ success: true, version: globalCalendarBroadcast.version });
+
+  res.json({ success: true, version });
 });
 
 /**
  * GET /api/student/sync
- * Retrieves student profile & schedule
+ * Retrieves student profile & schedule from MongoDB (or in-memory fallback)
  */
-router.get('/student/sync', (req, res) => {
+router.get('/student/sync', async (req, res) => {
   const email = (req.query.email || '').trim().toLowerCase();
-  const record = studentCloudStore.get(email) || { classes: [], student: null };
+  if (!email) {
+    return res.json({ success: true, classes: [], student: null });
+  }
+
+  try {
+    if (isConnected()) {
+      const doc = await StudentSchedule.findOne({ email }).lean();
+      if (doc) {
+        return res.json({ success: true, classes: doc.classes || [], student: doc.student || null });
+      }
+    }
+  } catch (err) {
+    console.warn('[SYNC] MongoDB student read failed:', err.message);
+  }
+
+  const record = memStudentStore.get(email) || { classes: [], student: null };
   res.json({ success: true, classes: record.classes || [], student: record.student || null });
 });
 
 /**
  * POST /api/student/sync
- * Synchronizes student profile & schedule
+ * Persists student profile & schedule to MongoDB (with in-memory fallback)
  */
-router.post('/student/sync', (req, res) => {
+router.post('/student/sync', async (req, res) => {
   const { email, student, classes } = req.body;
   const targetEmail = (email || student?.email || '').trim().toLowerCase();
-  if (targetEmail) {
-    studentCloudStore.set(targetEmail, {
-      student,
-      classes: Array.isArray(classes) ? classes : [],
-      updatedAt: new Date().toISOString(),
-    });
+  if (!targetEmail) {
+    return res.json({ success: true, classes: classes || [] });
   }
-  res.json({ success: true, classes: classes || [] });
+
+  const classArray = Array.isArray(classes) ? classes : [];
+  const now = new Date();
+
+  // Always update in-memory
+  memStudentStore.set(targetEmail, { student, classes: classArray, updatedAt: now.toISOString() });
+
+  try {
+    if (isConnected()) {
+      await StudentSchedule.findOneAndUpdate(
+        { email: targetEmail },
+        { $set: { student, classes: classArray, updatedAt: now } },
+        { upsert: true, new: true }
+      );
+    }
+  } catch (err) {
+    console.warn('[SYNC] MongoDB student write failed, in-memory only:', err.message);
+  }
+
+  res.json({ success: true, classes: classArray });
 });
 
 module.exports = router;

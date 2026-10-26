@@ -13,3 +13,5 @@ services:
         value: hamimasir5@gmail.com
       - key: EMAIL_PASS
         value: faixfyjgwixzbisl
+      - key: MONGODB_URI
+        sync: false

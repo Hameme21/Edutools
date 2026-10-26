@@ -58,3 +58,6 @@ backend/uploads/
 .env
 backend/.env
 *.apk
+
+graphify-out/
+.vscode/

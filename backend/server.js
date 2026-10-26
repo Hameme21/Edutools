@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
+const { connectDB } = require('./db');
 const apiRoutes = require('./routes/api');
 
 const app = express();
@@ -89,13 +90,16 @@ app.use((err, req, res, next) => {
 });
 
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`\n🎓 ========================================================`);
-    console.log(`🚀 Edutools Full-Stack Server listening on http://localhost:${PORT}`);
-    console.log(`✅ University Email Auth (.edu, .ac.bd) ready with 5-min OTP`);
-    console.log(`✅ File Uploader active (10MB max, .ics, .csv, .json, .pdf)`);
-    console.log(`✅ Calendar Sync Status Engine listening on /api/calendar/sync-status`);
-    console.log(`========================================================\n`);
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`\n🎓 ========================================================`);
+      console.log(`🚀 Edutools Full-Stack Server listening on http://localhost:${PORT}`);
+      console.log(`✅ University Email Auth (.edu, .ac.bd) ready with 5-min OTP`);
+      console.log(`✅ File Uploader active (10MB max, .ics, .csv, .json, .pdf)`);
+      console.log(`✅ Calendar Sync Status Engine listening on /api/calendar/sync-status`);
+      console.log(`✅ MongoDB Cloud Sync for persistent schedule storage`);
+      console.log(`========================================================\n`);
+    });
   });
 }
 

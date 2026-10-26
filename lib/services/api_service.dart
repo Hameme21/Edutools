@@ -102,7 +102,7 @@ class ApiService {
     String? token,
     Duration timeout = const Duration(seconds: 4),
   }) async {
-    final targets = _configuredBaseUrl != null ? [_configuredBaseUrl!] : candidateBaseUrls;
+    final targets = _configuredBaseUrl != null ? [_configuredBaseUrl] : candidateBaseUrls;
     dynamic lastConnectionError;
 
     for (final host in targets) {
@@ -434,7 +434,7 @@ class ApiService {
         auditLogs: ['Local sync verification active', 'All calendar items synchronized'],
       );
     }
-    final targets = _configuredBaseUrl != null ? [_configuredBaseUrl!] : candidateBaseUrls;
+    final targets = _configuredBaseUrl != null ? [_configuredBaseUrl] : candidateBaseUrls;
     for (final host in targets) {
       try {
         final req = await _client.getUrl(Uri.parse('$host/api/calendar/sync-status?email=${Uri.encodeComponent(email)}')).timeout(const Duration(seconds: 3));

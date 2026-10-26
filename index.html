@@ -4469,7 +4469,9 @@ function renderSetup() {
       const delBtn = box.querySelector(`[data-setup-del="${cls.id}"]`);
       if (delBtn) delBtn.onclick = () => {
         state.classes = state.classes.filter(c => c.id !== cls.id);
+        saveStudentSession();
         renderAll();
+        syncStudentWithServer(true);
         showToast(`Removed class ${cls.courseCode}`, 'info');
       };
     });
@@ -4847,6 +4849,9 @@ function openAuthModal() {
 
         clearInterval(otpCountdownInterval);
         dom.authModal.classList.remove('show');
+        saveStudentSession();
+        startCrossPlatformAutoSync();
+        syncStudentWithServer(false);
         renderAll();
         updateSyncStatusUI();
         showToast(`Welcome! Verified & synced with ${email}`, 'success');
@@ -5425,6 +5430,8 @@ function handleUploadedFile(file) {
           body: JSON.stringify({ rawSchedule: text, email: state.student?.email || 'student@university.edu' }),
         });
       } catch (_) {}
+      saveStudentSession();
+      syncStudentWithServer(true);
     } catch (err) {
       dom.droppedFileStatus.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message}</span>`;
       showToast(err.message, 'warning');
@@ -5633,6 +5640,7 @@ function initEventListeners() {
     state.routineRange = detected;
     saveStudentSession();
     renderAll();
+    syncStudentWithServer(true);
     showToast('Loaded Demo Class Routine & Official Calendar!', 'success');
     openRoutineConfigModal(true);
   };
@@ -5646,7 +5654,9 @@ function initEventListeners() {
     if (confirm('Clear all loaded classes and academic notices?')) {
       state.classes = [];
       state.notices = [];
+      saveStudentSession();
       renderAll();
+      syncStudentWithServer(true);
       showToast('All calendar data cleared.', 'info');
     }
   });
