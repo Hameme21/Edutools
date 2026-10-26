@@ -11,9 +11,15 @@ const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes expiration
 const EMAIL_USER = process.env.EMAIL_USER || 'hamimasir5@gmail.com';
 const EMAIL_PASS = process.env.EMAIL_PASS || 'faixfyjgwixzbisl';
 
-// Nodemailer Gmail SMTP Transporter with connection timeouts
+console.log(`[SMTP CONFIG] EMAIL_USER=${EMAIL_USER ? EMAIL_USER : '(MISSING)'}`);
+console.log(`[SMTP CONFIG] EMAIL_PASS=${EMAIL_PASS ? EMAIL_PASS.substring(0, 4) + '****' : '(MISSING)'}`);
+console.log(`[SMTP CONFIG] Source: ${process.env.EMAIL_USER ? 'process.env' : 'hardcoded fallback'}`);
+
+// Nodemailer Gmail SMTP Transporter — port 465, secure: true (implicit TLS)
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  port: 465,
+  secure: true,
   connectionTimeout: 15000,
   greetingTimeout: 15000,
   socketTimeout: 15000,
@@ -239,8 +245,19 @@ async function sendEmailOtp(email, otp) {
     `,
   };
 
-  const info = await transporter.sendMail(mailOptions);
-  console.log(`✅ Real email delivered via SMTP! MessageId: ${info.messageId}`);
+  let info;
+  try {
+    info = await transporter.sendMail(mailOptions);
+  } catch (sendErr) {
+    console.error(`❌ [transporter.sendMail REJECTED]`);
+    console.error(`   message: ${sendErr.message}`);
+    console.error(`   code: ${sendErr.code || 'none'}`);
+    console.error(`   responseCode: ${sendErr.responseCode || 'none'}`);
+    console.error(`   response: ${sendErr.response || 'none'}`);
+    console.error(`   command: ${sendErr.command || 'none'}`);
+    throw sendErr;
+  }
+  console.log(`✅ [SMTP SENT] MessageId: ${info.messageId} | accepted: ${JSON.stringify(info.accepted)} | rejected: ${JSON.stringify(info.rejected)}`);
   return { delivered: true, messageId: info.messageId, timestamp: new Date().toISOString() };
 }
 
@@ -338,6 +355,7 @@ async function requestOtp(email, options = {}) {
   recordOtpRequest(normalizedEmail);
 
   const otp = generate6DigitOtp();
+  console.log(`\n🔑 [OTP GENERATED] Email: ${normalizedEmail} | OTP: ${otp} | Mode: ${options.isRegistration ? 'REGISTRATION' : 'SIGN-IN'}`);
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = hashOtp(otp, salt);
   const expiresAt = Date.now() + OTP_TTL_MS;
@@ -372,12 +390,25 @@ async function requestOtp(email, options = {}) {
       sendEmailOtp(normalizedEmail, otp),
       new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (15s)')), 15000))
     ]);
+    console.log(`✅ [SMTP OK] Email delivered to ${normalizedEmail} | MessageId: ${emailResult.messageId}`);
   } catch (err) {
-    console.error('[SMTP DISPATCH FAILED]:', err.message, err.code || '', err.responseCode || '');
-    emailResult = { delivered: false, warning: err.message, smtpCode: err.code || null };
+    console.error(`❌ [SMTP DISPATCH FAILED] To: ${normalizedEmail}`);
+    console.error(`   Error: ${err.message}`);
+    console.error(`   Code: ${err.code || 'none'} | ResponseCode: ${err.responseCode || 'none'}`);
+    console.error(`   Stack: ${err.stack}`);
+    console.error(`   OTP was: ${otp} (saved in store, expires in 5 min)`);
+
+    // Delete the OTP since user cannot receive it
+    otpStore.delete(normalizedEmail);
+    console.error(`   OTP removed from store — user must retry.`);
+
+    const smtpErr = new Error(`Email delivery failed: ${err.message}. Please try again in a moment.`);
+    smtpErr.status = 500;
+    smtpErr.code = 'SMTP_FAILED';
+    throw smtpErr;
   }
 
-  const responsePayload = {
+  return {
     success: true,
     message: options.isRegistration
       ? 'A 6-digit registration code has been sent to your UIU email. Valid for 5 minutes.'
@@ -386,8 +417,6 @@ async function requestOtp(email, options = {}) {
     expiresInSeconds: 300,
     emailResult,
   };
-
-  return responsePayload;
 }
 
 /**
