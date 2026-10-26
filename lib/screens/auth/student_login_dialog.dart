@@ -234,13 +234,7 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
     });
 
     try {
-      final res = await _apiService.verifyOtp(
-        email,
-        otp,
-        fullName: _isRegisterMode ? _fullNameController.text.trim() : null,
-        studentId: _isRegisterMode ? _studentIdController.text.trim() : null,
-        department: _isRegisterMode ? _departmentController.text.trim() : null,
-      );
+      final res = await _apiService.verifyOtp(email, otp);
       final studentJson = res['student'] as Map<String, dynamic>;
 
       final resolvedName = studentJson['fullName'] ??
