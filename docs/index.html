@@ -4177,6 +4177,8 @@ const DEMO_CLASSES = [
 ];
 
 // ===================== DYNAMIC BACKEND API BASE URL =====================
+const EDUTOOLS_RENDER_URL = 'https://edutools-y4xy.onrender.com';
+
 function getApiBaseUrl() {
   if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
     // 1. Check window global override or saved localStorage backend
@@ -4194,15 +4196,20 @@ function getApiBaseUrl() {
       }
     } catch (_) {}
 
-    // 3. If hosted on Render, Railway, or Vercel (using Vercel rewrites to proxy /api)
-    if (window.location.hostname.includes('vercel.app') || window.location.port === '3000' || window.location.hostname.includes('onrender.com') || window.location.hostname.includes('railway.app')) {
+    // 3. If served by the backend itself (same origin has /api), use relative paths
+    const host = window.location.hostname;
+    const port = window.location.port;
+    if (host.includes('onrender.com') || host.includes('railway.app') || port === '3000') {
       return '';
     }
-    if (!window.location.hostname.includes('github.io')) {
-      return window.location.origin;
+
+    // 4. If running on localhost (dev server on another port), use localhost:3000
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:3000';
     }
   }
-  return localStorage.getItem('edutools_backend_url') || 'https://edutools-y4xy.onrender.com';
+  // 5. All other cases (GitHub Pages, Vercel static, file://, custom domains) -> Render backend
+  return localStorage.getItem('edutools_backend_url') || EDUTOOLS_RENDER_URL;
 }
 
 // ===================== APP STATE =====================
@@ -5156,14 +5163,14 @@ function renderNextMilestone() {
   if (upcomingList.length === 0) {
     dom.nextMilestoneBanner.style.display = 'none';
     if (state.notices.length === 0 && state.classes.length === 0) {
-      dom.emptyWelcomeCard.style.display = 'flex';
+      if (dom.emptyWelcomeCard) dom.emptyWelcomeCard.style.display = 'flex';
     } else {
-      dom.emptyWelcomeCard.style.display = 'none';
+      if (dom.emptyWelcomeCard) dom.emptyWelcomeCard.style.display = 'none';
     }
     return;
   }
 
-  dom.emptyWelcomeCard.style.display = 'none';
+  if (dom.emptyWelcomeCard) dom.emptyWelcomeCard.style.display = 'none';
   dom.nextMilestoneBanner.style.display = 'flex';
 
   const next = upcomingList[0];
@@ -6687,12 +6694,12 @@ function initEventListeners() {
     openRoutineConfigModal(true);
   };
 
-  dom.btnSyncOfficial.addEventListener('click', loadOfficialHandler);
-  dom.btnLoadOfficialFromDash.addEventListener('click', loadOfficialHandler);
-  dom.btnLoadDemoRoutine.addEventListener('click', loadDemoHandler);
-  dom.btnLoadDemoFromDash.addEventListener('click', loadDemoHandler);
+  if (dom.btnSyncOfficial) dom.btnSyncOfficial.addEventListener('click', loadOfficialHandler);
+  if (dom.btnLoadOfficialFromDash) dom.btnLoadOfficialFromDash.addEventListener('click', loadOfficialHandler);
+  if (dom.btnLoadDemoRoutine) dom.btnLoadDemoRoutine.addEventListener('click', loadDemoHandler);
+  if (dom.btnLoadDemoFromDash) dom.btnLoadDemoFromDash.addEventListener('click', loadDemoHandler);
 
-  dom.btnClearAll.addEventListener('click', () => {
+  if (dom.btnClearAll) dom.btnClearAll.addEventListener('click', () => {
     if (confirm('Clear all loaded classes and academic notices?')) {
       state.classes = [];
       state.notices = [];
@@ -6704,7 +6711,7 @@ function initEventListeners() {
   });
 
   // Save Class Reminder Modal
-  document.getElementById('btnSaveClassReminder').addEventListener('click', () => {
+  document.getElementById('btnSaveClassReminder')?.addEventListener('click', () => {
     const mins = parseInt(document.getElementById('classMinutesSelect').value, 10);
     const enabled = document.getElementById('classReminderToggle').checked;
     const scopeAll = document.getElementById('classScopeAll').checked;
@@ -6729,7 +6736,7 @@ function initEventListeners() {
   });
 
   // Save Notice Reminder Modal
-  document.getElementById('btnSaveNoticeReminder').addEventListener('click', () => {
+  document.getElementById('btnSaveNoticeReminder')?.addEventListener('click', () => {
     const timeVal = document.getElementById('noticeTimeInput').value;
     const enabled = document.getElementById('noticeReminderToggle').checked;
     const dayBefore = document.getElementById('noticeDayBeforeCheckbox').checked;
@@ -6847,8 +6854,8 @@ function initEventListeners() {
   }
 
   // File Ingestion from textarea or active content
-  dom.btnProcessImport.addEventListener('click', () => {
-    const content = dom.importTextarea.value.trim();
+  if (dom.btnProcessImport) dom.btnProcessImport.addEventListener('click', () => {
+    const content = dom.importTextarea ? dom.importTextarea.value.trim() : '';
     if (!content) {
       showToast('Please drag & drop a file, browse from device, or paste content.', 'warning');
       return;
@@ -6856,27 +6863,27 @@ function initEventListeners() {
 
     try {
       processFileContent(content, 'pasted_input.txt');
-      dom.importTextarea.value = '';
+      if (dom.importTextarea) dom.importTextarea.value = '';
     } catch (e) {
       showToast('Failed to parse content: ' + e.message, 'warning');
     }
   });
 
   // Export .ICS
-  dom.btnExportIcs.addEventListener('click', () => {
+  if (dom.btnExportIcs) dom.btnExportIcs.addEventListener('click', () => {
     const ics = generateIcsExport();
     document.getElementById('exportIcsTextarea').value = ics;
     dom.exportIcsModal.classList.add('show');
   });
 
-  document.getElementById('btnCopyIcs').addEventListener('click', () => {
+  document.getElementById('btnCopyIcs')?.addEventListener('click', () => {
     const val = document.getElementById('exportIcsTextarea').value;
     navigator.clipboard.writeText(val);
     showToast('Copied .ICS data to clipboard!', 'success');
     dom.exportIcsModal.classList.remove('show');
   });
 
-  document.getElementById('btnDownloadIcs').addEventListener('click', () => {
+  document.getElementById('btnDownloadIcs')?.addEventListener('click', () => {
     const val = document.getElementById('exportIcsTextarea').value;
     const blob = new Blob([val], { type: 'text/calendar;charset=utf-8;' });
     const link = document.createElement('a');
@@ -6889,11 +6896,11 @@ function initEventListeners() {
   });
 
   // Add Class Form
-  dom.btnOpenAddClass.addEventListener('click', () => {
-    dom.classModal.classList.add('show');
+  if (dom.btnOpenAddClass) dom.btnOpenAddClass.addEventListener('click', () => {
+    if (dom.classModal) dom.classModal.classList.add('show');
   });
 
-  document.getElementById('classForm').addEventListener('submit', (e) => {
+  document.getElementById('classForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const code = document.getElementById('classCourseCode').value.trim();
     const subject = document.getElementById('classSubject').value.trim();
@@ -6924,13 +6931,15 @@ function initEventListeners() {
   });
 
   // Add Notice Form
-  dom.btnOpenAddNotice.addEventListener('click', () => {
-    document.getElementById('noticeStartDateInput').value = formatDateISO(state.selectedDate);
-    document.getElementById('noticeEndDateInput').value = formatDateISO(state.selectedDate);
-    dom.noticeModal.classList.add('show');
+  if (dom.btnOpenAddNotice) dom.btnOpenAddNotice.addEventListener('click', () => {
+    const startInput = document.getElementById('noticeStartDateInput');
+    const endInput = document.getElementById('noticeEndDateInput');
+    if (startInput) startInput.value = formatDateISO(state.selectedDate);
+    if (endInput) endInput.value = formatDateISO(state.selectedDate);
+    if (dom.noticeModal) dom.noticeModal.classList.add('show');
   });
 
-  document.getElementById('noticeForm').addEventListener('submit', (e) => {
+  document.getElementById('noticeForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const title = document.getElementById('noticeTitleInput').value.trim();
     const category = document.getElementById('noticeCategoryInput').value;
@@ -7106,7 +7115,7 @@ function initAuthGate() {
   }
 
   // Password Sign In handler
-  document.getElementById('agSignInPasswordBtn').addEventListener('click', async () => {
+  document.getElementById('agSignInPasswordBtn')?.addEventListener('click', async () => {
     const email = document.getElementById('agSignInEmail').value.trim().toLowerCase();
     const password = document.getElementById('agSignInPassword').value;
     const errEl = document.getElementById('agSignInError');
@@ -7177,7 +7186,7 @@ function initAuthGate() {
   });
 
   // OTP Sign In handler
-  document.getElementById('agSignInSendBtn').addEventListener('click', async () => {
+  document.getElementById('agSignInSendBtn')?.addEventListener('click', async () => {
     const email = document.getElementById('agSignInEmail').value.trim().toLowerCase();
     const errEl = document.getElementById('agSignInError');
     const errSpan = errEl.querySelector('span');
@@ -7230,18 +7239,18 @@ function initAuthGate() {
     }
   });
 
-  document.getElementById('agSignInChangeEmail').addEventListener('click', () => {
+  document.getElementById('agSignInChangeEmail')?.addEventListener('click', () => {
     clearInterval(signInTimerInterval);
     document.getElementById('agSignInStep2').style.display = 'none';
     document.getElementById('agSignInStep1').style.display = 'block';
   });
 
-  document.getElementById('agSignInResend').addEventListener('click', () => {
+  document.getElementById('agSignInResend')?.addEventListener('click', () => {
     document.getElementById('agSignInChangeEmail').click();
     document.getElementById('agSignInSendBtn').click();
   });
 
-  document.getElementById('agSignInVerifyBtn').addEventListener('click', async () => {
+  document.getElementById('agSignInVerifyBtn')?.addEventListener('click', async () => {
     const email = document.getElementById('agSignInEmail').value.trim().toLowerCase();
     const otp = document.getElementById('agSignInOtp').value.trim();
     const errEl = document.getElementById('agSignInOtpError');
@@ -7316,7 +7325,7 @@ function initAuthGate() {
     }, 1000);
   }
 
-  document.getElementById('agRegSendBtn').addEventListener('click', async () => {
+  document.getElementById('agRegSendBtn')?.addEventListener('click', async () => {
     const email = document.getElementById('agRegEmail').value.trim().toLowerCase();
     const fullName = document.getElementById('agRegName').value.trim();
     const studentId = document.getElementById('agRegStudentId').value.trim();
@@ -7389,18 +7398,18 @@ function initAuthGate() {
     }
   });
 
-  document.getElementById('agRegChangeEmail').addEventListener('click', () => {
+  document.getElementById('agRegChangeEmail')?.addEventListener('click', () => {
     clearInterval(regTimerInterval);
     document.getElementById('agRegStep2').style.display = 'none';
     document.getElementById('agRegStep1').style.display = 'block';
   });
 
-  document.getElementById('agRegResend').addEventListener('click', () => {
+  document.getElementById('agRegResend')?.addEventListener('click', () => {
     document.getElementById('agRegChangeEmail').click();
     document.getElementById('agRegSendBtn').click();
   });
 
-  document.getElementById('agRegVerifyBtn').addEventListener('click', async () => {
+  document.getElementById('agRegVerifyBtn')?.addEventListener('click', async () => {
     const email = document.getElementById('agRegEmail').value.trim().toLowerCase();
     const otp = document.getElementById('agRegOtp').value.trim();
     const errEl = document.getElementById('agRegOtpError');
@@ -7488,7 +7497,7 @@ function initToolsSection() {
   });
 
   // CGPA Calculator
-  document.getElementById('btnAddCgpaSemester').addEventListener('click', () => {
+  document.getElementById('btnAddCgpaSemester')?.addEventListener('click', () => {
     const list = document.getElementById('cgpaSemestersList');
     const count = list.querySelectorAll('.cgpa-semester-row').length + 1;
     const row = document.createElement('div');
@@ -7501,7 +7510,7 @@ function initToolsSection() {
     list.appendChild(row);
   });
 
-  document.getElementById('btnCalcCgpa').addEventListener('click', () => {
+  document.getElementById('btnCalcCgpa')?.addEventListener('click', () => {
     const gpas = document.querySelectorAll('.cgpa-gpa-input');
     const credits = document.querySelectorAll('.cgpa-credits-input');
     let totalPoints = 0, totalCredits = 0;
@@ -7521,7 +7530,7 @@ function initToolsSection() {
     document.getElementById('cgpaResultBox').style.display = 'block';
   });
 
-  document.getElementById('btnCloseCgpa').addEventListener('click', () => {
+  document.getElementById('btnCloseCgpa')?.addEventListener('click', () => {
     document.getElementById('cgpaCalcPanel').style.display = 'none';
   });
 
@@ -7532,7 +7541,7 @@ function initToolsSection() {
     pharmacy: { perCredit: 7000, labFee: 4000, devFee: 5000, regFee: 1500 },
   };
 
-  document.getElementById('btnCalcTuition').addEventListener('click', () => {
+  document.getElementById('btnCalcTuition')?.addEventListener('click', () => {
     const dept = document.getElementById('tuitionDept').value;
     const credits = parseInt(document.getElementById('tuitionCredits').value) || 0;
     const waiver = parseFloat(document.getElementById('tuitionWaiver').value) || 0;
@@ -7569,7 +7578,7 @@ function initToolsSection() {
     el.style.display = 'block';
   });
 
-  document.getElementById('btnCloseTuition').addEventListener('click', () => {
+  document.getElementById('btnCloseTuition')?.addEventListener('click', () => {
     document.getElementById('tuitionCalcPanel').style.display = 'none';
   });
 }
