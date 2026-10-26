@@ -2479,9 +2479,13 @@ body {
               <span id="agSignInOtpTarget">Code sent to:</span>
               <button id="agSignInChangeEmail">Change email</button>
             </div>
-            <div class="auth-success show" style="margin-bottom: 14px;">
+            <div class="auth-success show" id="agSignInEmailSent" style="margin-bottom: 14px;">
               <i class="fa-solid fa-envelope-circle-check"></i>
-              <span>Check your inbox for the 6-digit code from <strong>hamimasir5@gmail.com</strong></span>
+              <span>Check your inbox (and spam/junk folder) for the 6-digit code from <strong>hamimasir5@gmail.com</strong></span>
+            </div>
+            <div class="auth-error" id="agSignInEmailFail" style="margin-bottom: 14px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Email delivery failed. Check your email address and try again, or check spam/junk folder.</span>
             </div>
             <div class="auth-field">
               <label>Enter 6-Digit Code <span class="required">*</span></label>
@@ -2548,9 +2552,13 @@ body {
               <span id="agRegOtpTarget">Code sent to:</span>
               <button id="agRegChangeEmail">Change details</button>
             </div>
-            <div class="auth-success show" style="margin-bottom: 14px;">
+            <div class="auth-success show" id="agRegEmailSent" style="margin-bottom: 14px;">
               <i class="fa-solid fa-envelope-circle-check"></i>
-              <span>Check your inbox for the 6-digit code from <strong>hamimasir5@gmail.com</strong></span>
+              <span>Check your inbox (and spam/junk folder) for the 6-digit code from <strong>hamimasir5@gmail.com</strong></span>
+            </div>
+            <div class="auth-error" id="agRegEmailFail" style="margin-bottom: 14px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Email delivery failed. Check your email address and try again, or check spam/junk folder.</span>
             </div>
             <div class="auth-field">
               <label>Enter 6-Digit Code <span class="required">*</span></label>
@@ -6592,6 +6600,13 @@ function initAuthGate() {
       document.getElementById('agSignInStep1').style.display = 'none';
       document.getElementById('agSignInStep2').style.display = 'block';
       document.getElementById('agSignInOtpTarget').textContent = `Code sent to: ${email}`;
+
+      const emailDelivered = data.emailResult && data.emailResult.delivered;
+      document.getElementById('agSignInEmailSent').style.display = emailDelivered ? '' : 'none';
+      document.getElementById('agSignInEmailSent').classList.toggle('show', !!emailDelivered);
+      document.getElementById('agSignInEmailFail').style.display = emailDelivered ? 'none' : '';
+      document.getElementById('agSignInEmailFail').classList.toggle('show', !emailDelivered);
+
       startSignInTimer();
     } catch (err) {
       errSpan.textContent = err.message;
@@ -6737,6 +6752,13 @@ function initAuthGate() {
       document.getElementById('agRegStep1').style.display = 'none';
       document.getElementById('agRegStep2').style.display = 'block';
       document.getElementById('agRegOtpTarget').textContent = `Code sent to: ${email}`;
+
+      const emailDelivered = data.emailResult && data.emailResult.delivered;
+      document.getElementById('agRegEmailSent').style.display = emailDelivered ? '' : 'none';
+      document.getElementById('agRegEmailSent').classList.toggle('show', !!emailDelivered);
+      document.getElementById('agRegEmailFail').style.display = emailDelivered ? 'none' : '';
+      document.getElementById('agRegEmailFail').classList.toggle('show', !emailDelivered);
+
       startRegTimer();
     } catch (err) {
       errSpan.textContent = err.message;

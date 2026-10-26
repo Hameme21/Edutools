@@ -108,7 +108,7 @@ async function runTests() {
     assert(typeof eduRes.data.devOtp === 'string' && eduRes.data.devOtp.length === 6, 'Generated OTP is 6 digits');
 
     // Valid .ac.bd email
-    const acBdRes = await makeRequest('POST', '/api/auth/request-otp', { email: 'sarah.ahmed@cse.buet.ac.bd' });
+    const acBdRes = await makeRequest('POST', '/api/auth/request-otp', { email: 'john.doe@cse.buet.ac.bd' });
     assert(acBdRes.status === 200, '.ac.bd institutional email accepted (HTTP 200)');
     console.log('');
 

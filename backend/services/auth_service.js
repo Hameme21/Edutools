@@ -14,9 +14,9 @@ const EMAIL_PASS = process.env.EMAIL_PASS || 'faixfyjgwixzbisl';
 // Nodemailer Gmail SMTP Transporter with connection timeouts
 const transporter = nodemailer.createTransport({
   service: 'gmail',
-  connectionTimeout: 6000,
-  greetingTimeout: 6000,
-  socketTimeout: 6000,
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 15000,
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS,
@@ -329,7 +329,7 @@ async function requestOtp(email, options = {}) {
   try {
     emailResult = await Promise.race([
       sendEmailOtp(normalizedEmail, otp),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (6s)')), 6000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (15s)')), 15000))
     ]);
   } catch (err) {
     console.warn('[SMTP DISPATCH WARNING]:', err.message);
