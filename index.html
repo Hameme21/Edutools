@@ -4060,16 +4060,30 @@ async function syncStudentWithServer(push = true) {
         }
       }
 
-      // 2. Pull student profile update if logged in
+      // 2. Pull student profile & schedule if logged in
       if (state.student) {
         const res = await fetch(`${getApiBaseUrl()}/api/student/sync?email=${encodeURIComponent(state.student.email)}`);
         const data = await res.json();
+        let changed = false;
+
+        if (data.student && data.student.fullName && data.student.email) {
+          const remote = data.student;
+          if (remote.fullName !== state.student.fullName || remote.studentId !== state.student.studentId || remote.department !== state.student.department) {
+            state.student = { ...state.student, fullName: remote.fullName, studentId: remote.studentId || state.student.studentId, department: remote.department || state.student.department };
+            changed = true;
+          }
+        }
+
         if (data.classes && Array.isArray(data.classes) && data.classes.length > 0) {
           if (JSON.stringify(data.classes) !== JSON.stringify(state.classes)) {
             state.classes = data.classes;
-            renderAll();
-            saveStudentSession();
+            changed = true;
           }
+        }
+
+        if (changed) {
+          renderAll();
+          saveStudentSession();
         }
       }
     }

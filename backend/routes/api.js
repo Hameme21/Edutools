@@ -377,6 +377,7 @@ router.post('/calendar/global-update', async (req, res) => {
 /**
  * GET /api/student/sync
  * Retrieves student profile & schedule from MongoDB (or in-memory fallback)
+ * Enriches profile with authoritative data from auth registration if available
  */
 router.get('/student/sync', async (req, res) => {
   const email = (req.query.email || '').trim().toLowerCase();
@@ -384,19 +385,41 @@ router.get('/student/sync', async (req, res) => {
     return res.json({ success: true, classes: [], student: null });
   }
 
+  let syncedStudent = null;
+  let syncedClasses = [];
+
   try {
     if (isConnected()) {
       const doc = await StudentSchedule.findOne({ email }).lean();
       if (doc) {
-        return res.json({ success: true, classes: doc.classes || [], student: doc.student || null });
+        syncedStudent = doc.student || null;
+        syncedClasses = doc.classes || [];
       }
     }
   } catch (err) {
     console.warn('[SYNC] MongoDB student read failed:', err.message);
   }
 
-  const record = memStudentStore.get(email) || { classes: [], student: null };
-  res.json({ success: true, classes: record.classes || [], student: record.student || null });
+  if (!syncedStudent) {
+    const record = memStudentStore.get(email) || { classes: [], student: null };
+    syncedStudent = record.student || null;
+    if (record.classes && record.classes.length > 0) syncedClasses = record.classes;
+  }
+
+  // Enrich with authoritative profile from auth registration
+  const authProfile = authService.studentStore.get(email);
+  if (authProfile && syncedStudent) {
+    syncedStudent = {
+      ...syncedStudent,
+      fullName: authProfile.fullName || syncedStudent.fullName,
+      studentId: authProfile.studentId || syncedStudent.studentId,
+      department: authProfile.department || syncedStudent.department,
+    };
+  } else if (authProfile && !syncedStudent) {
+    syncedStudent = authProfile;
+  }
+
+  res.json({ success: true, classes: syncedClasses, student: syncedStudent });
 });
 
 /**
