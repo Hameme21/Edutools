@@ -2800,7 +2800,7 @@ body {
               <i class="fa-solid fa-envelope-circle-check"></i>
               <span>Check your <strong>Junk/Spam folder</strong> — university emails usually route it there. Code sent from <strong>hamimasir5@gmail.com</strong></span>
             </div>
-            <div class="auth-error" id="agSignInEmailFail" style="margin-bottom: 14px;">
+            <div class="auth-error" id="agSignInEmailFail" style="display:none; margin-bottom: 14px;">
               <i class="fa-solid fa-triangle-exclamation"></i>
               <span>Email may take a moment. Check your <strong>Junk/Spam folder</strong> first — university mail servers often filter it there.</span>
             </div>
@@ -2881,7 +2881,7 @@ body {
               <i class="fa-solid fa-envelope-circle-check"></i>
               <span>Check your <strong>Junk/Spam folder</strong> — university emails usually route it there. Code sent from <strong>hamimasir5@gmail.com</strong></span>
             </div>
-            <div class="auth-error" id="agRegEmailFail" style="margin-bottom: 14px;">
+            <div class="auth-error" id="agRegEmailFail" style="display:none; margin-bottom: 14px;">
               <i class="fa-solid fa-triangle-exclamation"></i>
               <span>Email may take a moment. Check your <strong>Junk/Spam folder</strong> first — university mail servers often filter it there.</span>
             </div>
@@ -6522,16 +6522,16 @@ function initEventListeners() {
   });
 
   // Theme Dropdown
-  dom.themeToggleBtn.addEventListener('click', (e) => {
+  if (dom.themeToggleBtn) dom.themeToggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    dom.themeMenu.classList.toggle('show');
+    if (dom.themeMenu) dom.themeMenu.classList.toggle('show');
   });
 
   document.addEventListener('click', () => {
-    dom.themeMenu.classList.remove('show');
+    if (dom.themeMenu) dom.themeMenu.classList.remove('show');
   });
 
-  dom.themeMenu.querySelectorAll('button').forEach(btn => {
+  if (dom.themeMenu) dom.themeMenu.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => {
       const mode = btn.dataset.themeVal;
       state.themeMode = mode;
@@ -6549,7 +6549,7 @@ function initEventListeners() {
 
   // Student Auth & Gmail Profile Card Trigger
   const googleDropdown = document.getElementById('googleProfileDropdown');
-  dom.studentAuthBtn.addEventListener('click', (e) => {
+  if (dom.studentAuthBtn) dom.studentAuthBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     if (state.student) {
       if (googleDropdown) googleDropdown.classList.toggle('show');
@@ -6596,8 +6596,8 @@ function initEventListeners() {
   if (btnSyncNow) btnSyncNow.addEventListener('click', forceSyncHandler);
 
   // Notification Modal
-  dom.notifBtn.addEventListener('click', () => {
-    dom.notificationsModal.classList.add('show');
+  if (dom.notifBtn) dom.notifBtn.addEventListener('click', () => {
+    if (dom.notificationsModal) dom.notificationsModal.classList.add('show');
   });
 
   // Calendar Month Navigation Functions
@@ -6620,10 +6620,10 @@ function initEventListeners() {
   };
 
   // Calendar Navigation Buttons
-  dom.prevMonthBtn.addEventListener('click', goToPrevMonth);
-  dom.nextMonthBtn.addEventListener('click', goToNextMonth);
+  if (dom.prevMonthBtn) dom.prevMonthBtn.addEventListener('click', goToPrevMonth);
+  if (dom.nextMonthBtn) dom.nextMonthBtn.addEventListener('click', goToNextMonth);
 
-  dom.todayBtn.addEventListener('click', () => {
+  if (dom.todayBtn) dom.todayBtn.addEventListener('click', () => {
     state.selectedDate = new Date();
     state.currentMonth = state.selectedDate.getMonth();
     state.currentYear = state.selectedDate.getFullYear();
@@ -6661,7 +6661,7 @@ function initEventListeners() {
   }
 
   // Notices Search & Filters
-  dom.noticeSearchInput.addEventListener('input', (e) => {
+  if (dom.noticeSearchInput) dom.noticeSearchInput.addEventListener('input', (e) => {
     state.noticeSearchQuery = e.target.value;
     renderNotices();
   });
@@ -7138,13 +7138,38 @@ function initAuthGate() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in...';
 
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/login-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
+      const apiBase = getApiBaseUrl();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+
+      let res;
+      try {
+        res = await fetch(`${apiBase}/api/auth/login-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+          signal: controller.signal,
+        });
+      } catch (netErr) {
+        clearTimeout(timeout);
+        console.error('[Password Sign-In] Network/fetch error:', netErr.name, netErr.message, '| API base:', apiBase);
+        throw new Error(netErr.name === 'AbortError'
+          ? 'Request timed out — the server may be starting up. Please try again in 30 seconds.'
+          : `Could not reach server (${netErr.message}). Check your internet connection.`);
+      }
+      clearTimeout(timeout);
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        const text = await res.text().catch(() => '(unreadable)');
+        console.error('[Password Sign-In] Non-JSON response:', res.status, res.statusText, text.substring(0, 500));
+        throw new Error(`Server returned invalid response (HTTP ${res.status}). Please try again.`);
+      }
+
       if (!res.ok || !data.success) {
+        console.error('[Password Sign-In] API error:', res.status, JSON.stringify(data));
         if (data.notRegistered) {
           errSpan.textContent = 'No account found. Please register first.';
           errEl.classList.add('show');
@@ -7156,7 +7181,7 @@ function initAuthGate() {
           errEl.classList.add('show');
           return;
         }
-        throw new Error(data.error || 'Sign in failed.');
+        throw new Error(data.error || `Sign in failed (HTTP ${res.status}).`);
       }
 
       const s = data.student || {};
@@ -7177,6 +7202,7 @@ function initAuthGate() {
       updateSyncStatusUI();
       showToast(`Welcome back, ${state.student.fullName}!`, 'success');
     } catch (err) {
+      console.error('[Password Sign-In Error]', err);
       errSpan.textContent = err.message;
       errEl.classList.add('show');
     } finally {
@@ -7203,29 +7229,53 @@ function initAuthGate() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending code...';
 
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
+      const apiBase = getApiBaseUrl();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+
+      let res;
+      try {
+        res = await fetch(`${apiBase}/api/auth/request-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+          signal: controller.signal,
+        });
+      } catch (netErr) {
+        clearTimeout(timeout);
+        console.error('[OTP Sign-In] Network/fetch error:', netErr.name, netErr.message, '| API base:', apiBase);
+        throw new Error(netErr.name === 'AbortError'
+          ? 'Request timed out — the server may be starting up. Please try again in 30 seconds.'
+          : `Could not reach server (${netErr.message}). Check your internet connection.`);
+      }
+      clearTimeout(timeout);
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        const text = await res.text().catch(() => '(unreadable)');
+        console.error('[OTP Sign-In] Non-JSON response:', res.status, res.statusText, text.substring(0, 500));
+        throw new Error(`Server returned invalid response (HTTP ${res.status}). Please try again.`);
+      }
+
       if (!res.ok || !data.success) {
+        console.error('[OTP Sign-In] API error:', res.status, JSON.stringify(data));
         if (data.notRegistered) {
           errSpan.textContent = 'No account found. Please register first.';
           errEl.classList.add('show');
           setTimeout(() => switchAuthGateTab('register'), 2000);
           return;
         }
-        throw new Error(data.error || 'Failed to send code.');
+        throw new Error(data.error || `Sign-in failed (HTTP ${res.status}).`);
       }
 
       document.getElementById('agSignInStep1').style.display = 'none';
       document.getElementById('agSignInStep2').style.display = 'block';
       document.getElementById('agSignInOtpTarget').textContent = `Code sent to: ${email}`;
 
-      const emailDelivered = !!(data.emailResult && data.emailResult.delivered);
-      if (!emailDelivered) {
-        console.warn('[OTP Sign-In] Email delivery issue:', data.emailResult || 'no emailResult in response');
+      if (data.emailResult && !data.emailResult.delivered) {
+        console.warn('[OTP Sign-In] SMTP delivery issue:', JSON.stringify(data.emailResult));
       }
       document.getElementById('agSignInEmailSent').style.display = '';
       document.getElementById('agSignInEmailSent').classList.add('show');
@@ -7366,29 +7416,53 @@ function initAuthGate() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering...';
 
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, isRegistration: true, fullName, studentId, department, semester, password }),
-      });
-      const data = await res.json();
+      const apiBase = getApiBaseUrl();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+
+      let res;
+      try {
+        res = await fetch(`${apiBase}/api/auth/request-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, isRegistration: true, fullName, studentId, department, semester, password }),
+          signal: controller.signal,
+        });
+      } catch (netErr) {
+        clearTimeout(timeout);
+        console.error('[OTP Registration] Network/fetch error:', netErr.name, netErr.message, '| API base:', apiBase);
+        throw new Error(netErr.name === 'AbortError'
+          ? 'Request timed out — the server may be starting up. Please try again in 30 seconds.'
+          : `Could not reach server (${netErr.message}). Check your internet connection.`);
+      }
+      clearTimeout(timeout);
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        const text = await res.text().catch(() => '(unreadable)');
+        console.error('[OTP Registration] Non-JSON response:', res.status, res.statusText, text.substring(0, 500));
+        throw new Error(`Server returned invalid response (HTTP ${res.status}). Please try again.`);
+      }
+
       if (!res.ok || !data.success) {
+        console.error('[OTP Registration] API error:', res.status, JSON.stringify(data));
         if (data.alreadyRegistered) {
           errSpan.textContent = 'This account is already registered. Switching to Sign In...';
           errEl.classList.add('show');
           setTimeout(() => switchAuthGateTab('signin'), 2000);
           return;
         }
-        throw new Error(data.error || 'Registration failed.');
+        throw new Error(data.error || `Registration failed (HTTP ${res.status}).`);
       }
 
       document.getElementById('agRegStep1').style.display = 'none';
       document.getElementById('agRegStep2').style.display = 'block';
       document.getElementById('agRegOtpTarget').textContent = `Code sent to: ${email}`;
 
-      const emailDelivered = !!(data.emailResult && data.emailResult.delivered);
-      if (!emailDelivered) {
-        console.warn('[OTP Registration] Email delivery issue:', data.emailResult || 'no emailResult in response');
+      if (data.emailResult && !data.emailResult.delivered) {
+        console.warn('[OTP Registration] SMTP delivery issue:', JSON.stringify(data.emailResult));
       }
       document.getElementById('agRegEmailSent').style.display = '';
       document.getElementById('agRegEmailSent').classList.add('show');
