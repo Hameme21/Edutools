@@ -373,8 +373,8 @@ async function requestOtp(email, options = {}) {
       new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (15s)')), 15000))
     ]);
   } catch (err) {
-    console.warn('[SMTP DISPATCH WARNING]:', err.message);
-    emailResult = { delivered: false, warning: err.message };
+    console.error('[SMTP DISPATCH FAILED]:', err.message, err.code || '', err.responseCode || '');
+    emailResult = { delivered: false, warning: err.message, smtpCode: err.code || null };
   }
 
   const responsePayload = {

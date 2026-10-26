@@ -7223,14 +7223,18 @@ function initAuthGate() {
       document.getElementById('agSignInStep2').style.display = 'block';
       document.getElementById('agSignInOtpTarget').textContent = `Code sent to: ${email}`;
 
-      const emailDelivered = data.emailResult && data.emailResult.delivered;
-      document.getElementById('agSignInEmailSent').style.display = emailDelivered ? '' : 'none';
-      document.getElementById('agSignInEmailSent').classList.toggle('show', !!emailDelivered);
-      document.getElementById('agSignInEmailFail').style.display = emailDelivered ? 'none' : '';
-      document.getElementById('agSignInEmailFail').classList.toggle('show', !emailDelivered);
+      const emailDelivered = !!(data.emailResult && data.emailResult.delivered);
+      if (!emailDelivered) {
+        console.warn('[OTP Sign-In] Email delivery issue:', data.emailResult || 'no emailResult in response');
+      }
+      document.getElementById('agSignInEmailSent').style.display = '';
+      document.getElementById('agSignInEmailSent').classList.add('show');
+      document.getElementById('agSignInEmailFail').style.display = 'none';
+      document.getElementById('agSignInEmailFail').classList.remove('show');
 
       startSignInTimer();
     } catch (err) {
+      console.error('[OTP Sign-In Error]', err);
       errSpan.textContent = err.message;
       errEl.classList.add('show');
     } finally {
@@ -7382,14 +7386,18 @@ function initAuthGate() {
       document.getElementById('agRegStep2').style.display = 'block';
       document.getElementById('agRegOtpTarget').textContent = `Code sent to: ${email}`;
 
-      const emailDelivered = data.emailResult && data.emailResult.delivered;
-      document.getElementById('agRegEmailSent').style.display = emailDelivered ? '' : 'none';
-      document.getElementById('agRegEmailSent').classList.toggle('show', !!emailDelivered);
-      document.getElementById('agRegEmailFail').style.display = emailDelivered ? 'none' : '';
-      document.getElementById('agRegEmailFail').classList.toggle('show', !emailDelivered);
+      const emailDelivered = !!(data.emailResult && data.emailResult.delivered);
+      if (!emailDelivered) {
+        console.warn('[OTP Registration] Email delivery issue:', data.emailResult || 'no emailResult in response');
+      }
+      document.getElementById('agRegEmailSent').style.display = '';
+      document.getElementById('agRegEmailSent').classList.add('show');
+      document.getElementById('agRegEmailFail').style.display = 'none';
+      document.getElementById('agRegEmailFail').classList.remove('show');
 
       startRegTimer();
     } catch (err) {
+      console.error('[OTP Registration Error]', err);
       errSpan.textContent = err.message;
       errEl.classList.add('show');
     } finally {
