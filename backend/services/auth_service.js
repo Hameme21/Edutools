@@ -126,6 +126,23 @@ function hashOtp(otp, salt) {
 }
 
 /**
+ * Hashes a password using PBKDF2 with a random salt
+ */
+function hashPassword(password) {
+  const salt = crypto.randomBytes(32).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+  return { hash, salt };
+}
+
+/**
+ * Verifies a password against stored hash and salt
+ */
+function verifyPassword(password, storedHash, storedSalt) {
+  const hash = crypto.pbkdf2Sync(password, storedSalt, 100000, 64, 'sha512').toString('hex');
+  return hash === storedHash;
+}
+
+/**
  * Formats a clean human-readable name from an email address handle
  */
 function formatNameFromEmail(email) {
@@ -297,10 +314,24 @@ async function requestOtp(email, options = {}) {
     if (!isUiuEmail(normalizedEmail)) {
       throw new Error('Registration is strictly restricted to UIU student emails with degree program (e.g. ahamim2510370@bscse.uiu.ac.bd). Plain @uiu.ac.bd is not allowed.');
     }
+
+    if (options.password) {
+      if (options.password.length < 6) {
+        throw new Error('Password must be at least 6 characters long.');
+      }
+    }
   } else {
     // For sign in: allow @<degree>.uiu.ac.bd, valid university emails, or hamimasir5@gmail.com
     if (!isUiuEmail(normalizedEmail) && !isUniversityEmail(normalizedEmail) && normalizedEmail !== 'hamimasir5@gmail.com') {
       throw new Error('Sign in is restricted to UIU student emails with degree program (e.g. ahamim2510370@bscse.uiu.ac.bd).');
+    }
+
+    if (!isEmailRegistered(normalizedEmail)) {
+      const err = new Error('No account found for this email. Please register first.');
+      err.status = 404;
+      err.code = 'NOT_REGISTERED';
+      err.notRegistered = true;
+      throw err;
     }
   }
 
@@ -310,6 +341,14 @@ async function requestOtp(email, options = {}) {
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = hashOtp(otp, salt);
   const expiresAt = Date.now() + OTP_TTL_MS;
+
+  let pendingPasswordHash = null;
+  let pendingPasswordSalt = null;
+  if (options.isRegistration && options.password) {
+    const pw = hashPassword(options.password);
+    pendingPasswordHash = pw.hash;
+    pendingPasswordSalt = pw.salt;
+  }
 
   otpStore.set(normalizedEmail, {
     hash,
@@ -322,6 +361,8 @@ async function requestOtp(email, options = {}) {
     studentId: options.studentId?.trim(),
     department: options.department?.trim(),
     semester: options.semester?.trim(),
+    pendingPasswordHash,
+    pendingPasswordSalt,
   });
 
   // SMTP email dispatch from hamimasir5@gmail.com with fallback timeout
@@ -382,6 +423,8 @@ async function verifyOtp(email, submittedOtp) {
   const regStudentId = record.studentId;
   const regDepartment = record.department;
   const regSemester = record.semester;
+  const pendingPasswordHash = record.pendingPasswordHash;
+  const pendingPasswordSalt = record.pendingPasswordSalt;
   otpStore.delete(normalizedEmail);
 
   // Retrieve or create student profile
@@ -402,6 +445,10 @@ async function verifyOtp(email, submittedOtp) {
       createdAt: student ? student.createdAt : new Date().toISOString(),
       lastLogin: new Date().toISOString(),
     };
+    if (pendingPasswordHash && pendingPasswordSalt) {
+      student.passwordHash = pendingPasswordHash;
+      student.passwordSalt = pendingPasswordSalt;
+    }
     studentStore.set(normalizedEmail, student);
     saveRegisteredStudents();
   } else {
@@ -421,13 +468,14 @@ async function verifyOtp(email, submittedOtp) {
     { expiresIn: '7d' }
   );
 
+  const { passwordHash: _ph, passwordSalt: _ps, ...safeStudent } = student;
   return {
     success: true,
     message: isRegistration
       ? 'Registration complete! Welcome to Edutools UIU.'
       : 'Authenticated successfully with UIU Portal.',
     token,
-    student,
+    student: safeStudent,
   };
 }
 
@@ -444,6 +492,79 @@ function verifySessionToken(token) {
   }
 }
 
+/**
+ * Authenticates a student using email + password (no OTP required)
+ */
+async function loginWithPassword(email, password) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!isValidEmail(normalizedEmail)) {
+    throw new Error('Please enter a valid email address.');
+  }
+
+  if (!password || password.length < 1) {
+    throw new Error('Password is required.');
+  }
+
+  const student = studentStore.get(normalizedEmail);
+  if (!student) {
+    const err = new Error('No account found for this email. Please register first.');
+    err.status = 404;
+    err.code = 'NOT_REGISTERED';
+    err.notRegistered = true;
+    throw err;
+  }
+
+  if (!student.passwordHash || !student.passwordSalt) {
+    const err = new Error('This account was created without a password. Please sign in using OTP verification.');
+    err.status = 400;
+    err.code = 'NO_PASSWORD';
+    err.noPassword = true;
+    throw err;
+  }
+
+  if (!verifyPassword(password, student.passwordHash, student.passwordSalt)) {
+    throw new Error('Incorrect password. Please try again.');
+  }
+
+  student.lastLogin = new Date().toISOString();
+  saveRegisteredStudents();
+
+  const token = jwt.sign(
+    {
+      studentId: student.studentId,
+      email: student.email,
+      fullName: student.fullName,
+      university: student.university,
+    },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  const { passwordHash, passwordSalt, ...safeStudent } = student;
+  return {
+    success: true,
+    message: 'Signed in successfully.',
+    token,
+    student: safeStudent,
+  };
+}
+
+/**
+ * Verifies SMTP transporter connectivity at startup
+ */
+async function verifySMTP() {
+  try {
+    await transporter.verify();
+    console.log('[SMTP] Gmail transporter verified — ready to send emails.');
+    return true;
+  } catch (err) {
+    console.warn('[SMTP] Transporter verification failed:', err.message);
+    console.warn('[SMTP] OTP emails may not be delivered. Password login still works.');
+    return false;
+  }
+}
+
 module.exports = {
   transporter,
   isValidEmail,
@@ -452,7 +573,9 @@ module.exports = {
   isEmailRegistered,
   requestOtp,
   verifyOtp,
+  loginWithPassword,
   verifySessionToken,
+  verifySMTP,
   formatNameFromEmail,
   studentStore,
   otpStore,

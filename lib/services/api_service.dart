@@ -415,6 +415,62 @@ class ApiService {
     }
   }
 
+  /// Authenticate with email + password (no OTP required)
+  Future<Map<String, dynamic>> loginWithPassword(String email, String password) async {
+    final norm = email.trim().toLowerCase();
+
+    if (!isValidEmail(norm)) {
+      throw Exception('Please enter a valid email address.');
+    }
+    if (password.isEmpty) {
+      throw Exception('Password is required.');
+    }
+
+    final data = await _postJson(
+      '/api/auth/login-password',
+      {'email': norm, 'password': password},
+      timeout: const Duration(seconds: 8),
+    );
+    authToken = data['token'] as String?;
+    return data;
+  }
+
+  /// Request OTP with password included for registration
+  Future<Map<String, dynamic>> requestOtpWithPassword(
+    String email, {
+    required String password,
+    String? fullName,
+    String? studentId,
+    String? department,
+    String? semester,
+  }) async {
+    final norm = email.trim().toLowerCase();
+    _checkClientRateLimit(norm);
+
+    if (!isUiuEmail(norm)) {
+      throw Exception('Registration is restricted to UIU student emails (e.g. student@bscse.uiu.ac.bd).');
+    }
+    if (password.length < 6) {
+      throw Exception('Password must be at least 6 characters.');
+    }
+
+    final res = await _postJson(
+      '/api/auth/request-otp',
+      {
+        'email': norm,
+        'isRegistration': true,
+        'password': password,
+        if (fullName != null && fullName.isNotEmpty) 'fullName': fullName.trim(),
+        if (studentId != null && studentId.isNotEmpty) 'studentId': studentId.trim(),
+        if (department != null && department.isNotEmpty) 'department': department.trim(),
+        if (semester != null && semester.isNotEmpty) 'semester': semester.trim(),
+      },
+      timeout: const Duration(seconds: 20),
+    );
+    _recordClientOtpRequest(norm);
+    return res;
+  }
+
   /// Get live Calendar Sync Status Verification Report
   Future<SyncStatusReport> getCalendarSyncStatus(String email) async {
     if (Platform.environment.containsKey('FLUTTER_TEST')) {

@@ -2396,6 +2396,24 @@ body {
   gap: 12px;
 }
 
+.auth-or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.auth-or-divider::before, .auth-or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 @media (max-width: 480px) {
   .auth-card { padding: 22px 18px; }
   .auth-brand h1 { font-size: 24px; }
@@ -2447,7 +2465,7 @@ body {
 
         <!-- ========== SIGN IN SECTION ========== -->
         <div class="auth-form-section active" id="agSignIn">
-          <!-- Step 1: Email -->
+          <!-- Step 1: Email + Password or OTP -->
           <div id="agSignInStep1">
             <div class="auth-field">
               <label>University Email <span class="required">*</span></label>
@@ -2464,13 +2482,17 @@ body {
               <button class="auth-domain-pill" data-domain="@bba.uiu.ac.bd">@bba.uiu.ac.bd</button>
               <button class="auth-domain-pill" data-domain="@mscse.uiu.ac.bd">@mscse.uiu.ac.bd</button>
             </div>
-            <div class="auth-hint" style="margin-bottom: 18px;">
-              <i class="fa-solid fa-shield-halved"></i>
-              <span>Must end with <strong>@&lt;degree&gt;.uiu.ac.bd</strong></span>
+            <div class="auth-field" id="agSignInPasswordField">
+              <label>Password <span class="required">*</span></label>
+              <input type="password" class="auth-input" id="agSignInPassword" placeholder="Enter your password">
             </div>
             <div class="auth-error" id="agSignInError"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
-            <button class="auth-btn auth-btn-primary" id="agSignInSendBtn">
-              <i class="fa-solid fa-paper-plane"></i> Send Verification Code
+            <button class="auth-btn auth-btn-primary" id="agSignInPasswordBtn">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+            </button>
+            <div class="auth-or-divider"><span>or</span></div>
+            <button class="auth-btn auth-btn-outline" id="agSignInSendBtn">
+              <i class="fa-solid fa-paper-plane"></i> Sign In with OTP Email
             </button>
           </div>
           <!-- Step 2: OTP -->
@@ -2541,9 +2563,17 @@ body {
                 <input type="text" class="auth-input" id="agRegSemester" placeholder="e.g. Spring 2026" value="Spring 2026">
               </div>
             </div>
+            <div class="auth-field">
+              <label>Create Password <span class="required">*</span></label>
+              <input type="password" class="auth-input" id="agRegPassword" placeholder="Min 6 characters" minlength="6">
+            </div>
+            <div class="auth-hint" style="margin-bottom: 14px;">
+              <i class="fa-solid fa-lock"></i>
+              <span>Password lets you sign in without waiting for OTP email</span>
+            </div>
             <div class="auth-error" id="agRegError"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
             <button class="auth-btn auth-btn-primary" id="agRegSendBtn">
-              <i class="fa-solid fa-user-plus"></i> Register & Send Code
+              <i class="fa-solid fa-user-plus"></i> Register & Verify Email
             </button>
           </div>
           <!-- Step 2: OTP -->
@@ -6572,6 +6602,78 @@ function initAuthGate() {
     }, 1000);
   }
 
+  // Password Sign In handler
+  document.getElementById('agSignInPasswordBtn').addEventListener('click', async () => {
+    const email = document.getElementById('agSignInEmail').value.trim().toLowerCase();
+    const password = document.getElementById('agSignInPassword').value;
+    const errEl = document.getElementById('agSignInError');
+    const errSpan = errEl.querySelector('span');
+    const btn = document.getElementById('agSignInPasswordBtn');
+    errEl.classList.remove('show');
+
+    if (!email || !email.includes('@')) {
+      errSpan.textContent = 'Please enter a valid email address.';
+      errEl.classList.add('show');
+      return;
+    }
+    if (!password) {
+      errSpan.textContent = 'Please enter your password.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in...';
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/login-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        if (data.notRegistered) {
+          errSpan.textContent = 'No account found. Please register first.';
+          errEl.classList.add('show');
+          setTimeout(() => switchAuthGateTab('register'), 2000);
+          return;
+        }
+        if (data.noPassword) {
+          errSpan.textContent = 'No password set. Use OTP email sign in below.';
+          errEl.classList.add('show');
+          return;
+        }
+        throw new Error(data.error || 'Sign in failed.');
+      }
+
+      const s = data.student || {};
+      state.student = {
+        email: s.email || email,
+        studentId: s.studentId || email.split('@')[0].toUpperCase(),
+        fullName: s.fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        department: s.department || 'Computer Science & Engineering',
+        token: data.token,
+        lastSyncTime: new Date().toISOString(),
+      };
+
+      saveStudentSession();
+      startCrossPlatformAutoSync();
+      syncStudentWithServer(false);
+      hideAuthGate();
+      renderAll();
+      updateSyncStatusUI();
+      showToast(`Welcome back, ${state.student.fullName}!`, 'success');
+    } catch (err) {
+      errSpan.textContent = err.message;
+      errEl.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In';
+    }
+  });
+
+  // OTP Sign In handler
   document.getElementById('agSignInSendBtn').addEventListener('click', async () => {
     const email = document.getElementById('agSignInEmail').value.trim().toLowerCase();
     const errEl = document.getElementById('agSignInError');
@@ -6595,7 +6697,15 @@ function initAuthGate() {
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to send code.');
+      if (!res.ok || !data.success) {
+        if (data.notRegistered) {
+          errSpan.textContent = 'No account found. Please register first.';
+          errEl.classList.add('show');
+          setTimeout(() => switchAuthGateTab('register'), 2000);
+          return;
+        }
+        throw new Error(data.error || 'Failed to send code.');
+      }
 
       document.getElementById('agSignInStep1').style.display = 'none';
       document.getElementById('agSignInStep2').style.display = 'block';
@@ -6709,6 +6819,7 @@ function initAuthGate() {
     const studentId = document.getElementById('agRegStudentId').value.trim();
     const department = document.getElementById('agRegDept').value.trim();
     const semester = document.getElementById('agRegSemester').value.trim();
+    const password = document.getElementById('agRegPassword').value;
     const errEl = document.getElementById('agRegError');
     const errSpan = errEl.querySelector('span');
     const btn = document.getElementById('agRegSendBtn');
@@ -6729,6 +6840,11 @@ function initAuthGate() {
       errEl.classList.add('show');
       return;
     }
+    if (!password || password.length < 6) {
+      errSpan.textContent = 'Password must be at least 6 characters.';
+      errEl.classList.add('show');
+      return;
+    }
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering...';
@@ -6737,13 +6853,14 @@ function initAuthGate() {
       const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, isRegistration: true, fullName, studentId, department, semester }),
+        body: JSON.stringify({ email, isRegistration: true, fullName, studentId, department, semester, password }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
         if (data.alreadyRegistered) {
-          errSpan.textContent = 'This account is already registered. Please sign in instead.';
+          errSpan.textContent = 'This account is already registered. Switching to Sign In...';
           errEl.classList.add('show');
+          setTimeout(() => switchAuthGateTab('signin'), 2000);
           return;
         }
         throw new Error(data.error || 'Registration failed.');

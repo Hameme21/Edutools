@@ -99,7 +99,7 @@ router.get('/auth/check-student', (req, res) => {
  */
 router.post('/auth/request-otp', async (req, res) => {
   try {
-    const { email, fullName, studentId, department, semester, isRegistration } = req.body;
+    const { email, fullName, studentId, department, semester, isRegistration, password } = req.body;
     if (!email) {
       return res.status(400).json({ success: false, error: 'Email address is required.' });
     }
@@ -110,6 +110,7 @@ router.post('/auth/request-otp', async (req, res) => {
       department,
       semester,
       isRegistration,
+      password,
     });
     res.json(result);
   } catch (err) {
@@ -119,6 +120,32 @@ router.post('/auth/request-otp', async (req, res) => {
       error: err.message,
       code: err.code || 'AUTH_ERROR',
       alreadyRegistered: !!err.alreadyRegistered,
+      notRegistered: !!err.notRegistered,
+    });
+  }
+});
+
+/**
+ * POST /api/auth/login-password
+ * Authenticates a student using email + password (no OTP required)
+ */
+router.post('/auth/login-password', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Email and password are required.' });
+    }
+
+    const result = await authService.loginWithPassword(email, password);
+    res.json(result);
+  } catch (err) {
+    const status = err.status || 400;
+    res.status(status).json({
+      success: false,
+      error: err.message,
+      code: err.code || 'AUTH_ERROR',
+      notRegistered: !!err.notRegistered,
+      noPassword: !!err.noPassword,
     });
   }
 });
