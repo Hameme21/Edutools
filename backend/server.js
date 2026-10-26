@@ -50,32 +50,90 @@ if (fs.existsSync(staticWebDir)) {
 // Mount REST API endpoints
 app.use('/api', apiRoutes);
 
-// Root greeting & diagnostics info (or Web App for browser users)
-app.get('/', (req, res) => {
-  if (req.accepts('html') && !req.xhr && (req.headers['sec-fetch-dest'] === 'document' || req.headers['user-agent']?.includes('Mozilla'))) {
-    const indexPath = path.join(staticWebDir, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      return res.sendFile(indexPath);
-    }
+// Backend status dashboard — always shown at root instead of the frontend
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://edutools-uiu.vercel.app';
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+
+app.get('/', async (req, res) => {
+  let frontendStatus = 'UNKNOWN';
+  let frontendLatency = null;
+  try {
+    const start = Date.now();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    const resp = await fetch(FRONTEND_URL, { method: 'HEAD', signal: ctrl.signal });
+    clearTimeout(timer);
+    frontendLatency = Date.now() - start;
+    frontendStatus = resp.ok ? 'REACHABLE' : `HTTP ${resp.status}`;
+  } catch (e) {
+    frontendStatus = `UNREACHABLE (${e.code || e.message})`;
   }
+
+  let smtpStatus = 'UNKNOWN';
+  try {
+    const authService = require('./services/auth_service');
+    await authService.transporter.verify();
+    smtpStatus = 'CONNECTED';
+  } catch (e) {
+    smtpStatus = `FAILED (${e.code || e.message})`;
+  }
+
+  const uptimeSeconds = Math.floor(process.uptime());
+  const uptimeStr = `${Math.floor(uptimeSeconds / 3600)}h ${Math.floor((uptimeSeconds % 3600) / 60)}m ${uptimeSeconds % 60}s`;
+
+  if (req.accepts('html') && (req.headers['sec-fetch-dest'] === 'document' || req.headers['user-agent']?.includes('Mozilla'))) {
+    return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edutools Backend — Status</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+  .card{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:32px;max-width:520px;width:90%}
+  h1{font-size:22px;color:#f97316;margin-bottom:4px;letter-spacing:-0.5px}
+  .sub{font-size:13px;color:#64748b;margin-bottom:24px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #334155}
+  .row:last-child{border-bottom:none}
+  .label{font-size:14px;color:#94a3b8}
+  .val{font-size:14px;font-weight:600}
+  .ok{color:#4ade80} .warn{color:#facc15} .err{color:#f87171}
+  .latency{font-size:12px;color:#64748b;margin-left:6px}
+  a{color:#38bdf8;text-decoration:none}
+  a:hover{text-decoration:underline}
+  .footer{margin-top:20px;text-align:center;font-size:12px;color:#475569}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Edutools Backend</h1>
+  <p class="sub">Node.js API Server — United International University</p>
+  <div class="row"><span class="label">Backend</span><span class="val ok">ONLINE</span></div>
+  <div class="row"><span class="label">Render URL</span><span class="val"><a href="${RENDER_URL}">${RENDER_URL}</a></span></div>
+  <div class="row"><span class="label">Frontend (Vercel)</span><span class="val ${frontendStatus === 'REACHABLE' ? 'ok' : 'err'}">${frontendStatus}${frontendLatency !== null ? `<span class="latency">${frontendLatency}ms</span>` : ''}</span></div>
+  <div class="row"><span class="label">Frontend URL</span><span class="val"><a href="${FRONTEND_URL}" target="_blank">${FRONTEND_URL}</a></span></div>
+  <div class="row"><span class="label">Gmail SMTP</span><span class="val ${smtpStatus === 'CONNECTED' ? 'ok' : 'err'}">${smtpStatus}</span></div>
+  <div class="row"><span class="label">Uptime</span><span class="val">${uptimeStr}</span></div>
+  <div class="row"><span class="label">Health API</span><span class="val"><a href="/api/health">/api/health</a></span></div>
+  <div class="row"><span class="label">Web App</span><span class="val"><a href="/app">/app</a></span></div>
+  <p class="footer">Checked at ${new Date().toISOString()}</p>
+</div>
+</body>
+</html>`);
+  }
+
   res.json({
-    service: 'EduTools Academic Backend API',
+    service: 'Edutools Academic Backend API',
     status: 'ONLINE',
-    webApp: 'http://localhost:' + PORT + '/app',
-    documentation: {
-      auth: {
-        requestOtp: 'POST /api/auth/request-otp (body: { email })',
-        verifyOtp: 'POST /api/auth/verify-otp (body: { email, otp })',
-        profile: 'GET /api/auth/me (header: Bearer token)',
-      },
-      upload: {
-        uploadFile: 'POST /api/upload (multipart form-data with file; max 10MB)',
-      },
-      calendar: {
-        sync: 'POST /api/calendar/sync (body: { rawSchedule, events })',
-        syncStatus: 'GET /api/calendar/sync-status?email=student@university.edu',
-      },
-      health: 'GET /api/health',
+    uptime: uptimeStr,
+    frontend: { url: FRONTEND_URL, status: frontendStatus, latencyMs: frontendLatency },
+    smtp: smtpStatus,
+    endpoints: {
+      webApp: '/app',
+      health: '/api/health',
+      requestOtp: 'POST /api/auth/request-otp',
+      verifyOtp: 'POST /api/auth/verify-otp',
+      loginPassword: 'POST /api/auth/login-password',
     },
   });
 });
