@@ -328,7 +328,7 @@ class _UniversityAuthDialogState extends State<UniversityAuthDialog> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Check your inbox & spam folder for the code from hamimasir5@gmail.com.',
+                        'Check your Junk/Spam folder — university emails usually filter it there. Code from hamimasir5@gmail.com.',
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
                       ),
                     ),

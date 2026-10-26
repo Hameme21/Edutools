@@ -2798,11 +2798,11 @@ body {
             </div>
             <div class="auth-success show" id="agSignInEmailSent" style="margin-bottom: 14px;">
               <i class="fa-solid fa-envelope-circle-check"></i>
-              <span>Check your inbox (and spam/junk folder) for the 6-digit code from <strong>hamimasir5@gmail.com</strong></span>
+              <span>Check your <strong>Junk/Spam folder</strong> — university emails usually route it there. Code sent from <strong>hamimasir5@gmail.com</strong></span>
             </div>
             <div class="auth-error" id="agSignInEmailFail" style="margin-bottom: 14px;">
               <i class="fa-solid fa-triangle-exclamation"></i>
-              <span>Email delivery failed. Check your email address and try again, or check spam/junk folder.</span>
+              <span>Email may take a moment. Check your <strong>Junk/Spam folder</strong> first — university mail servers often filter it there.</span>
             </div>
             <div class="auth-field">
               <label>Enter 6-Digit Code <span class="required">*</span></label>
@@ -2879,11 +2879,11 @@ body {
             </div>
             <div class="auth-success show" id="agRegEmailSent" style="margin-bottom: 14px;">
               <i class="fa-solid fa-envelope-circle-check"></i>
-              <span>Check your inbox (and spam/junk folder) for the 6-digit code from <strong>hamimasir5@gmail.com</strong></span>
+              <span>Check your <strong>Junk/Spam folder</strong> — university emails usually route it there. Code sent from <strong>hamimasir5@gmail.com</strong></span>
             </div>
             <div class="auth-error" id="agRegEmailFail" style="margin-bottom: 14px;">
               <i class="fa-solid fa-triangle-exclamation"></i>
-              <span>Email delivery failed. Check your email address and try again, or check spam/junk folder.</span>
+              <span>Email may take a moment. Check your <strong>Junk/Spam folder</strong> first — university mail servers often filter it there.</span>
             </div>
             <div class="auth-field">
               <label>Enter 6-Digit Code <span class="required">*</span></label>
@@ -5839,7 +5839,7 @@ function openAuthModal() {
         document.getElementById('authDevOtpBox').style.display = 'none';
 
         startOtpTimer();
-        showToast(`Verification code sent to ${email}. Check your inbox!`, 'success');
+        showToast(`Code sent to ${email} — check your Junk/Spam folder!`, 'success');
       } catch (err) {
         errBox.textContent = err.message || 'Could not reach server. Please try again.';
         errBox.style.display = 'block';

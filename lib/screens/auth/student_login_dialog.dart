@@ -767,7 +767,7 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Check your inbox and spam/junk folder for the code from hamimasir5@gmail.com.',
+                  'Check your Junk/Spam folder — university emails usually filter it there. Code from hamimasir5@gmail.com.',
                   style: TextStyle(fontSize: 11, height: 1.35, color: isDark ? Colors.white70 : const Color(0xFF9A3412), fontWeight: FontWeight.w500),
                 ),
               ),
