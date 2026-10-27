@@ -600,6 +600,50 @@ async function verifySMTP() {
   }
 }
 
+/**
+ * Sets or updates a password for an existing student account.
+ * Used by logged-in users who registered via OTP and never set a password.
+ */
+async function setPassword(email, newPassword) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!isValidEmail(normalizedEmail)) {
+    throw new Error('Please enter a valid email address.');
+  }
+
+  const student = studentStore.get(normalizedEmail);
+  if (!student) {
+    const err = new Error('No account found for this email.');
+    err.status = 404;
+    err.code = 'NOT_REGISTERED';
+    throw err;
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error('Password must be at least 6 characters long.');
+  }
+
+  const pw = hashPassword(newPassword);
+  student.passwordHash = pw.hash;
+  student.passwordSalt = pw.salt;
+  saveRegisteredStudents();
+
+  return {
+    success: true,
+    message: 'Password set successfully. You can now sign in with your password.',
+  };
+}
+
+/**
+ * Checks whether a student account has a password set.
+ */
+function checkHasPassword(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const student = studentStore.get(normalizedEmail);
+  if (!student) return false;
+  return !!(student.passwordHash && student.passwordSalt);
+}
+
 module.exports = {
   transporter,
   isValidEmail,
@@ -609,6 +653,8 @@ module.exports = {
   requestOtp,
   verifyOtp,
   loginWithPassword,
+  setPassword,
+  checkHasPassword,
   verifySessionToken,
   verifySMTP,
   formatNameFromEmail,

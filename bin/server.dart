@@ -24,6 +24,8 @@ class OtpRecord {
   final String? studentId;
   final String? department;
   final String? semester;
+  final String? pendingPasswordHash;
+  final String? pendingPasswordSalt;
 
   OtpRecord({
     required this.hash,
@@ -35,6 +37,8 @@ class OtpRecord {
     this.studentId,
     this.department,
     this.semester,
+    this.pendingPasswordHash,
+    this.pendingPasswordSalt,
   });
 }
 
@@ -49,6 +53,8 @@ class StudentRecord {
   final String domain;
   final String createdAt;
   String lastLogin;
+  String? passwordHash;
+  String? passwordSalt;
 
   StudentRecord({
     required this.id,
@@ -61,7 +67,11 @@ class StudentRecord {
     required this.domain,
     required this.createdAt,
     required this.lastLogin,
+    this.passwordHash,
+    this.passwordSalt,
   });
+
+  bool get hasPassword => passwordHash != null && passwordSalt != null;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -74,6 +84,7 @@ class StudentRecord {
         'domain': domain,
         'createdAt': createdAt,
         'lastLogin': lastLogin,
+        'hasPassword': hasPassword,
       };
 }
 
@@ -115,6 +126,16 @@ String _generate6DigitOtp() {
 
 String _hashOtp(String otp, String salt) {
   final combined = '$otp:$salt:educal_secure_salt_2026';
+  final bytes = utf8.encode(combined);
+  var h = 0x811c9dc5;
+  for (final b in bytes) {
+    h = ((h ^ b) * 0x01000193) & 0xFFFFFFFF;
+  }
+  return base64Url.encode(bytes) + h.toRadixString(16).padLeft(8, '0');
+}
+
+String _hashPasswordValue(String password, String salt) {
+  final combined = '$password:$salt:educal_password_2026';
   final bytes = utf8.encode(combined);
   var h = 0x811c9dc5;
   for (final b in bytes) {
@@ -199,6 +220,15 @@ Future<void> _handleRequest(HttpRequest req) async {
       final hash = _hashOtp(otp, salt);
       final expiresAt = DateTime.now().millisecondsSinceEpoch + (5 * 60 * 1000);
 
+      String? pendingPwHash;
+      String? pendingPwSalt;
+      final password = body['password'] as String?;
+      if (isRegistration && password != null && password.length >= 6) {
+        final pwSalt = Random.secure().nextInt(1000000).toString();
+        pendingPwHash = _hashPasswordValue(password, pwSalt);
+        pendingPwSalt = pwSalt;
+      }
+
       _otpStore[email] = OtpRecord(
         hash: hash,
         salt: salt,
@@ -208,6 +238,8 @@ Future<void> _handleRequest(HttpRequest req) async {
         studentId: studentId,
         department: department,
         semester: semester,
+        pendingPasswordHash: pendingPwHash,
+        pendingPasswordSalt: pendingPwSalt,
       );
 
       print('\n📧 [EDU-MAIL OTP DISPATCH] To: $email | Code: [ $otp ] (Expires in 5 minutes)\n');
@@ -270,6 +302,8 @@ Future<void> _handleRequest(HttpRequest req) async {
       final regStudentId = record.studentId;
       final regDept = record.department;
       final regSem = record.semester;
+      final pendingPwHash = record.pendingPasswordHash;
+      final pendingPwSalt = record.pendingPasswordSalt;
       _otpStore.remove(email);
 
       final domain = email.split('@').last;
@@ -287,9 +321,15 @@ Future<void> _handleRequest(HttpRequest req) async {
           domain: domain,
           createdAt: DateTime.now().toIso8601String(),
           lastLogin: DateTime.now().toIso8601String(),
+          passwordHash: pendingPwHash,
+          passwordSalt: pendingPwSalt,
         ),
       );
       student.lastLogin = DateTime.now().toIso8601String();
+      if (pendingPwHash != null && pendingPwSalt != null) {
+        student.passwordHash = pendingPwHash;
+        student.passwordSalt = pendingPwSalt;
+      }
 
       final token = 'session_jwt_${base64Url.encode(utf8.encode(jsonEncode({'email': email, 'time': DateTime.now().millisecondsSinceEpoch})))}';
 
@@ -302,7 +342,97 @@ Future<void> _handleRequest(HttpRequest req) async {
       return;
     }
 
-    // 2.5 Real-time Student & Calendar Cross-Platform Sync
+    // 2.5 Auth: Login with Password
+    if (path == '/api/auth/login-password' && req.method == 'POST') {
+      final body = await _readJsonBody(req);
+      final email = (body['email'] as String? ?? '').trim().toLowerCase();
+      final password = body['password'] as String? ?? '';
+
+      if (email.isEmpty || password.isEmpty) {
+        _sendJson(res, {'success': false, 'error': 'Email and password are required.'}, statusCode: HttpStatus.badRequest);
+        return;
+      }
+
+      final student = _studentStore[email];
+      if (student == null) {
+        _sendJson(res, {'success': false, 'error': 'No account found for this email. Please register first.', 'code': 'NOT_REGISTERED'}, statusCode: HttpStatus.notFound);
+        return;
+      }
+
+      if (!student.hasPassword) {
+        _sendJson(res, {'success': false, 'error': 'This account was created without a password. Please sign in using OTP verification.', 'code': 'NO_PASSWORD'}, statusCode: HttpStatus.badRequest);
+        return;
+      }
+
+      final computedHash = _hashPasswordValue(password, student.passwordSalt!);
+      if (computedHash != student.passwordHash) {
+        _sendJson(res, {'success': false, 'error': 'Incorrect password. Please try again.'}, statusCode: HttpStatus.badRequest);
+        return;
+      }
+
+      student.lastLogin = DateTime.now().toIso8601String();
+      final token = 'session_jwt_${base64Url.encode(utf8.encode(jsonEncode({'email': email, 'time': DateTime.now().millisecondsSinceEpoch})))}';
+
+      _sendJson(res, {
+        'success': true,
+        'message': 'Signed in successfully.',
+        'token': token,
+        'student': student.toJson(),
+      });
+      return;
+    }
+
+    // 2.6 Auth: Set Password (for users who registered via OTP only)
+    if (path == '/api/auth/set-password' && req.method == 'POST') {
+      final body = await _readJsonBody(req);
+      final email = (body['email'] as String? ?? '').trim().toLowerCase();
+      final password = body['password'] as String? ?? '';
+
+      if (email.isEmpty) {
+        _sendJson(res, {'success': false, 'error': 'Email is required.'}, statusCode: HttpStatus.badRequest);
+        return;
+      }
+
+      final student = _studentStore[email];
+      if (student == null) {
+        _sendJson(res, {'success': false, 'error': 'No account found for this email.'}, statusCode: HttpStatus.notFound);
+        return;
+      }
+
+      if (password.length < 6) {
+        _sendJson(res, {'success': false, 'error': 'Password must be at least 6 characters.'}, statusCode: HttpStatus.badRequest);
+        return;
+      }
+
+      final pwSalt = Random.secure().nextInt(1000000).toString();
+      student.passwordHash = _hashPasswordValue(password, pwSalt);
+      student.passwordSalt = pwSalt;
+
+      _sendJson(res, {
+        'success': true,
+        'message': 'Password set successfully. You can now sign in with your password.',
+      });
+      return;
+    }
+
+    // 2.7 Auth: Check if user has password
+    if (path == '/api/auth/has-password' && req.method == 'GET') {
+      final email = (uri.queryParameters['email'] ?? '').trim().toLowerCase();
+      if (email.isEmpty) {
+        _sendJson(res, {'success': false, 'error': 'Email parameter is required.'}, statusCode: HttpStatus.badRequest);
+        return;
+      }
+
+      final student = _studentStore[email];
+      _sendJson(res, {
+        'success': true,
+        'email': email,
+        'hasPassword': student?.hasPassword ?? false,
+      });
+      return;
+    }
+
+    // 2.8 Real-time Student & Calendar Cross-Platform Sync
     if (path == '/api/student/sync' && req.method == 'POST') {
       final body = await _readJsonBody(req);
       final email = (body['email'] as String? ?? 'student@university.edu').trim().toLowerCase();

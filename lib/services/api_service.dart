@@ -241,6 +241,49 @@ class ApiService {
     return res;
   }
 
+  /// Set password for a logged-in user who doesn't have one yet
+  Future<Map<String, dynamic>> setPassword(String email, String password) async {
+    final norm = email.trim().toLowerCase();
+
+    if (!isValidEmail(norm)) {
+      throw Exception('Please enter a valid email address.');
+    }
+    if (password.length < 6) {
+      throw Exception('Password must be at least 6 characters.');
+    }
+
+    return await _postJson(
+      '/api/auth/set-password',
+      {'email': norm, 'password': password},
+      token: authToken,
+      timeout: const Duration(seconds: 10),
+    );
+  }
+
+  /// Check whether the user has a password set on their account
+  Future<bool> hasPassword(String email) async {
+    final norm = email.trim().toLowerCase();
+    final targets = _configuredBaseUrl != null ? [_configuredBaseUrl] : candidateBaseUrls;
+
+    for (final host in targets) {
+      try {
+        final req = await _client.getUrl(
+          Uri.parse('$host/api/auth/has-password?email=${Uri.encodeComponent(norm)}'),
+        ).timeout(const Duration(seconds: 5));
+        if (authToken != null) {
+          req.headers.set('Authorization', 'Bearer $authToken');
+        }
+        final res = await req.close().timeout(const Duration(seconds: 5));
+        if (res.statusCode == 200) {
+          final respBody = await utf8.decodeStream(res);
+          final data = jsonDecode(respBody) as Map<String, dynamic>;
+          return data['hasPassword'] == true;
+        }
+      } catch (_) {}
+    }
+    return false;
+  }
+
   /// Get live Calendar Sync Status Verification Report
   Future<SyncStatusReport> getCalendarSyncStatus(String email) async {
     if (Platform.environment.containsKey('FLUTTER_TEST')) {

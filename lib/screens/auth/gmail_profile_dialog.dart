@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../state/calendar_state.dart';
+import '../../services/api_service.dart';
+import 'change_password_dialog.dart';
 
 class GmailProfileDialog extends StatefulWidget {
   final CalendarState state;
@@ -12,6 +14,41 @@ class GmailProfileDialog extends StatefulWidget {
 
 class _GmailProfileDialogState extends State<GmailProfileDialog> {
   bool _isSyncing = false;
+  bool? _hasPassword;
+  final _apiService = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPasswordStatus();
+  }
+
+  Future<void> _checkPasswordStatus() async {
+    final student = widget.state.currentStudent;
+    if (student == null) return;
+    try {
+      final result = await _apiService.hasPassword(student.email);
+      if (mounted) {
+        setState(() => _hasPassword = result);
+      }
+    } catch (_) {}
+  }
+
+  void _openPasswordDialog() {
+    final student = widget.state.currentStudent;
+    if (student == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => ChangePasswordDialog(
+        email: student.email,
+        isAddMode: _hasPassword != true,
+      ),
+    ).then((result) {
+      if (result == true) {
+        setState(() => _hasPassword = true);
+      }
+    });
+  }
 
   Future<void> _handleSyncNow() async {
     setState(() => _isSyncing = true);
@@ -244,7 +281,37 @@ class _GmailProfileDialogState extends State<GmailProfileDialog> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
+
+            // Password Management Button
+            if (_hasPassword != null)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _openPasswordDialog,
+                  icon: Icon(
+                    _hasPassword == true ? Icons.lock_reset_rounded : Icons.lock_open_rounded,
+                    size: 16,
+                    color: _hasPassword == true ? const Color(0xFF2563EB) : const Color(0xFFEA580C),
+                  ),
+                  label: Text(
+                    _hasPassword == true ? 'Change Password' : 'Add Password',
+                    style: TextStyle(
+                      color: _hasPassword == true ? const Color(0xFF2563EB) : const Color(0xFFEA580C),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(
+                      color: (_hasPassword == true ? const Color(0xFF2563EB) : const Color(0xFFEA580C)).withValues(alpha: 0.4),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
 
             // Action Buttons (Sync Now & Sign Out)
             Row(

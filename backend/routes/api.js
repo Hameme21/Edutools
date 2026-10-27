@@ -84,6 +84,7 @@ router.get('/auth/check-student', (req, res) => {
     success: true,
     email,
     isRegistered,
+    hasPassword: authService.checkHasPassword(email),
     student: student ? {
       fullName: student.fullName,
       studentId: student.studentId,
@@ -172,6 +173,43 @@ router.post('/auth/verify-otp', async (req, res) => {
       alreadyRegistered: !!err.alreadyRegistered,
     });
   }
+});
+
+/**
+ * POST /api/auth/set-password
+ * Sets or updates password for a logged-in user (requires auth token)
+ */
+router.post('/auth/set-password', requireAuth, async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ success: false, error: 'Password is required.' });
+    }
+
+    const email = req.student.email;
+    const result = await authService.setPassword(email, password);
+    res.json(result);
+  } catch (err) {
+    const status = err.status || 400;
+    res.status(status).json({
+      success: false,
+      error: err.message,
+      code: err.code || 'AUTH_ERROR',
+    });
+  }
+});
+
+/**
+ * GET /api/auth/has-password?email=...
+ * Checks whether the student account has a password set
+ */
+router.get('/auth/has-password', (req, res) => {
+  const email = req.query.email?.trim().toLowerCase();
+  if (!email) {
+    return res.status(400).json({ success: false, error: 'Email parameter is required.' });
+  }
+  const hasPassword = authService.checkHasPassword(email);
+  res.json({ success: true, email, hasPassword });
 });
 
 /**
