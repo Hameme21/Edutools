@@ -255,7 +255,6 @@ class ApiService {
     return await _postJson(
       '/api/auth/set-password',
       {'email': norm, 'password': password},
-      token: authToken,
       timeout: const Duration(seconds: 10),
     );
   }

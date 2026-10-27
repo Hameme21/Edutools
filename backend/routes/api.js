@@ -177,17 +177,21 @@ router.post('/auth/verify-otp', async (req, res) => {
 
 /**
  * POST /api/auth/set-password
- * Sets or updates password for a logged-in user (requires auth token)
+ * Sets or updates password for a user account identified by auth token or email
  */
-router.post('/auth/set-password', requireAuth, async (req, res) => {
+router.post('/auth/set-password', optionalAuth, async (req, res) => {
   try {
-    const { password } = req.body;
+    const { email, password } = req.body;
     if (!password) {
       return res.status(400).json({ success: false, error: 'Password is required.' });
     }
 
-    const email = req.student.email;
-    const result = await authService.setPassword(email, password);
+    const targetEmail = req.student?.email || (email ? email.trim().toLowerCase() : null);
+    if (!targetEmail) {
+      return res.status(400).json({ success: false, error: 'Email is required.' });
+    }
+
+    const result = await authService.setPassword(targetEmail, password);
     res.json(result);
   } catch (err) {
     const status = err.status || 400;
