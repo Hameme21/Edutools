@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1097225985625",
+    "project_id": "edutools-e2558",
+    "storage_bucket": "edutools-e2558.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1097225985625:android:e1a432cb5c647549d3db48",
+        "android_client_info": {
+          "package_name": "com.example.educal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADZDBDep7hAC-H1z4emasfOACgzi--fcA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
