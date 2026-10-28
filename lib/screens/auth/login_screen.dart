@@ -58,7 +58,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         userCredential = await FirebaseAuth.instance.signInWithPopup(provider);
       } else {
         final gsi = GoogleSignIn.instance;
-        await gsi.initialize();
+        await gsi.initialize(
+          serverClientId: '1097225985625-1tgbd5ie7vl09cda6tj2iulnoqsu9fhq.apps.googleusercontent.com',
+        );
         final account = await gsi.authenticate(scopeHint: ['email']);
         final idToken = account.authentication.idToken;
         if (idToken == null) {
