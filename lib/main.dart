@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'state/calendar_state.dart';
 import 'theme/app_theme.dart';
 import 'screens/main_screen.dart';
+import 'screens/reminders/notification_permission_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,12 +18,25 @@ class EduCalApp extends StatefulWidget {
 
 class _EduCalAppState extends State<EduCalApp> {
   late final CalendarState _calendarState;
+  bool _showNotificationPrompt = false;
+  bool _checkingPermission = true;
 
   @override
   void initState() {
     super.initState();
     _calendarState = CalendarState();
     _calendarState.addListener(_onStateChange);
+    _checkNotificationPermission();
+  }
+
+  Future<void> _checkNotificationPermission() async {
+    final shouldShow = await NotificationPermissionScreen.shouldShow();
+    if (mounted) {
+      setState(() {
+        _showNotificationPrompt = shouldShow;
+        _checkingPermission = false;
+      });
+    }
   }
 
   @override
@@ -36,6 +50,12 @@ class _EduCalAppState extends State<EduCalApp> {
     setState(() {});
   }
 
+  void _onNotificationComplete() {
+    setState(() {
+      _showNotificationPrompt = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -44,7 +64,11 @@ class _EduCalAppState extends State<EduCalApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _calendarState.themeMode,
-      home: MainScreen(state: _calendarState),
+      home: _checkingPermission
+          ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+          : _showNotificationPrompt
+              ? NotificationPermissionScreen(onComplete: _onNotificationComplete)
+              : MainScreen(state: _calendarState),
     );
   }
 }

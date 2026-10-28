@@ -3,6 +3,7 @@ import '../../state/calendar_state.dart';
 import '../../theme/app_theme.dart';
 import 'cgpa_calculator_sheet.dart';
 import 'tuition_calculator_sheet.dart';
+import 'faculty_directory_sheet.dart';
 
 class _ToolItem {
   final String title;
@@ -40,49 +41,31 @@ class ToolsScreen extends StatelessWidget {
       action: 'dashboard',
     ),
     _ToolItem(
-      title: 'Academic Notices & Deadlines',
-      description: 'Track official university notices — holidays, fee payment dates, midterm & final exams, and course withdrawal deadlines.',
-      icon: Icons.campaign_rounded,
-      color: AppTheme.feeColor,
-      bgColor: Color(0x1AF59E0B),
-      chips: ['Fees', 'Exams', 'Drops'],
-      action: 'notices',
-    ),
-    _ToolItem(
-      title: 'Routine Setup & .ICS Export',
-      description: 'Build your weekly class timetable, import .ICS / JSON / CSV files, sync official calendar, and export schedules.',
-      icon: Icons.edit_calendar_rounded,
-      color: AppTheme.accentColor,
-      bgColor: Color(0x1A10B981),
-      chips: ['.ICS Export', 'Import', 'Sync'],
-      action: 'setup',
-    ),
-    _ToolItem(
       title: 'CGPA Calculator',
-      description: 'Calculate your cumulative GPA across semesters. Add semester-wise GPA and credits to get an accurate CGPA instantly.',
+      description: 'Course-by-course GPA calculator with retake support, UIU grade scale, and target CGPA planner.',
       icon: Icons.calculate_rounded,
       color: AppTheme.examColor,
       bgColor: Color(0x1A8B5CF6),
-      chips: ['Multi-Semester', 'UIU Scale'],
+      chips: ['Retake', 'UIU Scale', 'Target CGPA'],
       action: 'cgpa',
     ),
     _ToolItem(
       title: 'Tuition Fee Calculator',
-      description: 'Estimate your semester tuition fees based on credits, department, and waiver percentage with installment breakdown.',
+      description: 'Estimate trimester tuition with retake fees, waivers, scholarships, and 40/30/30 installment breakdown.',
       icon: Icons.account_balance_wallet_rounded,
       color: AppTheme.holidayColor,
       bgColor: Color(0x1AEF4444),
-      chips: ['Credits', 'Waivers', 'Installments'],
+      chips: ['Retake', 'Scholarship', 'Installments'],
       action: 'tuition',
     ),
     _ToolItem(
-      title: 'Holiday Planner',
-      description: 'View all official university holidays at a glance — plan trips, track remaining off-days, and set custom reminders.',
-      icon: Icons.beach_access_rounded,
-      color: Color(0xFF14B8A6),
-      bgColor: Color(0x1A14B8A6),
-      chips: ['2026 Calendar', 'Reminders'],
-      action: 'holidays',
+      title: 'Faculty Directory',
+      description: 'Search and browse UIU faculty members by name or code. View instructor details and find your course instructors.',
+      icon: Icons.people_rounded,
+      color: AppTheme.accentColor,
+      bgColor: Color(0x1A10B981),
+      chips: ['348 Faculty', 'Search'],
+      action: 'faculty',
     ),
   ];
 
@@ -90,10 +73,6 @@ class ToolsScreen extends StatelessWidget {
     switch (action) {
       case 'dashboard':
         state.setTabIndex(0);
-      case 'notices':
-        state.setTabIndex(1);
-      case 'setup':
-        state.setTabIndex(2);
       case 'cgpa':
         showModalBottomSheet(
           context: context,
@@ -108,8 +87,13 @@ class ToolsScreen extends StatelessWidget {
           backgroundColor: Colors.transparent,
           builder: (_) => const TuitionCalculatorSheet(),
         );
-      case 'holidays':
-        state.setTabIndex(1);
+      case 'faculty':
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => const FacultyDirectorySheet(),
+        );
     }
   }
 

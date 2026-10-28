@@ -82,10 +82,10 @@ class _NoticesScreenState extends State<NoticesScreen> {
     final notices = widget.state.upcomingNotices;
     final activeFilter = widget.state.selectedNoticeFilter;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Column(
-        children: [
+    return Stack(
+      children: [
+        Column(
+          children: [
           // Search & Filter header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -184,13 +184,18 @@ class _NoticesScreenState extends State<NoticesScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openAddNoticeDialog,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Notice'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-      ),
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton.extended(
+            onPressed: _openAddNoticeDialog,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add Notice'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Colors.white,
+          ),
+        ),
+      ],
     );
   }
 
