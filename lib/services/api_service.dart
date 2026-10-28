@@ -167,7 +167,7 @@ class ApiService {
         if (department != null && department.isNotEmpty) 'department': department.trim(),
         if (semester != null && semester.isNotEmpty) 'semester': semester.trim(),
       },
-      timeout: const Duration(seconds: 30),
+      timeout: const Duration(seconds: 50),
     );
     _recordClientOtpRequest(norm);
     return res;
@@ -235,7 +235,7 @@ class ApiService {
         if (department != null && department.isNotEmpty) 'department': department.trim(),
         if (semester != null && semester.isNotEmpty) 'semester': semester.trim(),
       },
-      timeout: const Duration(seconds: 30),
+      timeout: const Duration(seconds: 50),
     );
     _recordClientOtpRequest(norm);
     return res;

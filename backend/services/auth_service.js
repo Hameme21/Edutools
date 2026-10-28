@@ -16,19 +16,27 @@ console.log(`[SMTP CONFIG] EMAIL_PASS=${EMAIL_PASS ? EMAIL_PASS.substring(0, 4) 
 console.log(`[SMTP CONFIG] Source: ${process.env.EMAIL_USER ? 'process.env' : 'hardcoded fallback'}`);
 
 // Nodemailer Gmail SMTP Transporter — port 465, secure: true (implicit TLS)
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  port: 465,
-  secure: true,
-  family: 4,
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS,
-  },
-});
+// Generous timeouts to survive Render cold starts and network variability
+function createTransporter() {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    port: 465,
+    secure: true,
+    family: 4,
+    pool: true,
+    maxConnections: 2,
+    maxMessages: 10,
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+    auth: {
+      user: EMAIL_USER,
+      pass: EMAIL_PASS,
+    },
+  });
+}
+
+let transporter = createTransporter();
 
 // Persistent data storage paths
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -250,13 +258,30 @@ async function sendEmailOtp(email, otp) {
   try {
     info = await transporter.sendMail(mailOptions);
   } catch (sendErr) {
-    console.error(`❌ [transporter.sendMail REJECTED]`);
+    console.error(`❌ [transporter.sendMail ATTEMPT 1 FAILED]`);
     console.error(`   message: ${sendErr.message}`);
     console.error(`   code: ${sendErr.code || 'none'}`);
     console.error(`   responseCode: ${sendErr.responseCode || 'none'}`);
-    console.error(`   response: ${sendErr.response || 'none'}`);
-    console.error(`   command: ${sendErr.command || 'none'}`);
-    throw sendErr;
+
+    // Retry once with a fresh transporter (stale pool recovery)
+    console.log(`🔄 [SMTP RETRY] Creating fresh transporter and retrying...`);
+    try {
+      transporter.close();
+    } catch (_) {}
+    transporter = createTransporter();
+
+    try {
+      info = await transporter.sendMail(mailOptions);
+      console.log(`✅ [SMTP RETRY OK] Delivered on second attempt.`);
+    } catch (retryErr) {
+      console.error(`❌ [transporter.sendMail ATTEMPT 2 FAILED]`);
+      console.error(`   message: ${retryErr.message}`);
+      console.error(`   code: ${retryErr.code || 'none'}`);
+      console.error(`   responseCode: ${retryErr.responseCode || 'none'}`);
+      console.error(`   response: ${retryErr.response || 'none'}`);
+      console.error(`   command: ${retryErr.command || 'none'}`);
+      throw retryErr;
+    }
   }
   console.log(`✅ [SMTP SENT] MessageId: ${info.messageId} | accepted: ${JSON.stringify(info.accepted)} | rejected: ${JSON.stringify(info.rejected)}`);
   return { delivered: true, messageId: info.messageId, timestamp: new Date().toISOString() };
@@ -384,14 +409,13 @@ async function requestOtp(email, options = {}) {
     pendingPasswordSalt,
   });
 
-  // SMTP email dispatch from hamimasir5@gmail.com with fallback timeout
-  // Race timeout (20s) is higher than Nodemailer's connectionTimeout (10s)
-  // so the real SMTP error code surfaces instead of a generic timeout
+  // SMTP email dispatch with fallback timeout
+  // 45s race covers: 30s first attempt timeout + fresh transporter retry
   let emailResult = null;
   try {
     emailResult = await Promise.race([
       sendEmailOtp(normalizedEmail, otp),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (20s) — server could not reach Gmail')), 20000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (45s) — server could not reach Gmail after retry')), 45000))
     ]);
     console.log(`✅ [SMTP OK] Email delivered to ${normalizedEmail} | MessageId: ${emailResult.messageId}`);
   } catch (err) {
@@ -595,8 +619,18 @@ async function verifySMTP() {
     return true;
   } catch (err) {
     console.warn('[SMTP] Transporter verification failed:', err.message);
-    console.warn('[SMTP] OTP emails may not be delivered. Password login still works.');
-    return false;
+    console.warn('[SMTP] Recreating transporter for fresh connection...');
+    try { transporter.close(); } catch (_) {}
+    transporter = createTransporter();
+    try {
+      await transporter.verify();
+      console.log('[SMTP] Fresh transporter verified — ready to send emails.');
+      return true;
+    } catch (retryErr) {
+      console.warn('[SMTP] Fresh transporter also failed:', retryErr.message);
+      console.warn('[SMTP] OTP emails may not be delivered. Password login still works.');
+      return false;
+    }
   }
 }
 
