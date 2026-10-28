@@ -294,6 +294,34 @@ async function sendEmailOtp(email, otp) {
 // Rate limiting store: email -> array of request timestamps (ms)
 const otpRateLimitStore = new Map();
 
+// Device-level rate limiting: deviceId -> { count, blocked }
+// After 6 OTP requests from a single device, block it permanently
+const deviceRateLimitStore = new Map();
+
+function checkDeviceRateLimit(deviceId) {
+  if (!deviceId || process.env.NODE_ENV === 'test') return;
+
+  const record = deviceRateLimitStore.get(deviceId);
+  if (record && record.blocked) {
+    const err = new Error('This device has been blocked due to excessive OTP requests. Use password login instead.');
+    err.status = 403;
+    err.code = 'DEVICE_BLOCKED';
+    throw err;
+  }
+}
+
+function recordDeviceOtpRequest(deviceId) {
+  if (!deviceId) return;
+
+  const record = deviceRateLimitStore.get(deviceId) || { count: 0, blocked: false };
+  record.count += 1;
+  if (record.count >= 6) {
+    record.blocked = true;
+    console.warn(`[DEVICE BLOCKED] deviceId=${deviceId} exceeded 6 OTP requests — blocked.`);
+  }
+  deviceRateLimitStore.set(deviceId, record);
+}
+
 function checkOtpRateLimit(email) {
   if (process.env.NODE_ENV === 'test') return;
 
@@ -341,10 +369,18 @@ async function requestOtp(email, options = {}) {
     throw new Error('Please enter a valid email address.');
   }
 
-  // 1. Enforce rate limiting (60s cooldown, max 4 / 10m)
+  // 0. Enforce device-level rate limit (block after 6 OTP requests from same device)
+  checkDeviceRateLimit(options.deviceId);
+
+  // 1. Enforce per-email rate limiting (60s cooldown, max 4 / 10m)
   checkOtpRateLimit(normalizedEmail);
 
-  // 2. Check if already registered when registering
+  // 2. Only UIU degree-program emails are allowed (both registration and sign-in)
+  if (!isUiuEmail(normalizedEmail)) {
+    throw new Error('Only UIU student emails with degree program are allowed (e.g. ahamim2510370@bscse.uiu.ac.bd). Plain @uiu.ac.bd or other domains are not permitted.');
+  }
+
+  // 3. Check registration/sign-in specific rules
   if (options.isRegistration) {
     if (isEmailRegistered(normalizedEmail)) {
       const err = new Error('This account is already registered. Please sign in with your credentials.');
@@ -354,21 +390,12 @@ async function requestOtp(email, options = {}) {
       throw err;
     }
 
-    if (!isUiuEmail(normalizedEmail)) {
-      throw new Error('Registration is strictly restricted to UIU student emails with degree program (e.g. ahamim2510370@bscse.uiu.ac.bd). Plain @uiu.ac.bd is not allowed.');
-    }
-
     if (options.password) {
       if (options.password.length < 6) {
         throw new Error('Password must be at least 6 characters long.');
       }
     }
   } else {
-    // For sign in: allow @<degree>.uiu.ac.bd, valid university emails, or hamimasir5@gmail.com
-    if (!isUiuEmail(normalizedEmail) && !isUniversityEmail(normalizedEmail) && normalizedEmail !== 'hamimasir5@gmail.com') {
-      throw new Error('Sign in is restricted to UIU student emails with degree program (e.g. ahamim2510370@bscse.uiu.ac.bd).');
-    }
-
     if (!isEmailRegistered(normalizedEmail)) {
       const err = new Error('No account found for this email. Please register first.');
       err.status = 404;
@@ -379,6 +406,7 @@ async function requestOtp(email, options = {}) {
   }
 
   recordOtpRequest(normalizedEmail);
+  recordDeviceOtpRequest(options.deviceId);
 
   const otp = generate6DigitOtp();
   console.log(`\n🔑 [OTP GENERATED] Email: ${normalizedEmail} | OTP: ${otp} | Mode: ${options.isRegistration ? 'REGISTRATION' : 'SIGN-IN'}`);

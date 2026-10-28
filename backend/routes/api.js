@@ -100,7 +100,7 @@ router.get('/auth/check-student', (req, res) => {
  */
 router.post('/auth/request-otp', async (req, res) => {
   try {
-    const { email, fullName, studentId, department, semester, isRegistration, password } = req.body;
+    const { email, fullName, studentId, department, semester, isRegistration, password, deviceId } = req.body;
     if (!email) {
       return res.status(400).json({ success: false, error: 'Email address is required.' });
     }
@@ -112,6 +112,7 @@ router.post('/auth/request-otp', async (req, res) => {
       semester,
       isRegistration,
       password,
+      deviceId,
     });
     res.json(result);
   } catch (err) {
@@ -122,6 +123,7 @@ router.post('/auth/request-otp', async (req, res) => {
       code: err.code || 'AUTH_ERROR',
       alreadyRegistered: !!err.alreadyRegistered,
       notRegistered: !!err.notRegistered,
+      deviceBlocked: err.code === 'DEVICE_BLOCKED',
     });
   }
 });

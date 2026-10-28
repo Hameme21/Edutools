@@ -1,14 +1,50 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/sync_status_report.dart';
 
 class ApiService {
   static final Map<String, List<DateTime>> _otpRateLimitStore = {};
+  static String? _cachedDeviceId;
+  static int _deviceOtpCount = 0;
+  static const int _maxDeviceOtpRequests = 6;
+  static bool _deviceBlocked = false;
+
+  static Future<String> _getDeviceId() async {
+    if (_cachedDeviceId != null) return _cachedDeviceId!;
+    final prefs = await SharedPreferences.getInstance();
+    var id = prefs.getString('edutools_device_id');
+    if (id == null || id.isEmpty) {
+      final rng = Random.secure();
+      id = List.generate(32, (_) => rng.nextInt(16).toRadixString(16)).join();
+      await prefs.setString('edutools_device_id', id);
+    }
+    _deviceOtpCount = prefs.getInt('edutools_device_otp_count') ?? 0;
+    _deviceBlocked = _deviceOtpCount >= _maxDeviceOtpRequests;
+    _cachedDeviceId = id;
+    return id;
+  }
+
+  static Future<void> _recordDeviceOtpRequest() async {
+    _deviceOtpCount += 1;
+    if (_deviceOtpCount >= _maxDeviceOtpRequests) _deviceBlocked = true;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('edutools_device_otp_count', _deviceOtpCount);
+  }
+
+  static void _checkDeviceRateLimit() {
+    if (_deviceBlocked) {
+      throw Exception('This device has been blocked due to excessive OTP requests. Use password login instead.');
+    }
+  }
 
   static void _checkClientRateLimit(String email) {
     if (Platform.environment.containsKey('FLUTTER_TEST')) return;
+    _checkDeviceRateLimit();
+
     final now = DateTime.now();
     final history = _otpRateLimitStore[email] ?? [];
     final recent = history.where((dt) => now.difference(dt).inSeconds < 600).toList();
@@ -115,7 +151,7 @@ class ApiService {
     final regex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
     if (!regex.hasMatch(norm)) return false;
     final domain = norm.split('@').last;
-    return domain == 'uiu.ac.bd' || domain.endsWith('.uiu.ac.bd');
+    return domain.endsWith('.uiu.ac.bd') && domain != 'uiu.ac.bd';
   }
 
   static bool isValidEmail(String email) {
@@ -149,19 +185,22 @@ class ApiService {
 
     _checkClientRateLimit(norm);
 
-    if (isRegistration && !isUiuEmail(norm)) {
-      throw Exception('Registration is strictly restricted to UIU student emails ending with uiu.ac.bd (e.g. student@bscse.uiu.ac.bd).');
+    if (!isUiuEmail(norm)) {
+      throw Exception('Only UIU student emails are allowed (e.g. student@bscse.uiu.ac.bd).');
     }
 
     if (!isValidEmail(norm)) {
       throw Exception('Please enter a valid email address.');
     }
 
+    final deviceId = await _getDeviceId();
+
     final res = await _postJson(
       '/api/auth/request-otp',
       {
         'email': norm,
         'isRegistration': isRegistration,
+        'deviceId': deviceId,
         if (fullName != null && fullName.isNotEmpty) 'fullName': fullName.trim(),
         if (studentId != null && studentId.isNotEmpty) 'studentId': studentId.trim(),
         if (department != null && department.isNotEmpty) 'department': department.trim(),
@@ -170,6 +209,7 @@ class ApiService {
       timeout: const Duration(seconds: 50),
     );
     _recordClientOtpRequest(norm);
+    await _recordDeviceOtpRequest();
     return res;
   }
 
@@ -218,11 +258,13 @@ class ApiService {
     _checkClientRateLimit(norm);
 
     if (!isUiuEmail(norm)) {
-      throw Exception('Registration is restricted to UIU student emails (e.g. student@bscse.uiu.ac.bd).');
+      throw Exception('Only UIU student emails are allowed (e.g. student@bscse.uiu.ac.bd).');
     }
     if (password.length < 6) {
       throw Exception('Password must be at least 6 characters.');
     }
+
+    final deviceId = await _getDeviceId();
 
     final res = await _postJson(
       '/api/auth/request-otp',
@@ -230,6 +272,7 @@ class ApiService {
         'email': norm,
         'isRegistration': true,
         'password': password,
+        'deviceId': deviceId,
         if (fullName != null && fullName.isNotEmpty) 'fullName': fullName.trim(),
         if (studentId != null && studentId.isNotEmpty) 'studentId': studentId.trim(),
         if (department != null && department.isNotEmpty) 'department': department.trim(),
@@ -238,6 +281,7 @@ class ApiService {
       timeout: const Duration(seconds: 50),
     );
     _recordClientOtpRequest(norm);
+    await _recordDeviceOtpRequest();
     return res;
   }
 

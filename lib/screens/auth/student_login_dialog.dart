@@ -85,6 +85,10 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
       setState(() => _errorMessage = 'Please enter a valid email address.');
       return;
     }
+    if (!ApiService.isUiuEmail(email)) {
+      setState(() => _errorMessage = 'Only UIU student emails are allowed (e.g. student@bscse.uiu.ac.bd).');
+      return;
+    }
     if (password.isEmpty) {
       setState(() => _errorMessage = 'Please enter your password.');
       return;
@@ -192,6 +196,10 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
 
     if (!ApiService.isValidEmail(email)) {
       setState(() => _errorMessage = 'Please enter a valid email address.');
+      return;
+    }
+    if (!ApiService.isUiuEmail(email)) {
+      setState(() => _errorMessage = 'Only UIU student emails are allowed (e.g. student@bscse.uiu.ac.bd).');
       return;
     }
 
