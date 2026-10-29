@@ -82,41 +82,88 @@ app.get('/', async (req, res) => {
   const uptimeStr = `${Math.floor(uptimeSeconds / 3600)}h ${Math.floor((uptimeSeconds % 3600) / 60)}m ${uptimeSeconds % 60}s`;
 
   if (req.accepts('html') && (req.headers['sec-fetch-dest'] === 'document' || req.headers['user-agent']?.includes('Mozilla'))) {
+    const smtpDot = smtpStatus === 'CONNECTED' ? '#4ade80' : '#f87171';
+    const frontendDot = frontendStatus === 'REACHABLE' ? '#4ade80' : '#f87171';
     return res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Edutools Backend — Status</title>
+<title>Edutools — API Server</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center}
-  .card{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:32px;max-width:520px;width:90%}
-  h1{font-size:22px;color:#f97316;margin-bottom:4px;letter-spacing:-0.5px}
-  .sub{font-size:13px;color:#64748b;margin-bottom:24px}
-  .row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #334155}
-  .row:last-child{border-bottom:none}
-  .label{font-size:14px;color:#94a3b8}
-  .val{font-size:14px;font-weight:600}
-  .ok{color:#4ade80} .warn{color:#facc15} .err{color:#f87171}
-  .latency{font-size:12px;color:#64748b;margin-left:6px}
-  a{color:#38bdf8;text-decoration:none}
-  a:hover{text-decoration:underline}
-  .footer{margin-top:20px;text-align:center;font-size:12px;color:#475569}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fafafa;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+  .container{max-width:480px;width:100%}
+  .hero{text-align:center;margin-bottom:32px}
+  .logo{width:56px;height:56px;background:linear-gradient(135deg,#f97316,#fb923c);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:16px;box-shadow:0 8px 32px rgba(249,115,22,0.25)}
+  h1{font-size:24px;font-weight:700;letter-spacing:-0.5px}
+  h1 span{color:#f97316}
+  .badge{display:inline-block;background:#14532d;color:#4ade80;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-top:8px;letter-spacing:0.5px;text-transform:uppercase}
+  .visit{display:block;margin:28px auto 0;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;font-size:15px;font-weight:600;padding:14px 32px;border:none;border-radius:12px;cursor:pointer;text-decoration:none;text-align:center;transition:transform 0.15s,box-shadow 0.15s;box-shadow:0 4px 20px rgba(249,115,22,0.3)}
+  .visit:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(249,115,22,0.4)}
+  .visit small{display:block;font-size:11px;font-weight:400;opacity:0.85;margin-top:2px}
+  .panel{background:#141414;border:1px solid #262626;border-radius:14px;padding:20px;margin-top:28px}
+  .panel-title{font-size:12px;color:#737373;text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:14px}
+  .status-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #1e1e1e}
+  .status-row:last-child{border-bottom:none}
+  .status-label{display:flex;align-items:center;gap:8px;font-size:13px;color:#a3a3a3}
+  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .status-val{font-size:13px;font-weight:500;color:#e5e5e5}
+  .status-val a{color:#38bdf8;text-decoration:none}
+  .status-val a:hover{text-decoration:underline}
+  .latency{font-size:11px;color:#525252;margin-left:4px}
+  .endpoints{margin-top:20px}
+  .endpoints .panel-title{margin-bottom:10px}
+  .ep-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .ep{background:#1a1a1a;border:1px solid #262626;border-radius:8px;padding:10px 12px;text-decoration:none;transition:border-color 0.15s}
+  .ep:hover{border-color:#404040}
+  .ep-name{font-size:12px;font-weight:600;color:#e5e5e5}
+  .ep-path{font-size:11px;color:#525252;margin-top:2px}
+  .footer{text-align:center;margin-top:24px;font-size:11px;color:#404040}
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>Edutools Backend</h1>
-  <p class="sub">Node.js API Server — United International University</p>
-  <div class="row"><span class="label">Backend</span><span class="val ok">ONLINE</span></div>
-  <div class="row"><span class="label">Render URL</span><span class="val"><a href="${RENDER_URL}">${RENDER_URL}</a></span></div>
-  <div class="row"><span class="label">Frontend (Vercel)</span><span class="val ${frontendStatus === 'REACHABLE' ? 'ok' : 'err'}">${frontendStatus}${frontendLatency !== null ? `<span class="latency">${frontendLatency}ms</span>` : ''}</span></div>
-  <div class="row"><span class="label">Frontend URL</span><span class="val"><a href="${FRONTEND_URL}" target="_blank">${FRONTEND_URL}</a></span></div>
-  <div class="row"><span class="label">Gmail SMTP</span><span class="val ${smtpStatus === 'CONNECTED' ? 'ok' : 'err'}">${smtpStatus}</span></div>
-  <div class="row"><span class="label">Uptime</span><span class="val">${uptimeStr}</span></div>
-  <div class="row"><span class="label">Health API</span><span class="val"><a href="/api/health">/api/health</a></span></div>
-  <div class="row"><span class="label">Web App</span><span class="val"><a href="/app">/app</a></span></div>
-  <p class="footer">Checked at ${new Date().toISOString()}</p>
+<div class="container">
+  <div class="hero">
+    <div class="logo">E</div>
+    <h1>Edutools <span>API</span></h1>
+    <div class="badge">Backend Server Online</div>
+    <a class="visit" href="${FRONTEND_URL}" target="_blank">
+      Open Edutools Website
+      <small>${FRONTEND_URL.replace('https://', '')}</small>
+    </a>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">System Status</div>
+    <div class="status-row">
+      <span class="status-label"><span class="dot" style="background:#4ade80"></span>Backend API</span>
+      <span class="status-val">Running</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label"><span class="dot" style="background:${frontendDot}"></span>Frontend (Vercel)</span>
+      <span class="status-val">${frontendStatus}${frontendLatency !== null ? `<span class="latency">${frontendLatency}ms</span>` : ''}</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label"><span class="dot" style="background:${smtpDot}"></span>Email (SMTP)</span>
+      <span class="status-val">${smtpStatus}</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label"><span class="dot" style="background:#4ade80"></span>Uptime</span>
+      <span class="status-val">${uptimeStr}</span>
+    </div>
+  </div>
+
+  <div class="panel endpoints">
+    <div class="panel-title">API Endpoints</div>
+    <div class="ep-grid">
+      <a class="ep" href="/api/health"><div class="ep-name">Health Check</div><div class="ep-path">GET /api/health</div></a>
+      <a class="ep" href="/app"><div class="ep-name">Web App</div><div class="ep-path">GET /app</div></a>
+      <a class="ep" href="/api/auth/request-otp"><div class="ep-name">Request OTP</div><div class="ep-path">POST /api/auth</div></a>
+      <a class="ep" href="/api/auth/verify-otp"><div class="ep-name">Verify OTP</div><div class="ep-path">POST /api/auth</div></a>
+    </div>
+  </div>
+
+  <p class="footer">Edutools API Server &middot; United International University &middot; ${new Date().toISOString().split('T')[0]}</p>
 </div>
 </body>
 </html>`);
