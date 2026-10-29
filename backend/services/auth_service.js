@@ -1,3 +1,5 @@
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -7,21 +9,22 @@ const path = require('path');
 const JWT_SECRET = process.env.JWT_SECRET || 'edutools-secure-jwt-secret-key-2026-academic';
 const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes expiration
 
-// Gmail SMTP Credentials for OTP dispatch from hamimasir5@gmail.com
-const EMAIL_USER = process.env.EMAIL_USER || 'hamimasir5@gmail.com';
-const EMAIL_PASS = process.env.EMAIL_PASS || 'faixfyjgwixzbisl';
+// SMTP credentials loaded from backend/.env
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_FROM_EMAIL = process.env.SMTP_FROM_EMAIL || SMTP_USER;
 
-console.log(`[SMTP CONFIG] EMAIL_USER=${EMAIL_USER ? EMAIL_USER : '(MISSING)'}`);
-console.log(`[SMTP CONFIG] EMAIL_PASS=${EMAIL_PASS ? EMAIL_PASS.substring(0, 4) + '****' : '(MISSING)'}`);
-console.log(`[SMTP CONFIG] Source: ${process.env.EMAIL_USER ? 'process.env' : 'hardcoded fallback'}`);
+console.log(`[SMTP CONFIG] HOST=${SMTP_HOST} PORT=${SMTP_PORT}`);
+console.log(`[SMTP CONFIG] USER=${SMTP_USER ? SMTP_USER : '(MISSING — check backend/.env)'}`);
+console.log(`[SMTP CONFIG] PASS=${SMTP_PASS ? SMTP_PASS.substring(0, 4) + '****' : '(MISSING — check backend/.env)'}`);
 
-// Nodemailer Gmail SMTP Transporter — port 465, secure: true (implicit TLS)
-// Generous timeouts to survive Render cold starts and network variability
 function createTransporter() {
   return nodemailer.createTransport({
-    service: 'gmail',
-    port: 465,
-    secure: true,
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_PORT === 465,
     family: 4,
     pool: true,
     maxConnections: 2,
@@ -30,8 +33,8 @@ function createTransporter() {
     greetingTimeout: 30000,
     socketTimeout: 30000,
     auth: {
-      user: EMAIL_USER,
-      pass: EMAIL_PASS,
+      user: SMTP_USER,
+      pass: SMTP_PASS,
     },
   });
 }
@@ -201,13 +204,12 @@ function extractUniversityName(domain) {
 }
 
 /**
- * Dispatches email from hamimasir5@gmail.com via Gmail SMTP using Nodemailer
+ * Dispatches OTP email via SMTP (Nodemailer)
  */
 async function sendEmailOtp(email, otp) {
   const norm = email.trim().toLowerCase();
   const domain = norm.split('@')[1] || '';
 
-  // Prevent sending live test emails to fake domains (which trigger bounce-back NDR blocks like 550 5.4.1)
   if (
     process.env.NODE_ENV === 'test' ||
     norm.startsWith('john.doe@') ||
@@ -222,15 +224,16 @@ async function sendEmailOtp(email, otp) {
   }
 
   console.log(`\n========================================`);
-  console.log(`📧 [DISPATCHING LIVE OTP EMAIL FROM hamimasir5@gmail.com]`);
+  console.log(`📧 [DISPATCHING LIVE OTP EMAIL]`);
+  console.log(`From: ${SMTP_FROM_EMAIL}`);
   console.log(`To: ${norm}`);
   console.log(`Subject: Edutools UIU - Verification Code`);
   console.log(`========================================\n`);
 
   const mailOptions = {
-    from: `"Edutools UIU Academic Portal" <${EMAIL_USER}>`,
+    from: `"Edutools UIU Academic Portal" <${SMTP_FROM_EMAIL}>`,
     to: norm,
-    replyTo: EMAIL_USER,
+    replyTo: SMTP_FROM_EMAIL,
     subject: `Edutools UIU - Your Verification Code: ${otp}`,
     text: `Welcome to Edutools (United International University)!\n\nYour 6-digit verification code is: ${otp}\n\nThis code will expire in 5 minutes.\nIf you did not request this code, please ignore this email.`,
     html: `
@@ -247,7 +250,7 @@ async function sendEmailOtp(email, otp) {
           <p style="color: #ef4444; font-size: 12px; margin: 12px 0 0 0; font-weight: 600;">⏱ Valid for 5 minutes only</p>
         </div>
         <p style="color: #64748b; font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
-          Sent from <strong>hamimasir5@gmail.com</strong>.<br/>
+          Sent from <strong>${SMTP_FROM_EMAIL}</strong>.<br/>
           If you did not request this login or registration code, you can safely ignore this email.
         </p>
       </div>
@@ -263,7 +266,6 @@ async function sendEmailOtp(email, otp) {
     console.error(`   code: ${sendErr.code || 'none'}`);
     console.error(`   responseCode: ${sendErr.responseCode || 'none'}`);
 
-    // Retry once with a fresh transporter (stale pool recovery)
     console.log(`🔄 [SMTP RETRY] Creating fresh transporter and retrying...`);
     try {
       transporter.close();
@@ -438,12 +440,11 @@ async function requestOtp(email, options = {}) {
   });
 
   // SMTP email dispatch with fallback timeout
-  // 45s race covers: 30s first attempt timeout + fresh transporter retry
   let emailResult = null;
   try {
     emailResult = await Promise.race([
       sendEmailOtp(normalizedEmail, otp),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (45s) — server could not reach Gmail after retry')), 45000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (45s) — server could not reach mail server after retry')), 45000))
     ]);
     console.log(`✅ [SMTP OK] Email delivered to ${normalizedEmail} | MessageId: ${emailResult.messageId}`);
   } catch (err) {
@@ -456,7 +457,6 @@ async function requestOtp(email, options = {}) {
     console.error(`   Stack: ${err.stack}`);
     console.error(`   OTP was: ${otp} (generated for ${normalizedEmail})`);
 
-    // Delete the OTP since user cannot receive it
     otpStore.delete(normalizedEmail);
     console.error(`   OTP removed from store — user must retry.`);
 
@@ -641,9 +641,13 @@ async function loginWithPassword(email, password) {
  * Verifies SMTP transporter connectivity at startup
  */
 async function verifySMTP() {
+  if (!SMTP_USER || !SMTP_PASS) {
+    console.warn('[SMTP] ⚠️  SMTP_USER or SMTP_PASS not set in backend/.env — OTP emails will not work.');
+    return false;
+  }
   try {
     await transporter.verify();
-    console.log('[SMTP] Gmail transporter verified — ready to send emails.');
+    console.log('[SMTP] Transporter verified — ready to send emails.');
     return true;
   } catch (err) {
     console.warn('[SMTP] Transporter verification failed:', err.message);
