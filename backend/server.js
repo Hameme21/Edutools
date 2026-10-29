@@ -137,6 +137,8 @@ app.get('/', async (req, res) => {
       <a class="ep" href="/app"><div class="ep-name">Web App</div><div class="ep-path">GET /app</div></a>
       <a class="ep" href="/api/auth/request-otp"><div class="ep-name">Request OTP</div><div class="ep-path">POST /api/auth</div></a>
       <a class="ep" href="/api/auth/verify-otp"><div class="ep-name">Verify OTP</div><div class="ep-path">POST /api/auth</div></a>
+      <a class="ep" href="#"><div class="ep-name">Verify Email</div><div class="ep-path">POST /api/auth</div></a>
+      <a class="ep" href="#"><div class="ep-name">Reset Password</div><div class="ep-path">POST /api/auth</div></a>
     </div>
   </div>
 

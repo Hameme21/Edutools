@@ -327,6 +327,63 @@ class ApiService {
     return false;
   }
 
+  /// Request email verification link (for Google Sign-In flow)
+  Future<Map<String, dynamic>> requestEmailVerification(String email, {String? displayName}) async {
+    final norm = email.trim().toLowerCase();
+
+    if (!isValidEmail(norm)) {
+      throw Exception('Please enter a valid email address.');
+    }
+
+    return await _postJson(
+      '/api/auth/send-verification-link',
+      {
+        'email': norm,
+        if (displayName != null && displayName.isNotEmpty) 'displayName': displayName.trim(),
+      },
+      timeout: const Duration(seconds: 50),
+    );
+  }
+
+  /// Check if email has been verified via the link (polled by frontend)
+  Future<Map<String, dynamic>> checkEmailVerification(String email) async {
+    final norm = email.trim().toLowerCase();
+    final targets = _configuredBaseUrl != null ? [_configuredBaseUrl] : candidateBaseUrls;
+
+    for (final host in targets) {
+      try {
+        final req = await _client.getUrl(
+          Uri.parse('$host/api/auth/check-verification?email=${Uri.encodeComponent(norm)}'),
+        ).timeout(const Duration(seconds: 5));
+        if (authToken != null) {
+          req.headers.set('Authorization', 'Bearer $authToken');
+        }
+        final res = await req.close().timeout(const Duration(seconds: 5));
+        if (res.statusCode == 200) {
+          final respBody = await utf8.decodeStream(res);
+          final data = jsonDecode(respBody) as Map<String, dynamic>;
+          return data;
+        }
+      } catch (_) {}
+    }
+    return {'verified': false};
+  }
+
+  /// Request a password reset link
+  Future<Map<String, dynamic>> requestPasswordReset(String email) async {
+    final norm = email.trim().toLowerCase();
+
+    if (!isValidEmail(norm)) {
+      throw Exception('Please enter a valid email address.');
+    }
+
+    return await _postJson(
+      '/api/auth/forgot-password',
+      {'email': norm},
+      timeout: const Duration(seconds: 30),
+    );
+  }
+
   /// Get live Calendar Sync Status Verification Report
   Future<SyncStatusReport> getCalendarSyncStatus(String email) async {
     if (Platform.environment.containsKey('FLUTTER_TEST')) {

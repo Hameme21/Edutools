@@ -219,12 +219,251 @@ router.get('/auth/has-password', (req, res) => {
 });
 
 /**
+ * POST /api/auth/send-verification-link
+ * Sends an email verification link (used for Google Sign-In flow)
+ */
+router.post('/auth/send-verification-link', async (req, res) => {
+  try {
+    const { email, displayName } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email address is required.' });
+    }
+    const result = await authService.requestEmailVerification(email, displayName);
+    res.json(result);
+  } catch (err) {
+    const status = err.status || 400;
+    res.status(status).json({
+      success: false,
+      error: err.message,
+      code: err.code || 'AUTH_ERROR',
+    });
+  }
+});
+
+/**
+ * GET /api/auth/verify-email?token=...
+ * Called when the user clicks the verification link in their email.
+ * Returns an HTML page confirming verification.
+ */
+router.get('/auth/verify-email', (req, res) => {
+  const { token } = req.query;
+  if (!token) {
+    return res.status(400).send(renderVerificationPage(false, 'Missing verification token.'));
+  }
+
+  const result = authService.verifyEmailToken(token);
+  if (result.success) {
+    return res.send(renderVerificationPage(true, `Email ${result.email} verified successfully! You can close this tab and return to the app.`));
+  } else {
+    return res.send(renderVerificationPage(false, result.error));
+  }
+});
+
+/**
+ * GET /api/auth/check-verification?email=...
+ * Polled by the frontend to check if the email has been verified via the link.
+ */
+router.get('/auth/check-verification', (req, res) => {
+  const email = req.query.email?.trim().toLowerCase();
+  if (!email) {
+    return res.status(400).json({ success: false, error: 'Email parameter is required.' });
+  }
+  const result = authService.checkEmailVerification(email);
+  res.json({ success: true, ...result });
+});
+
+/**
+ * POST /api/auth/forgot-password
+ * Sends a password reset link to the user's email.
+ */
+router.post('/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email address is required.' });
+    }
+    const result = await authService.requestPasswordReset(email);
+    res.json(result);
+  } catch (err) {
+    const status = err.status || 400;
+    res.status(status).json({
+      success: false,
+      error: err.message,
+      code: err.code || 'AUTH_ERROR',
+    });
+  }
+});
+
+/**
+ * GET /api/auth/reset-password?token=...
+ * Renders the password reset form (HTML page).
+ */
+router.get('/auth/reset-password', (req, res) => {
+  const { token } = req.query;
+  if (!token) {
+    return res.send(renderResetPasswordPage(null, 'Missing reset token.'));
+  }
+
+  const result = authService.validateResetToken(token);
+  if (!result.valid) {
+    return res.send(renderResetPasswordPage(null, result.error));
+  }
+  return res.send(renderResetPasswordPage(token, null, result.email));
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Processes the password reset form submission.
+ */
+router.post('/auth/reset-password', (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      // If browser form submit (not JSON)
+      if (req.is('application/x-www-form-urlencoded')) {
+        return res.send(renderResetPasswordPage(token, 'Token and password are required.'));
+      }
+      return res.status(400).json({ success: false, error: 'Token and password are required.' });
+    }
+
+    const result = authService.resetPasswordWithToken(token, password);
+
+    if (req.is('application/x-www-form-urlencoded')) {
+      return res.send(renderResetSuccessPage());
+    }
+    res.json(result);
+  } catch (err) {
+    if (req.is('application/x-www-form-urlencoded')) {
+      return res.send(renderResetPasswordPage(req.body?.token, err.message));
+    }
+    const status = err.status || 400;
+    res.status(status).json({
+      success: false,
+      error: err.message,
+      code: err.code || 'AUTH_ERROR',
+    });
+  }
+});
+
+/**
  * GET /api/auth/me
  * Retrieves student profile for active session token
  */
 router.get('/auth/me', requireAuth, (req, res) => {
   res.json({ success: true, student: req.student });
 });
+
+// ===================== HTML PAGE RENDERERS =====================
+
+function renderVerificationPage(success, message) {
+  const color = success ? '#10B981' : '#EF4444';
+  const icon = success ? '✅' : '❌';
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edutools — Email Verification</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0a;color:#fafafa;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{max-width:440px;width:100%;background:#141414;border:1px solid #262626;border-radius:20px;padding:40px;text-align:center}
+  .icon{font-size:56px;margin-bottom:16px}
+  h1{font-size:22px;font-weight:700;margin-bottom:8px;color:${color}}
+  p{font-size:14px;color:#a3a3a3;line-height:1.6;margin-bottom:24px}
+  .brand{font-size:12px;color:#525252;margin-top:16px}
+</style></head>
+<body>
+<div class="card">
+  <div class="icon">${icon}</div>
+  <h1>${success ? 'Email Verified!' : 'Verification Failed'}</h1>
+  <p>${message}</p>
+  <p class="brand">Edutools &bull; United International University</p>
+</div>
+</body></html>`;
+}
+
+function renderResetPasswordPage(token, error, email) {
+  const errorHtml = error
+    ? `<div style="background:#7f1d1d;border:1px solid #ef4444;border-radius:10px;padding:12px;margin-bottom:16px;color:#fca5a5;font-size:13px">${error}</div>`
+    : '';
+
+  if (!token) {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edutools — Reset Password</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0a;color:#fafafa;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{max-width:440px;width:100%;background:#141414;border:1px solid #262626;border-radius:20px;padding:40px;text-align:center}
+  h1{font-size:22px;font-weight:700;margin-bottom:8px;color:#EF4444}
+  p{font-size:14px;color:#a3a3a3;line-height:1.6}
+</style></head>
+<body><div class="card"><h1>Invalid Reset Link</h1>${errorHtml}<p>${error || 'This password reset link is invalid or has expired.'}</p></div></body></html>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edutools — Reset Password</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0a;color:#fafafa;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{max-width:440px;width:100%;background:#141414;border:1px solid #262626;border-radius:20px;padding:40px}
+  .logo{text-align:center;margin-bottom:24px}
+  .logo h1{color:#f97316;font-size:24px;font-weight:800}
+  .logo p{color:#737373;font-size:12px}
+  label{display:block;font-size:13px;font-weight:600;color:#d4d4d4;margin-bottom:6px}
+  input{width:100%;padding:12px 14px;background:#1e1e1e;border:1px solid #333;border-radius:10px;color:#fafafa;font-size:14px;margin-bottom:14px;font-family:inherit}
+  input:focus{outline:none;border-color:#f97316}
+  button{width:100%;padding:14px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+  button:hover{opacity:0.9}
+  .email{text-align:center;color:#f97316;font-weight:700;font-size:14px;margin-bottom:16px}
+</style></head>
+<body>
+<div class="card">
+  <div class="logo"><h1>Edutools &bull; UIU</h1><p>Reset Your Password</p></div>
+  ${email ? `<p class="email">${email}</p>` : ''}
+  ${errorHtml}
+  <form method="POST" action="/api/auth/reset-password">
+    <input type="hidden" name="token" value="${token}">
+    <label>New Password</label>
+    <input type="password" name="password" placeholder="Min 6 characters" minlength="6" required>
+    <label>Confirm Password</label>
+    <input type="password" id="confirmPw" placeholder="Confirm new password" minlength="6" required>
+    <button type="submit">Reset Password</button>
+  </form>
+  <script>
+    document.querySelector('form').addEventListener('submit', function(e) {
+      const pw = document.querySelector('input[name="password"]').value;
+      const cpw = document.getElementById('confirmPw').value;
+      if (pw !== cpw) { e.preventDefault(); alert('Passwords do not match.'); }
+    });
+  </script>
+</div>
+</body></html>`;
+}
+
+function renderResetSuccessPage() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edutools — Password Reset</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0a;color:#fafafa;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{max-width:440px;width:100%;background:#141414;border:1px solid #262626;border-radius:20px;padding:40px;text-align:center}
+  h1{font-size:22px;font-weight:700;margin-bottom:8px;color:#10B981}
+  p{font-size:14px;color:#a3a3a3;line-height:1.6}
+</style></head>
+<body>
+<div class="card">
+  <div style="font-size:56px;margin-bottom:16px">✅</div>
+  <h1>Password Reset Successfully!</h1>
+  <p>You can now sign in with your new password. You may close this tab.</p>
+  <p style="color:#525252;font-size:12px;margin-top:16px">Edutools &bull; United International University</p>
+</div>
+</body></html>`;
+}
 
 // ===================== 2. FILE UPLOAD ENDPOINT =====================
 

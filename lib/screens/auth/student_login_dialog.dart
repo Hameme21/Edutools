@@ -4,6 +4,7 @@ import '../../models/student_profile.dart';
 import '../../state/calendar_state.dart';
 import '../../widgets/educal_logo.dart';
 import '../../services/api_service.dart';
+import 'forgot_password_dialog.dart';
 
 class StudentLoginDialog extends StatefulWidget {
   final CalendarState state;
@@ -626,6 +627,32 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
           suffixIcon: IconButton(
             icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
             onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+          ),
+        ),
+      ),
+      const SizedBox(height: 4),
+      Align(
+        alignment: Alignment.centerRight,
+        child: TextButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (_) => ForgotPasswordDialog(
+                initialEmail: _emailController.text.trim(),
+              ),
+            );
+          },
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+          ),
+          child: const Text(
+            'Forgot Password?',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFEA580C),
+            ),
           ),
         ),
       ),

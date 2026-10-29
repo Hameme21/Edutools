@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/student_profile.dart';
 import '../../services/api_service.dart';
+import 'forgot_password_dialog.dart';
 
 class UniversityAuthDialog extends StatefulWidget {
   final StudentProfile? currentProfile;
@@ -268,6 +269,27 @@ class _UniversityAuthDialogState extends State<UniversityAuthDialog> {
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => ForgotPasswordDialog(
+                          initialEmail: _emailController.text.trim(),
+                        ),
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFEA580C)),
                     ),
                   ),
                 ),

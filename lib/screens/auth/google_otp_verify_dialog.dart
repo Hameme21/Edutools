@@ -4,6 +4,8 @@ import '../../services/api_service.dart';
 import '../../state/calendar_state.dart';
 import 'edit_profile_dialog.dart';
 
+/// Dialog shown after Google Sign-In to verify email ownership via a link.
+/// Replaces the old OTP-based verification dialog.
 class GoogleOtpVerifyDialog extends StatefulWidget {
   final String email;
   final String displayName;
@@ -21,31 +23,31 @@ class GoogleOtpVerifyDialog extends StatefulWidget {
 }
 
 class _GoogleOtpVerifyDialogState extends State<GoogleOtpVerifyDialog> {
-  final _otpCtrl = TextEditingController();
   final _apiService = ApiService();
   bool _sending = true;
-  bool _verifying = false;
+  bool _verified = false;
   String? _error;
-  int _secondsLeft = 300;
-  Timer? _timer;
+  Timer? _pollTimer;
+  int _secondsLeft = 900; // 15 minutes
+  Timer? _countdownTimer;
 
   @override
   void initState() {
     super.initState();
-    _sendOtp();
+    _sendVerificationLink();
   }
 
   @override
   void dispose() {
-    _otpCtrl.dispose();
-    _timer?.cancel();
+    _pollTimer?.cancel();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
-  void _startTimer() {
-    _timer?.cancel();
-    _secondsLeft = 300;
-    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+  void _startCountdown() {
+    _countdownTimer?.cancel();
+    _secondsLeft = 900;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_secondsLeft <= 0) {
         t.cancel();
       } else {
@@ -54,49 +56,65 @@ class _GoogleOtpVerifyDialogState extends State<GoogleOtpVerifyDialog> {
     });
   }
 
-  Future<void> _sendOtp() async {
-    setState(() { _sending = true; _error = null; });
-    try {
-      await _apiService.requestOtp(widget.email);
-      _startTimer();
-    } catch (e) {
-      setState(() => _error = 'Failed to send code. Tap Resend.');
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+      try {
+        final result = await _apiService.checkEmailVerification(widget.email);
+        if (result['verified'] == true) {
+          _pollTimer?.cancel();
+          _countdownTimer?.cancel();
+
+          // Store the auth token
+          if (result['token'] != null) {
+            _apiService.authToken = result['token'] as String;
+          }
+
+          if (!mounted) return;
+
+          setState(() => _verified = true);
+
+          // Login with the verified student data
+          final studentJson = result['student'] as Map<String, dynamic>?;
+          widget.state.loginStudent(
+            email: widget.email,
+            studentId: studentJson?['studentId'] ?? widget.email.split('@').first.toUpperCase(),
+            fullName: studentJson?['fullName'] ?? widget.displayName,
+          );
+
+          // Small delay to show success state, then continue
+          await Future.delayed(const Duration(milliseconds: 800));
+          if (!mounted) return;
+
+          Navigator.of(context).pop(true);
+
+          showDialog(
+            context: context,
+            builder: (ctx) => EditProfileDialog(state: widget.state),
+          );
+        }
+      } catch (_) {
+        // Polling errors are silently ignored
+      }
+    });
   }
 
-  Future<void> _verify() async {
-    final otp = _otpCtrl.text.trim();
-    if (otp.length != 6) {
-      setState(() => _error = 'Please enter the 6-digit code.');
-      return;
-    }
-
-    setState(() { _verifying = true; _error = null; });
-
+  Future<void> _sendVerificationLink() async {
+    setState(() {
+      _sending = true;
+      _error = null;
+    });
     try {
-      await _apiService.verifyOtp(widget.email, otp);
-      _timer?.cancel();
-
-      if (!mounted) return;
-
-      widget.state.loginStudent(
-        email: widget.email,
-        studentId: widget.email.split('@').first.toUpperCase(),
-        fullName: widget.displayName,
+      await _apiService.requestEmailVerification(
+        widget.email,
+        displayName: widget.displayName,
       );
-
-      Navigator.of(context).pop(true);
-
-      showDialog(
-        context: context,
-        builder: (ctx) => EditProfileDialog(state: widget.state),
-      );
+      _startCountdown();
+      _startPolling();
     } catch (e) {
-      setState(() => _error = e.toString().replaceAll('Exception: ', ''));
+      setState(() => _error = 'Failed to send verification email. Tap Resend.');
     } finally {
-      if (mounted) setState(() => _verifying = false);
+      if (mounted) setState(() => _sending = false);
     }
   }
 
@@ -123,10 +141,14 @@ class _GoogleOtpVerifyDialogState extends State<GoogleOtpVerifyDialog> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.mark_email_read_rounded, size: 20, color: Color(0xFF2563EB)),
+                      Icon(
+                        _verified ? Icons.check_circle_rounded : Icons.mark_email_read_rounded,
+                        size: 20,
+                        color: _verified ? const Color(0xFF10B981) : const Color(0xFF2563EB),
+                      ),
                       const SizedBox(width: 8),
                       Text(
-                        'Verify Email',
+                        _verified ? 'Email Verified!' : 'Verify Email',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
@@ -135,134 +157,187 @@ class _GoogleOtpVerifyDialogState extends State<GoogleOtpVerifyDialog> {
                       ),
                     ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => Navigator.of(context).pop(false),
-                    visualDensity: VisualDensity.compact,
-                  ),
+                  if (!_verified)
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.of(context).pop(false),
+                      visualDensity: VisualDensity.compact,
+                    ),
                 ],
               ),
               const SizedBox(height: 12),
 
-              Text(
-                'We sent a 6-digit code to:',
-                style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.email,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
-              ),
-              const SizedBox(height: 14),
-
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.2)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline, size: 14, color: Color(0xFF2563EB)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Check your Inbox and Spam/Junk folder.\nSent from hamimasir5@gmail.com',
+              if (_verified) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                  ),
+                  child: const Column(
+                    children: [
+                      Icon(Icons.check_circle_rounded, size: 48, color: Color(0xFF10B981)),
+                      SizedBox(height: 10),
+                      Text(
+                        'Your email has been verified successfully!',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 11,
-                          height: 1.4,
-                          color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF10B981),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              TextField(
-                controller: _otpCtrl,
-                maxLength: 6,
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  letterSpacing: 8,
-                  fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
-                decoration: InputDecoration(
-                  counterText: '',
-                  hintText: '------',
-                  hintStyle: TextStyle(color: isDark ? Colors.white24 : const Color(0xFFCBD5E1)),
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _secondsLeft > 0 ? 'Expires in: $timerText' : 'Code expired',
-                    style: TextStyle(fontSize: 12, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
-                  ),
-                  if (_secondsLeft <= 0 || !_sending)
-                    TextButton(
-                      onPressed: _sending ? null : _sendOtp,
-                      child: Text(
-                        'Resend',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _sending ? Colors.grey : const Color(0xFF2563EB)),
-                      ),
-                    ),
-                ],
-              ),
-
-              if (_error != null) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline, size: 14, color: Color(0xFFEF4444)),
-                      const SizedBox(width: 6),
-                      Expanded(child: Text(_error!, style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12))),
                     ],
                   ),
                 ),
-              ],
-
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                height: 46,
-                child: ElevatedButton.icon(
-                  onPressed: _verifying ? null : _verify,
-                  icon: _verifying
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.check_circle_rounded, size: 18),
-                  label: Text(_verifying ? 'Verifying...' : 'Verify & Continue'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ] else ...[
+                if (_sending) ...[
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Column(
+                      children: [
+                        CircularProgressIndicator(strokeWidth: 2.5),
+                        SizedBox(height: 12),
+                        Text(
+                          'Sending verification email...',
+                          style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
+                ] else ...[
+                  Text(
+                    'We sent a verification link to:',
+                    style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.email,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
+                  ),
+                  const SizedBox(height: 14),
+
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.2)),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.link_rounded, size: 16, color: Color(0xFF2563EB)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Click the link in your email to verify.\nThis page will update automatically.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(Icons.info_outline, size: 14, color: Color(0xFF2563EB)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Check your Inbox and Spam/Junk folder.\nSent from hamimasir5@gmail.com',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  height: 1.4,
+                                  color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Waiting indicator
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Waiting for verification...',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _secondsLeft > 0 ? 'Expires in: $timerText' : 'Link expired',
+                        style: TextStyle(fontSize: 12, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                      ),
+                      TextButton(
+                        onPressed: _sending ? null : _sendVerificationLink,
+                        child: Text(
+                          'Resend',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _sending ? Colors.grey : const Color(0xFF2563EB),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
+                if (_error != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, size: 14, color: Color(0xFFEF4444)),
+                        const SizedBox(width: 6),
+                        Expanded(child: Text(_error!, style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12))),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ],
           ),
         ),

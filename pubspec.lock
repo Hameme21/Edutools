@@ -296,22 +296,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.20.3"
-  jni:
-    dependency: transitive
-    description:
-      name: jni
-      sha256: "6b9ca0602fef0230e83149afbe3f9f8227e94f2bbe84a1da4f14d699742f402d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
-  jni_util:
-    dependency: transitive
-    description:
-      name: jni_util
-      sha256: "1ba86da04a5f2bf18fde2edb235587e70c5b0fc5bd4ba955f46b00942c3fc35f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.0"
   leak_tracker:
     dependency: transitive
     description:
@@ -368,14 +352,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.19.0"
-  package_config:
-    dependency: transitive
-    description:
-      name: package_config
-      sha256: ffcf4cf3d6c0b74ac43708d9f56625506e8a68aa935abe9d267a7330f320eb5d
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.0"
   path:
     dependency: transitive
     description:
@@ -441,13 +417,13 @@ packages:
     source: hosted
     version: "2.2.2"
   shared_preferences_android:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: shared_preferences_android
-      sha256: "593034a16e82953ca31145db6c85174286262715f9c5e6a9d8c65ffd9fcdce09"
+      sha256: "93d0ec9dd902d85f326068e6a899487d1f65ffcd5798721a95330b26c8131577"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.3"
+    version: "2.2.3"
   shared_preferences_foundation:
     dependency: "direct overridden"
     description:
