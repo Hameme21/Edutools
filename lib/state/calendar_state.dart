@@ -112,6 +112,19 @@ class CalendarState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateProfile({String? fullName, String? studentId, String? department, String? semester}) {
+    if (_currentStudent == null) return;
+    _currentStudent = _currentStudent!.copyWith(
+      fullName: fullName,
+      studentId: studentId,
+      department: department,
+      semester: semester,
+    );
+    _saveSessionToDisk();
+    syncWithWebsite();
+    notifyListeners();
+  }
+
   void logoutStudent() {
     _currentStudent = null;
     _autoSyncTimer?.cancel();

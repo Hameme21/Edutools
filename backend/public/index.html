@@ -3064,9 +3064,10 @@ body {
               </div>
               <button class="btn btn-sm btn-outline" id="btnForceCloudSync" title="Force Sync"><i class="fa-solid fa-arrows-rotate"></i></button>
             </div>
-            <div class="g-profile-footer">
+            <div class="g-profile-footer" style="flex-wrap:wrap;gap:8px">
+              <button class="btn btn-sm btn-outline" id="btnEditProfile" style="flex:1"><i class="fa-solid fa-user-pen"></i> Edit Profile</button>
               <button class="btn btn-sm btn-outline-danger" id="btnSignOutGProfile"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign out</button>
-              <button class="btn btn-sm btn-primary" id="btnSyncNowGProfile"><i class="fa-brands fa-google-drive"></i> Drive Sync</button>
+              <button class="btn btn-sm btn-primary" id="btnSyncNowGProfile" style="flex:1"><i class="fa-brands fa-google-drive"></i> Drive Sync</button>
             </div>
           </div>
         </div>
@@ -3701,34 +3702,118 @@ body {
     </div>
   </div>
 
-  <!-- SET PASSWORD AFTER GOOGLE SIGN-IN MODAL -->
-  <div class="modal-overlay" id="googleSetPasswordModal">
-    <div class="modal-box" style="max-width:420px">
+  <!-- GOOGLE SIGN-IN: OTP VERIFY + PROFILE SETUP MODAL -->
+  <div class="modal-overlay" id="googleVerifyModal">
+    <div class="modal-box" style="max-width:440px">
       <div class="modal-header">
         <div class="modal-title-wrap">
-          <i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i>
-          <h3>Set a Password</h3>
+          <i class="fa-solid fa-envelope-circle-check" style="color:var(--primary)"></i>
+          <h3 id="googleVerifyTitle">Verify Your Email</h3>
         </div>
-        <button class="modal-close" id="btnCloseGooglePwModal">&times;</button>
+        <button class="modal-close" id="btnCloseGoogleVerify">&times;</button>
       </div>
       <div class="modal-body">
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.5">
-          You signed in with Google. Set a password so you can also sign in with <strong>email &amp; password</strong> next time — no Google popup needed.
-        </p>
+        <!-- Step 1: OTP Verification -->
+        <div id="gvStep1">
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px;line-height:1.5">
+            We sent a <strong>6-digit code</strong> to your Google email:
+          </p>
+          <p style="font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px" id="gvEmailDisplay"></p>
+          <div class="auth-success show" style="margin-bottom:14px">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Check your <strong>Inbox</strong> and <strong>Spam/Junk</strong> folder. Code sent from <strong>hamimasir5@gmail.com</strong></span>
+          </div>
+          <div class="form-group">
+            <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Enter 6-Digit Code <span style="color:var(--danger)">*</span></label>
+            <input type="text" class="form-input" id="gvOtpInput" maxlength="6" placeholder="------" style="width:100%;padding:12px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:20px;letter-spacing:6px;text-align:center;font-family:monospace;font-weight:800">
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:12px;color:var(--text-muted)" id="gvTimer">Expires in: 05:00</span>
+            <button style="font-size:12px;color:var(--primary);background:none;border:none;cursor:pointer;font-weight:600;font-family:var(--font);display:none" id="gvResendBtn">Resend Code</button>
+          </div>
+          <div id="gvOtpError" style="display:none;color:var(--danger);font-size:12px;font-weight:600;margin-bottom:10px"></div>
+          <button class="auth-btn auth-btn-primary" id="gvVerifyBtn" style="width:100%">
+            <i class="fa-solid fa-circle-check"></i> Verify Email
+          </button>
+        </div>
+
+        <!-- Step 2: Profile Setup + Password (after OTP verified) -->
+        <div id="gvStep2" style="display:none">
+          <div class="auth-success show" style="margin-bottom:16px">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Email verified! Complete your profile below.</span>
+          </div>
+          <div class="form-group">
+            <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Full Name</label>
+            <input type="text" class="form-input" id="gvName" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Student ID</label>
+              <input type="text" class="form-input" id="gvStudentId" placeholder="e.g. 011251234" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+            </div>
+            <div class="form-group">
+              <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Department</label>
+              <input type="text" class="form-input" id="gvDept" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Set Password <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+            <input type="password" class="form-input" id="gvPassword" placeholder="Min 6 characters — lets you sign in without Google" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+          </div>
+          <div id="gvProfileError" style="display:none;color:var(--danger);font-size:12px;font-weight:600;margin-bottom:10px"></div>
+          <button class="auth-btn auth-btn-primary" id="gvSaveProfileBtn" style="width:100%;margin-bottom:10px">
+            <i class="fa-solid fa-check"></i> Save & Continue
+          </button>
+          <button id="gvSkipBtn" style="width:100%;padding:10px;background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">
+            Skip — use defaults
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT PROFILE MODAL -->
+  <div class="modal-overlay" id="editProfileModal">
+    <div class="modal-box" style="max-width:440px">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i class="fa-solid fa-user-pen" style="color:var(--primary)"></i>
+          <h3>Edit Profile</h3>
+        </div>
+        <button class="modal-close" id="btnCloseEditProfile">&times;</button>
+      </div>
+      <div class="modal-body">
         <div class="form-group">
-          <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">New Password <span style="color:var(--danger)">*</span></label>
-          <input type="password" class="form-input" id="googlePwInput" placeholder="Min 6 characters" minlength="6" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+          <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Email</label>
+          <input type="email" class="form-input" id="epEmail" disabled style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-muted);font-size:14px;font-family:var(--font);opacity:0.7">
         </div>
         <div class="form-group">
-          <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Confirm Password</label>
-          <input type="password" class="form-input" id="googlePwConfirm" placeholder="Re-enter password" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+          <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Full Name</label>
+          <input type="text" class="form-input" id="epName" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
         </div>
-        <div id="googlePwError" style="display:none;color:var(--danger);font-size:12px;font-weight:600;margin-bottom:10px"></div>
-        <button class="auth-btn auth-btn-primary" id="googlePwSaveBtn" style="width:100%;margin-bottom:10px">
-          <i class="fa-solid fa-lock"></i> Save Password
-        </button>
-        <button id="googlePwSkipBtn" style="width:100%;padding:10px;background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">
-          Skip for now
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Student ID</label>
+            <input type="text" class="form-input" id="epStudentId" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+          </div>
+          <div class="form-group">
+            <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Department</label>
+            <input type="text" class="form-input" id="epDept" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Semester</label>
+          <input type="text" class="form-input" id="epSemester" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+        </div>
+        <div class="form-group">
+          <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Change Password <span style="font-weight:400;color:var(--text-muted)">(leave blank to keep current)</span></label>
+          <input type="password" class="form-input" id="epPassword" placeholder="New password (min 6 chars)" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+        </div>
+        <div id="epError" style="display:none;color:var(--danger);font-size:12px;font-weight:600;margin-bottom:10px"></div>
+        <div id="epSuccess" style="display:none;color:var(--emerald);font-size:12px;font-weight:600;margin-bottom:10px"></div>
+        <button class="auth-btn auth-btn-primary" id="epSaveBtn" style="width:100%">
+          <i class="fa-solid fa-floppy-disk"></i> Save Changes
         </button>
       </div>
     </div>
@@ -6683,6 +6768,14 @@ function initEventListeners() {
     });
   }
 
+  const btnEditProfile = document.getElementById('btnEditProfile');
+  if (btnEditProfile) {
+    btnEditProfile.addEventListener('click', () => {
+      if (googleDropdown) googleDropdown.classList.remove('show');
+      openEditProfileModal();
+    });
+  }
+
   const forceSyncHandler = async () => {
     showToast('Syncing with Cloud & Mobile App...', 'info');
     await syncStudentWithServer(true);
@@ -7188,39 +7281,137 @@ function inferDepartmentFromEmail(email) {
   return 'Computer Science & Engineering';
 }
 
-function showGoogleSetPasswordModal() {
-  const modal = document.getElementById('googleSetPasswordModal');
-  const pwInput = document.getElementById('googlePwInput');
-  const pwConfirm = document.getElementById('googlePwConfirm');
-  const errBox = document.getElementById('googlePwError');
-  const saveBtn = document.getElementById('googlePwSaveBtn');
-  const skipBtn = document.getElementById('googlePwSkipBtn');
-  const closeBtn = document.getElementById('btnCloseGooglePwModal');
+function showGoogleVerifyModal(googleEmail, googleDisplayName) {
+  const modal = document.getElementById('googleVerifyModal');
   if (!modal) return;
 
-  pwInput.value = '';
-  pwConfirm.value = '';
+  const emailDisplay = document.getElementById('gvEmailDisplay');
+  const otpInput = document.getElementById('gvOtpInput');
+  const timerEl = document.getElementById('gvTimer');
+  const resendBtn = document.getElementById('gvResendBtn');
+  const errBox = document.getElementById('gvOtpError');
+  const verifyBtn = document.getElementById('gvVerifyBtn');
+  const closeBtn = document.getElementById('btnCloseGoogleVerify');
+  const step1 = document.getElementById('gvStep1');
+  const step2 = document.getElementById('gvStep2');
+
+  emailDisplay.textContent = googleEmail;
+  otpInput.value = '';
   errBox.style.display = 'none';
+  step1.style.display = 'block';
+  step2.style.display = 'none';
   modal.classList.add('show');
 
-  function closeModal() { modal.classList.remove('show'); }
-
+  function closeModal() { modal.classList.remove('show'); clearInterval(timerInterval); }
   closeBtn.onclick = closeModal;
-  skipBtn.onclick = closeModal;
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-  saveBtn.onclick = async () => {
-    const pw = pwInput.value;
-    const pw2 = pwConfirm.value;
+  let timerInterval = null;
+  function startTimer() {
+    let sec = 300;
+    resendBtn.style.display = 'none';
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      sec--;
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      timerEl.textContent = `Expires in: ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      if (sec <= 0) { clearInterval(timerInterval); timerEl.textContent = 'Code expired'; resendBtn.style.display = 'inline'; }
+    }, 1000);
+  }
+
+  async function sendOtp() {
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: googleEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) console.warn('OTP send warning:', data.error);
+      startTimer();
+    } catch (e) {
+      console.error('Failed to send OTP:', e);
+    }
+  }
+
+  sendOtp();
+
+  resendBtn.onclick = () => { sendOtp(); resendBtn.style.display = 'none'; };
+
+  verifyBtn.onclick = async () => {
+    const otp = otpInput.value.trim();
     errBox.style.display = 'none';
-
-    if (!pw || pw.length < 6) {
-      errBox.textContent = 'Password must be at least 6 characters.';
+    if (!otp || otp.length !== 6) {
+      errBox.textContent = 'Please enter the 6-digit code.';
       errBox.style.display = 'block';
       return;
     }
-    if (pw !== pw2) {
-      errBox.textContent = 'Passwords do not match.';
+
+    verifyBtn.disabled = true;
+    verifyBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: googleEmail, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Invalid code.');
+
+      clearInterval(timerInterval);
+      step1.style.display = 'none';
+      step2.style.display = 'block';
+      document.getElementById('googleVerifyTitle').textContent = 'Complete Your Profile';
+
+      document.getElementById('gvName').value = googleDisplayName;
+      document.getElementById('gvStudentId').value = googleEmail.split('@')[0].toUpperCase();
+      document.getElementById('gvDept').value = inferDepartmentFromEmail(googleEmail);
+      document.getElementById('gvPassword').value = '';
+
+      setupProfileStep(modal, googleEmail);
+    } catch (err) {
+      errBox.textContent = err.message;
+      errBox.style.display = 'block';
+    } finally {
+      verifyBtn.disabled = false;
+      verifyBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verify Email';
+    }
+  };
+}
+
+function setupProfileStep(modal, email) {
+  const saveBtn = document.getElementById('gvSaveProfileBtn');
+  const skipBtn = document.getElementById('gvSkipBtn');
+  const errBox = document.getElementById('gvProfileError');
+
+  function completeLogin() {
+    const name = document.getElementById('gvName').value.trim();
+    const studentId = document.getElementById('gvStudentId').value.trim();
+    const dept = document.getElementById('gvDept').value.trim();
+
+    if (name) state.student.fullName = name;
+    if (studentId) state.student.studentId = studentId;
+    if (dept) state.student.department = dept;
+
+    saveStudentSession();
+    syncStudentWithServer(false);
+    renderAll();
+    updateSyncStatusUI();
+    modal.classList.remove('show');
+  }
+
+  skipBtn.onclick = () => {
+    completeLogin();
+    showToast(`Welcome, ${state.student.fullName}!`, 'success');
+  };
+
+  saveBtn.onclick = async () => {
+    errBox.style.display = 'none';
+    const pw = document.getElementById('gvPassword').value;
+
+    if (pw && pw.length < 6) {
+      errBox.textContent = 'Password must be at least 6 characters.';
       errBox.style.display = 'block';
       return;
     }
@@ -7229,24 +7420,99 @@ function showGoogleSetPasswordModal() {
     saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/set-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: state.student.email, password: pw }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to set password.');
-
-      closeModal();
-      showToast('Password saved! You can now sign in with email & password.', 'success');
+      if (pw) {
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/set-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: pw }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to set password.');
+      }
+      completeLogin();
+      showToast(`Profile saved${pw ? ' with password' : ''}! Welcome, ${state.student.fullName}!`, 'success');
     } catch (err) {
       errBox.textContent = err.message;
       errBox.style.display = 'block';
     } finally {
       saveBtn.disabled = false;
-      saveBtn.innerHTML = '<i class="fa-solid fa-lock"></i> Save Password';
+      saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Save & Continue';
     }
   };
+}
+
+function openEditProfileModal() {
+  const modal = document.getElementById('editProfileModal');
+  if (!modal || !state.student) return;
+
+  document.getElementById('epEmail').value = state.student.email || '';
+  document.getElementById('epName').value = state.student.fullName || '';
+  document.getElementById('epStudentId').value = state.student.studentId || '';
+  document.getElementById('epDept').value = state.student.department || '';
+  document.getElementById('epSemester').value = state.student.semester || '';
+  document.getElementById('epPassword').value = '';
+  document.getElementById('epError').style.display = 'none';
+  document.getElementById('epSuccess').style.display = 'none';
+
+  const closeBtn = document.getElementById('btnCloseEditProfile');
+  closeBtn.onclick = () => modal.classList.remove('show');
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+
+  document.getElementById('epSaveBtn').onclick = async () => {
+    const errBox = document.getElementById('epError');
+    const successBox = document.getElementById('epSuccess');
+    const saveBtn = document.getElementById('epSaveBtn');
+    errBox.style.display = 'none';
+    successBox.style.display = 'none';
+
+    const name = document.getElementById('epName').value.trim();
+    const studentId = document.getElementById('epStudentId').value.trim();
+    const dept = document.getElementById('epDept').value.trim();
+    const semester = document.getElementById('epSemester').value.trim();
+    const pw = document.getElementById('epPassword').value;
+
+    if (!name) { errBox.textContent = 'Name is required.'; errBox.style.display = 'block'; return; }
+    if (pw && pw.length < 6) { errBox.textContent = 'Password must be at least 6 characters.'; errBox.style.display = 'block'; return; }
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+    try {
+      if (pw) {
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/set-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: state.student.email, password: pw }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to update password.');
+      }
+
+      state.student.fullName = name;
+      state.student.studentId = studentId;
+      state.student.department = dept;
+      state.student.semester = semester;
+
+      saveStudentSession();
+      syncStudentWithServer(false);
+      renderAll();
+      updateSyncStatusUI();
+      renderGoogleProfileUI();
+
+      successBox.textContent = 'Profile updated successfully!';
+      successBox.style.display = 'block';
+      showToast('Profile updated!', 'success');
+      setTimeout(() => modal.classList.remove('show'), 1200);
+    } catch (err) {
+      errBox.textContent = err.message;
+      errBox.style.display = 'block';
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+    }
+  };
+
+  modal.classList.add('show');
 }
 
 function initAuthGate() {
@@ -7294,12 +7560,10 @@ function initAuthGate() {
 
       saveStudentSession();
       startCrossPlatformAutoSync();
-      syncStudentWithServer(false);
       hideAuthGate();
       renderAll();
       updateSyncStatusUI();
-      showToast(`Welcome, ${state.student.fullName}!`, 'success');
-      showGoogleSetPasswordModal();
+      showGoogleVerifyModal(email, displayName);
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
         btn.disabled = false;

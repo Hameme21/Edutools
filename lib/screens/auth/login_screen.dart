@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../state/calendar_state.dart';
 import '../../theme/app_theme.dart';
 import 'student_login_dialog.dart';
+import 'google_otp_verify_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   final CalendarState state;
@@ -82,15 +83,22 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       final email = user.email!.toLowerCase();
       final displayName = user.displayName ?? _formatNameFromEmail(email);
 
-      widget.state.loginStudent(
-        email: email,
-        studentId: email.split('@').first.toUpperCase(),
-        fullName: displayName,
-        department: _inferDepartment(email),
+      setState(() => _isLoading = false);
+
+      if (!mounted) return;
+      final verified = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => GoogleOtpVerifyDialog(
+          email: email,
+          displayName: displayName,
+          state: widget.state,
+        ),
       );
 
-      setState(() => _isLoading = false);
-      widget.onLoginComplete();
+      if (verified == true && widget.state.isLoggedIn) {
+        widget.onLoginComplete();
+      }
     } on FirebaseAuthException catch (e) {
       setState(() {
         _isLoading = false;
@@ -131,15 +139,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         .where((p) => p.isNotEmpty)
         .map((p) => p[0].toUpperCase() + p.substring(1).toLowerCase())
         .join(' ');
-  }
-
-  String _inferDepartment(String email) {
-    final domain = email.split('@').last.toLowerCase();
-    if (domain.contains('bscse') || domain.contains('cse')) return 'Computer Science & Engineering';
-    if (domain.contains('bseee') || domain.contains('eee')) return 'Electrical & Electronic Engineering';
-    if (domain.contains('bsce') || domain.contains('ce')) return 'Civil Engineering';
-    if (domain.contains('sobe') || domain.contains('bba')) return 'School of Business & Economics';
-    return 'Computer Science & Engineering';
   }
 
   @override

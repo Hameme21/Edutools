@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../state/calendar_state.dart';
 import '../../services/api_service.dart';
 import 'change_password_dialog.dart';
+import 'edit_profile_dialog.dart';
 
 class GmailProfileDialog extends StatefulWidget {
   final CalendarState state;
@@ -282,6 +283,32 @@ class _GmailProfileDialogState extends State<GmailProfileDialog> {
               ),
             ),
             const SizedBox(height: 12),
+
+            // Edit Profile Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => EditProfileDialog(state: widget.state),
+                  ).then((_) {
+                    if (mounted) setState(() {});
+                  });
+                },
+                icon: const Icon(Icons.edit_rounded, size: 16, color: Color(0xFF2563EB)),
+                label: const Text(
+                  'Edit Profile',
+                  style: TextStyle(color: Color(0xFF2563EB), fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0x662563EB)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
 
             // Password Management Button
             if (_hasPassword != null)
