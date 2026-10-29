@@ -3701,6 +3701,39 @@ body {
     </div>
   </div>
 
+  <!-- SET PASSWORD AFTER GOOGLE SIGN-IN MODAL -->
+  <div class="modal-overlay" id="googleSetPasswordModal">
+    <div class="modal-box" style="max-width:420px">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i>
+          <h3>Set a Password</h3>
+        </div>
+        <button class="modal-close" id="btnCloseGooglePwModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.5">
+          You signed in with Google. Set a password so you can also sign in with <strong>email &amp; password</strong> next time — no Google popup needed.
+        </p>
+        <div class="form-group">
+          <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">New Password <span style="color:var(--danger)">*</span></label>
+          <input type="password" class="form-input" id="googlePwInput" placeholder="Min 6 characters" minlength="6" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+        </div>
+        <div class="form-group">
+          <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Confirm Password</label>
+          <input type="password" class="form-input" id="googlePwConfirm" placeholder="Re-enter password" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+        </div>
+        <div id="googlePwError" style="display:none;color:var(--danger);font-size:12px;font-weight:600;margin-bottom:10px"></div>
+        <button class="auth-btn auth-btn-primary" id="googlePwSaveBtn" style="width:100%;margin-bottom:10px">
+          <i class="fa-solid fa-lock"></i> Save Password
+        </button>
+        <button id="googlePwSkipBtn" style="width:100%;padding:10px;background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">
+          Skip for now
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- CLASS REMINDER CUSTOMIZATION MODAL -->
   <div class="modal-overlay" id="classReminderModal">
     <div class="modal-box">
@@ -7155,6 +7188,67 @@ function inferDepartmentFromEmail(email) {
   return 'Computer Science & Engineering';
 }
 
+function showGoogleSetPasswordModal() {
+  const modal = document.getElementById('googleSetPasswordModal');
+  const pwInput = document.getElementById('googlePwInput');
+  const pwConfirm = document.getElementById('googlePwConfirm');
+  const errBox = document.getElementById('googlePwError');
+  const saveBtn = document.getElementById('googlePwSaveBtn');
+  const skipBtn = document.getElementById('googlePwSkipBtn');
+  const closeBtn = document.getElementById('btnCloseGooglePwModal');
+  if (!modal) return;
+
+  pwInput.value = '';
+  pwConfirm.value = '';
+  errBox.style.display = 'none';
+  modal.classList.add('show');
+
+  function closeModal() { modal.classList.remove('show'); }
+
+  closeBtn.onclick = closeModal;
+  skipBtn.onclick = closeModal;
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  saveBtn.onclick = async () => {
+    const pw = pwInput.value;
+    const pw2 = pwConfirm.value;
+    errBox.style.display = 'none';
+
+    if (!pw || pw.length < 6) {
+      errBox.textContent = 'Password must be at least 6 characters.';
+      errBox.style.display = 'block';
+      return;
+    }
+    if (pw !== pw2) {
+      errBox.textContent = 'Passwords do not match.';
+      errBox.style.display = 'block';
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/set-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.student.email, password: pw }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to set password.');
+
+      closeModal();
+      showToast('Password saved! You can now sign in with email & password.', 'success');
+    } catch (err) {
+      errBox.textContent = err.message;
+      errBox.style.display = 'block';
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-lock"></i> Save Password';
+    }
+  };
+}
+
 function initAuthGate() {
   // Domain pill handlers for both forms
   document.querySelectorAll('#agSignInPills .auth-domain-pill, #agRegPills .auth-domain-pill').forEach(pill => {
@@ -7205,6 +7299,7 @@ function initAuthGate() {
       renderAll();
       updateSyncStatusUI();
       showToast(`Welcome, ${state.student.fullName}!`, 'success');
+      showGoogleSetPasswordModal();
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
         btn.disabled = false;
