@@ -27,30 +27,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 
-// Serve All-in-One Web App for browser users (public/ folder, docs/ directory, or web_app/)
-const localPublicDir = path.join(__dirname, 'public');
-const docsDir = path.join(__dirname, '..', 'docs');
-const webAppDir = path.join(__dirname, '..', 'web_app');
-let staticWebDir = localPublicDir;
-if (fs.existsSync(path.join(localPublicDir, 'index.html'))) {
-  staticWebDir = localPublicDir;
-} else if (fs.existsSync(path.join(docsDir, 'index.html'))) {
-  staticWebDir = docsDir;
-} else if (fs.existsSync(path.join(webAppDir, 'index.html'))) {
-  staticWebDir = webAppDir;
-}
-
-if (fs.existsSync(staticWebDir)) {
-  app.use(express.static(staticWebDir));
-  app.get('/app', (req, res) => {
-    res.sendFile(path.join(staticWebDir, 'index.html'));
-  });
-}
-
-// Mount REST API endpoints
-app.use('/api', apiRoutes);
-
-// Backend status dashboard — always shown at root instead of the frontend
+// Backend status dashboard — always shown at root
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://edutools-uiu.vercel.app';
 const RENDER_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
@@ -184,6 +161,29 @@ app.get('/', async (req, res) => {
     },
   });
 });
+
+// Serve Web App at /app only (not at root — root is the dashboard above)
+const localPublicDir = path.join(__dirname, 'public');
+const docsDir = path.join(__dirname, '..', 'docs');
+const webAppDir = path.join(__dirname, '..', 'web_app');
+let staticWebDir = localPublicDir;
+if (fs.existsSync(path.join(localPublicDir, 'index.html'))) {
+  staticWebDir = localPublicDir;
+} else if (fs.existsSync(path.join(docsDir, 'index.html'))) {
+  staticWebDir = docsDir;
+} else if (fs.existsSync(path.join(webAppDir, 'index.html'))) {
+  staticWebDir = webAppDir;
+}
+
+if (fs.existsSync(staticWebDir)) {
+  app.use(express.static(staticWebDir, { index: false }));
+  app.get('/app', (req, res) => {
+    res.sendFile(path.join(staticWebDir, 'index.html'));
+  });
+}
+
+// Mount REST API endpoints
+app.use('/api', apiRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

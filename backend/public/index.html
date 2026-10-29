@@ -2715,12 +2715,73 @@ body {
   .auth-reg-row { grid-template-columns: 1fr; }
 }
 
+.auth-google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.auth-google-btn:hover {
+  background: var(--bg-card-subtle);
+  border-color: var(--text-muted);
+  box-shadow: var(--shadow-sm);
+}
+.auth-google-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.auth-google-btn img {
+  width: 20px;
+  height: 20px;
+}
+.auth-google-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.auth-google-divider::before, .auth-google-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
 
 </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Firebase JS SDK for Google Sign-In -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyBYwvka8sDYOZF5IC4P0JKE1gDulEKzL1s",
+      authDomain: "edutools-e2558.firebaseapp.com",
+      projectId: "edutools-e2558",
+      storageBucket: "edutools-e2558.firebasestorage.app",
+      messagingSenderId: "1097225985625",
+      appId: "1:1097225985625:web:ec22bf03eb0fc142d3db48",
+      measurementId: "G-5BT7JYNYXH"
+    });
+  </script>
 </head>
 <body>
   <!-- ===================== AUTH GATE: Login / Register Screen ===================== -->
@@ -2762,6 +2823,13 @@ body {
         <div class="auth-form-section active" id="agSignIn">
           <!-- Step 1: Email + Password or OTP -->
           <div id="agSignInStep1">
+            <!-- Google Sign-In -->
+            <button class="auth-google-btn" id="agGoogleSignInBtn">
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+              Continue with Google
+            </button>
+            <div class="auth-google-divider"><span>or sign in with email</span></div>
+
             <div class="auth-field">
               <label>University Email <span class="required">*</span></label>
               <input type="email" class="auth-input" id="agSignInEmail" placeholder="username@bscse.uiu.ac.bd">
@@ -7078,6 +7146,15 @@ function hideAuthGate() {
   document.getElementById('appContainer').style.display = '';
 }
 
+function inferDepartmentFromEmail(email) {
+  const domain = email.split('@')[1] || '';
+  if (domain.includes('bscse') || domain.includes('cse')) return 'Computer Science & Engineering';
+  if (domain.includes('bseee') || domain.includes('eee')) return 'Electrical & Electronic Engineering';
+  if (domain.includes('bsce') || domain.includes('ce')) return 'Civil Engineering';
+  if (domain.includes('sobe') || domain.includes('bba')) return 'School of Business & Economics';
+  return 'Computer Science & Engineering';
+}
+
 function initAuthGate() {
   // Domain pill handlers for both forms
   document.querySelectorAll('#agSignInPills .auth-domain-pill, #agRegPills .auth-domain-pill').forEach(pill => {
@@ -7090,6 +7167,57 @@ function initAuthGate() {
       input.value = handle + domain;
       input.focus();
     });
+  });
+
+  // ---- GOOGLE SIGN-IN ----
+  document.getElementById('agGoogleSignInBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('agGoogleSignInBtn');
+    const errEl = document.getElementById('agSignInError');
+    const errSpan = errEl.querySelector('span');
+    errEl.classList.remove('show');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in with Google...';
+
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope('email');
+      const result = await firebase.auth().signInWithPopup(provider);
+      const user = result.user;
+
+      if (!user || !user.email) throw new Error('Google Sign-In failed. Please try again.');
+
+      const email = user.email.toLowerCase();
+      const displayName = user.displayName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+      state.student = {
+        email: email,
+        studentId: email.split('@')[0].toUpperCase(),
+        fullName: displayName,
+        department: inferDepartmentFromEmail(email),
+        photoURL: user.photoURL || null,
+        lastSyncTime: new Date().toISOString(),
+      };
+
+      saveStudentSession();
+      startCrossPlatformAutoSync();
+      syncStudentWithServer(false);
+      hideAuthGate();
+      renderAll();
+      updateSyncStatusUI();
+      showToast(`Welcome, ${state.student.fullName}!`, 'success');
+    } catch (err) {
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        btn.disabled = false;
+        btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Continue with Google';
+        return;
+      }
+      console.error('[Google Sign-In Error]', err);
+      errSpan.textContent = err.message || 'Google Sign-In failed.';
+      errEl.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Continue with Google';
+    }
   });
 
   // ---- SIGN IN FLOW ----
