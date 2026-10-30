@@ -2021,6 +2021,205 @@ body {
   }
 }
 
+/* Tool Panel (shared) */
+.tool-panel-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Exam Routine Table */
+.exam-table-scroll { overflow-x: auto; }
+.exam-routine-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.exam-routine-table th,
+.exam-routine-table td {
+  border: 1px solid var(--border-color);
+  padding: 6px 8px;
+  vertical-align: top;
+  text-align: left;
+}
+.exam-routine-table th {
+  background: var(--bg-card-subtle);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.exam-routine-table th span { font-weight: 400; font-size: 10px; }
+.exam-routine-table td .exam-code {
+  display: inline-block;
+  padding: 2px 5px;
+  margin: 1px 2px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--bg-card-subtle);
+  color: var(--text-muted);
+  cursor: default;
+}
+.exam-routine-table td .exam-code.highlight {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 800;
+  border: 1px solid var(--primary);
+}
+
+/* Planner Tabs */
+.planner-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-card-subtle);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  margin-bottom: 16px;
+}
+.planner-tab {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.planner-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+.planner-tab-content { margin-top: 4px; }
+
+/* Planner Trimester Card */
+.planner-tri-card {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.planner-tri-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+  font-weight: 700;
+}
+.planner-tri-header .tri-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  margin-right: 8px;
+}
+.planner-tri-header .tri-credits {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.planner-course-row {
+  display: flex;
+  align-items: center;
+  padding: 5px 12px;
+  font-size: 11px;
+  gap: 8px;
+}
+.planner-course-row .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.planner-course-row .dot.theory { background: var(--primary); opacity: 0.5; }
+.planner-course-row .dot.lab { background: var(--emerald); }
+.planner-course-row .code {
+  width: 90px;
+  font-weight: 600;
+  color: var(--text-main);
+  flex-shrink: 0;
+}
+.planner-course-row .name {
+  flex: 1;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.planner-course-row .cr {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Planner GED card */
+.planner-ged-card {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.planner-ged-card .ged-icon {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(245,158,11,0.1);
+  border-radius: 8px;
+  font-size: 9px; font-weight: 800; color: var(--amber);
+}
+.planner-ged-card .ged-info { flex: 1; }
+.planner-ged-card .ged-code { font-size: 12px; font-weight: 700; color: var(--text-main); }
+.planner-ged-card .ged-name { font-size: 11px; color: var(--text-muted); }
+.planner-ged-card .ged-cr { font-size: 11px; font-weight: 700; color: var(--amber); }
+
+/* Planner Elective Track */
+.planner-track {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.planner-track-header {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+  gap: 10px;
+}
+.planner-track-header .track-icon {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; font-size: 14px;
+}
+.planner-track-header .track-info { flex: 1; }
+.planner-track-header .track-name { font-size: 13px; font-weight: 700; color: var(--text-main); }
+.planner-track-header .track-count { font-size: 11px; color: var(--text-muted); }
+.planner-track-header .track-chevron { color: var(--text-muted); font-size: 14px; }
+.planner-track-courses {
+  display: none;
+  border-top: 1px solid var(--border-color);
+  padding: 4px 0;
+}
+.planner-track.expanded .planner-track-courses { display: block; }
+
 /* MOBILE BOTTOM NAV */
 .mobile-bottom-nav {
   display: none;
@@ -3472,48 +3671,12 @@ body {
               <span class="tool-badge">Active</span>
             </div>
             <h3>Academic Calendar</h3>
-            <p>Interactive monthly calendar with holiday conflict resolution, class schedules, exam dates, and automated reminders.</p>
+            <p>Interactive calendar with holidays, class schedules, exam dates, and daily schedule view.</p>
             <div class="tool-card-footer">
               <div class="tool-features">
                 <span class="tool-feat-chip">Holidays</span>
                 <span class="tool-feat-chip">Exams</span>
-                <span class="tool-feat-chip">Reminders</span>
-              </div>
-              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-            </div>
-          </div>
-
-          <!-- Academic Notices -->
-          <div class="tool-card" data-tool-action="notices">
-            <div class="tool-card-top">
-              <div class="tool-icon-box amber"><i class="fa-solid fa-bullhorn"></i></div>
-              <span class="tool-badge">Active</span>
-            </div>
-            <h3>Academic Notices & Deadlines</h3>
-            <p>Track official university notices — holidays, fee payment dates, midterm & final exams, course withdrawal deadlines, and more.</p>
-            <div class="tool-card-footer">
-              <div class="tool-features">
-                <span class="tool-feat-chip">Fees</span>
-                <span class="tool-feat-chip">Exams</span>
-                <span class="tool-feat-chip">Drops</span>
-              </div>
-              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-            </div>
-          </div>
-
-          <!-- Routine Setup & .ICS -->
-          <div class="tool-card" data-tool-action="setup">
-            <div class="tool-card-top">
-              <div class="tool-icon-box emerald"><i class="fa-solid fa-calendar-plus"></i></div>
-              <span class="tool-badge">Active</span>
-            </div>
-            <h3>Routine Setup & .ICS Export</h3>
-            <p>Build your weekly class timetable, import .ICS / JSON / CSV files, sync official calendar, and export holiday-conflict-free schedules.</p>
-            <div class="tool-card-footer">
-              <div class="tool-features">
-                <span class="tool-feat-chip">.ICS Export</span>
-                <span class="tool-feat-chip">Import</span>
-                <span class="tool-feat-chip">Sync</span>
+                <span class="tool-feat-chip">Schedule</span>
               </div>
               <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
             </div>
@@ -3526,46 +3689,66 @@ body {
               <span class="tool-badge">Active</span>
             </div>
             <h3>CGPA Calculator</h3>
-            <p>Calculate your cumulative GPA across semesters. Add semester-wise GPA and credits to get an accurate CGPA instantly.</p>
+            <p>Course-by-course GPA calculator with retake support, UIU grade scale, and target CGPA planner.</p>
             <div class="tool-card-footer">
               <div class="tool-features">
-                <span class="tool-feat-chip">Multi-Semester</span>
+                <span class="tool-feat-chip">Retake</span>
                 <span class="tool-feat-chip">UIU Scale</span>
+                <span class="tool-feat-chip">Target CGPA</span>
               </div>
               <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
             </div>
           </div>
 
-          <!-- Tuition Fee Calculator -->
-          <div class="tool-card" data-tool-action="tuition">
+          <!-- Exam Routine -->
+          <div class="tool-card" data-tool-action="exam">
             <div class="tool-card-top">
-              <div class="tool-icon-box red"><i class="fa-solid fa-wallet"></i></div>
+              <div class="tool-icon-box amber"><i class="fa-solid fa-calendar-check"></i></div>
               <span class="tool-badge">Active</span>
             </div>
-            <h3>Tuition Fee Calculator</h3>
-            <p>Estimate your semester tuition fees based on credits, department, and waiver percentage. Includes installment breakdown.</p>
+            <h3>Exam Routine</h3>
+            <p>Searchable final exam schedule in a Day × Time Slot grid. Find your exam slot instantly.</p>
             <div class="tool-card-footer">
               <div class="tool-features">
-                <span class="tool-feat-chip">Credits</span>
-                <span class="tool-feat-chip">Waivers</span>
+                <span class="tool-feat-chip">Search</span>
+                <span class="tool-feat-chip">7 Days</span>
+                <span class="tool-feat-chip">3 Slots</span>
+              </div>
+              <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+          </div>
+
+          <!-- Division Calculator -->
+          <div class="tool-card" data-tool-action="division">
+            <div class="tool-card-top">
+              <div class="tool-icon-box red"><i class="fa-solid fa-money-bill-wave"></i></div>
+              <span class="tool-badge">Active</span>
+            </div>
+            <h3>Division Calculator</h3>
+            <p>Tuition fee calculator with waiver/scholarship logic, installment plans, and multi-semester planner.</p>
+            <div class="tool-card-footer">
+              <div class="tool-features">
+                <span class="tool-feat-chip">Waiver</span>
+                <span class="tool-feat-chip">Scholarship</span>
                 <span class="tool-feat-chip">Installments</span>
               </div>
               <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
             </div>
           </div>
 
-          <!-- Holiday Planner -->
-          <div class="tool-card" data-tool-action="holidays">
+          <!-- Course Planner -->
+          <div class="tool-card" data-tool-action="planner">
             <div class="tool-card-top">
-              <div class="tool-icon-box teal"><i class="fa-solid fa-umbrella-beach"></i></div>
+              <div class="tool-icon-box emerald"><i class="fa-solid fa-graduation-cap"></i></div>
               <span class="tool-badge">Active</span>
             </div>
-            <h3>Holiday Planner</h3>
-            <p>View all official university holidays at a glance — plan trips, track remaining off-days, and set custom reminders for each one.</p>
+            <h3>Course Planner</h3>
+            <p>Full UIU BSc in CSE curriculum — 12 trimesters, GED options, and elective tracks.</p>
             <div class="tool-card-footer">
               <div class="tool-features">
-                <span class="tool-feat-chip">2026 Calendar</span>
-                <span class="tool-feat-chip">Reminders</span>
+                <span class="tool-feat-chip">Curriculum</span>
+                <span class="tool-feat-chip">GED</span>
+                <span class="tool-feat-chip">Electives</span>
               </div>
               <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
             </div>
@@ -3612,49 +3795,98 @@ body {
           </div>
         </div>
 
-        <!-- Tuition Calculator Panel (initially hidden) -->
-        <div class="tuition-calc-wrap" id="tuitionCalcPanel" style="display: none;">
+        <!-- Exam Routine Panel (initially hidden) -->
+        <div class="tool-panel-wrap" id="examRoutinePanel" style="display: none;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <div>
               <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-wallet" style="color: var(--danger);"></i> Tuition Fee Calculator
+                <i class="fa-solid fa-calendar-check" style="color: var(--amber);"></i> Exam Routine
               </h3>
-              <p style="font-size: 12px; color: var(--text-muted);">Estimate your semester fees — UIU rate structure</p>
+              <p style="font-size: 12px; color: var(--text-muted);">Final Exam Schedule — Day × Time Slot</p>
             </div>
-            <button class="btn btn-sm btn-outline" id="btnCloseTuition" type="button"><i class="fa-solid fa-xmark"></i> Close</button>
+            <button class="btn btn-sm btn-outline" id="btnCloseExam" type="button"><i class="fa-solid fa-xmark"></i> Close</button>
           </div>
+          <div style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
+            <input type="text" id="examSearchInput" class="form-input" placeholder="Search course code or name..." style="flex:1; padding: 9px 14px; font-size: 13px; background: var(--bg-card-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-main); font-family: var(--font);">
+            <span id="examSearchCount" class="tool-feat-chip" style="display:none; white-space:nowrap;"></span>
+          </div>
+          <div class="exam-table-scroll">
+            <table class="exam-routine-table" id="examRoutineTable">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>T1<br><span>09:30–11:00 AM</span></th>
+                  <th>T2<br><span>11:30–01:00 PM</span></th>
+                  <th>T3<br><span>02:30–04:00 PM</span></th>
+                </tr>
+              </thead>
+              <tbody id="examRoutineBody"></tbody>
+            </table>
+          </div>
+        </div>
 
+        <!-- Division Calculator Panel (initially hidden) -->
+        <div class="tool-panel-wrap" id="divisionCalcPanel" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-money-bill-wave" style="color: var(--danger);"></i> Division Calculator
+              </h3>
+              <p style="font-size: 12px; color: var(--text-muted);">Tuition fee with waiver/scholarship logic</p>
+            </div>
+            <button class="btn btn-sm btn-outline" id="btnCloseDivision" type="button"><i class="fa-solid fa-xmark"></i> Close</button>
+          </div>
           <div class="tuition-form-grid">
             <div class="tuition-form-group">
-              <label>Department</label>
-              <select id="tuitionDept">
-                <option value="cse">CSE / EEE / CE</option>
-                <option value="bba">BBA / Economics</option>
-                <option value="pharmacy">Pharmacy</option>
-              </select>
-            </div>
-            <div class="tuition-form-group">
               <label>Credits This Semester</label>
-              <input type="number" id="tuitionCredits" placeholder="e.g. 12" min="1" max="24" value="12">
+              <input type="number" id="divCredits" placeholder="e.g. 12" min="1" max="24" value="12">
             </div>
             <div class="tuition-form-group">
-              <label>Tuition Waiver (%)</label>
-              <input type="number" id="tuitionWaiver" placeholder="0" min="0" max="100" value="0">
+              <label>Previous Semester Credits</label>
+              <input type="number" id="divPrevCredits" placeholder="e.g. 12" min="0" max="24" value="12">
             </div>
             <div class="tuition-form-group">
-              <label>Installments</label>
-              <select id="tuitionInstallments">
-                <option value="3">3 Installments</option>
-                <option value="2">2 Installments</option>
-                <option value="1">Full Payment</option>
-              </select>
+              <label>Credit Fee (৳)</label>
+              <input type="number" id="divCreditFee" placeholder="7750" min="0" value="7750">
+            </div>
+            <div class="tuition-form-group">
+              <label>Semester Fee (৳)</label>
+              <input type="number" id="divSemesterFee" placeholder="6500" min="0" value="6500">
+            </div>
+            <div class="tuition-form-group">
+              <label>Waiver (%)</label>
+              <input type="number" id="divWaiver" placeholder="0" min="0" max="100" value="0">
+            </div>
+            <div class="tuition-form-group">
+              <label>Scholarship (%)</label>
+              <input type="number" id="divScholarship" placeholder="0" min="0" max="100" value="0">
             </div>
           </div>
           <div style="margin-top: 12px;">
-            <button class="btn btn-sm btn-primary" id="btnCalcTuition" type="button"><i class="fa-solid fa-calculator"></i> Calculate Tuition</button>
+            <button class="btn btn-sm btn-primary" id="btnCalcDivision" type="button"><i class="fa-solid fa-calculator"></i> Calculate</button>
           </div>
-          <div class="tuition-breakdown" id="tuitionBreakdown" style="display: none; margin-top: 16px;">
+          <div class="tuition-breakdown" id="divisionBreakdown" style="display: none; margin-top: 16px;"></div>
+        </div>
+
+        <!-- Course Planner Panel (initially hidden) -->
+        <div class="tool-panel-wrap" id="coursePlannerPanel" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-graduation-cap" style="color: var(--emerald);"></i> Course Planner
+              </h3>
+              <p style="font-size: 12px; color: var(--text-muted);">UIU BSc in CSE Curriculum</p>
+            </div>
+            <button class="btn btn-sm btn-outline" id="btnClosePlanner" type="button"><i class="fa-solid fa-xmark"></i> Close</button>
           </div>
+          <div class="planner-tabs">
+            <button class="planner-tab active" data-planner-tab="curriculum">Curriculum</button>
+            <button class="planner-tab" data-planner-tab="ged">GED Options</button>
+            <button class="planner-tab" data-planner-tab="electives">Electives</button>
+          </div>
+          <div class="planner-tab-content" id="plannerCurriculumTab"></div>
+          <div class="planner-tab-content" id="plannerGedTab" style="display:none;"></div>
+          <div class="planner-tab-content" id="plannerElectivesTab" style="display:none;"></div>
         </div>
       </section>
 
@@ -5332,6 +5564,9 @@ async function syncStudentWithServer(push = true) {
         }
 
         if (hasChanges) {
+          if (!state.routineRange && state.notices.length > 0) {
+            state.routineRange = autoFigureRoutineDates();
+          }
           renderAll();
           saveStudentSession();
           showToast(`⚡ Live Schedule Updated from PC (${gData.source || 'Admin'})!`, 'info');
@@ -5744,6 +5979,7 @@ function renderSetup() {
           </div>
           <div class="class-item-right">
             <button class="reminder-chip" data-setup-remind="${cls.id}"><i class="fa-solid fa-bell"></i> ${cls.customReminderMinutes || 10}m</button>
+            <button class="btn-text text-primary" data-setup-edit="${cls.id}"><i class="fa-solid fa-pen-to-square"></i></button>
             <button class="btn-text text-danger" data-setup-del="${cls.id}"><i class="fa-solid fa-trash-can"></i></button>
           </div>
         </div>
@@ -5758,6 +5994,20 @@ function renderSetup() {
     dayClasses.forEach(cls => {
       const remBtn = box.querySelector(`[data-setup-remind="${cls.id}"]`);
       if (remBtn) remBtn.onclick = () => openClassReminderModal(cls);
+
+      const editBtn = box.querySelector(`[data-setup-edit="${cls.id}"]`);
+      if (editBtn) editBtn.onclick = () => {
+        document.getElementById('classCourseCode').value = cls.courseCode;
+        document.getElementById('classSubject').value = cls.subject;
+        document.getElementById('classDayOfWeek').value = cls.dayOfWeek;
+        document.getElementById('classRoom').value = cls.room || '';
+        document.getElementById('classStartTime').value = cls.startTime;
+        document.getElementById('classEndTime').value = cls.endTime;
+        document.getElementById('classInstructor').value = cls.instructor || '';
+        state.activeEditClassId = cls.id;
+        document.getElementById('classModalTitle').textContent = 'Edit Class';
+        dom.classModal.classList.add('show');
+      };
 
       const delBtn = box.querySelector(`[data-setup-del="${cls.id}"]`);
       if (delBtn) delBtn.onclick = () => {
@@ -6917,7 +7167,9 @@ function initEventListeners() {
   // Quick Action Buttons (Load Official, Load Demo, Clear)
   const loadOfficialHandler = () => {
     state.notices = [...OFFICIAL_2026_CALENDAR];
+    state.routineRange = autoFigureRoutineDates();
     renderAll();
+    saveStudentSession();
     showToast('Loaded 76 Official Academic Milestones!', 'success');
   };
 
@@ -7136,6 +7388,9 @@ function initEventListeners() {
 
   // Add Class Form
   if (dom.btnOpenAddClass) dom.btnOpenAddClass.addEventListener('click', () => {
+    state.activeEditClassId = null;
+    document.getElementById('classModalTitle').textContent = 'Add New Class';
+    document.getElementById('classForm').reset();
     if (dom.classModal) dom.classModal.classList.add('show');
   });
 
@@ -7149,24 +7404,35 @@ function initEventListeners() {
     const endTime = document.getElementById('classEndTime').value;
     const instructor = document.getElementById('classInstructor').value.trim() || 'Instructor';
 
-    state.classes.push({
-      id: `CLS-${Date.now()}`,
-      courseCode: code,
-      subject,
-      dayOfWeek,
-      room,
-      startTime,
-      endTime,
-      instructor,
-      color: '#2563EB',
-      reminderEnabled: true,
-    });
+    if (state.activeEditClassId) {
+      const idx = state.classes.findIndex(c => c.id === state.activeEditClassId);
+      if (idx !== -1) {
+        state.classes[idx] = { ...state.classes[idx], courseCode: code, subject, dayOfWeek, room, startTime, endTime, instructor };
+      }
+      state.activeEditClassId = null;
+      document.getElementById('classModalTitle').textContent = 'Add New Class';
+      showToast(`Updated ${code}: ${subject}`, 'success');
+    } else {
+      state.classes.push({
+        id: `CLS-${Date.now()}`,
+        courseCode: code,
+        subject,
+        dayOfWeek,
+        room,
+        startTime,
+        endTime,
+        instructor,
+        color: '#2563EB',
+        reminderEnabled: true,
+      });
+      showToast(`Added ${code}: ${subject} and broadcasted to all users!`, 'success');
+    }
 
     dom.classModal.classList.remove('show');
     document.getElementById('classForm').reset();
     renderAll();
     syncStudentWithServer(true);
-    showToast(`Added ${code}: ${subject} and broadcasted to all users!`, 'success');
+    saveStudentSession();
   });
 
   // Add Notice Form
@@ -7276,12 +7542,20 @@ function initEventListeners() {
       const modalId = btn.getAttribute('data-close') || btn.dataset.close;
       const modal = document.getElementById(modalId);
       if (modal) modal.classList.remove('show');
+      if (modalId === 'classModal') {
+        state.activeEditClassId = null;
+        document.getElementById('classModalTitle').textContent = 'Add New Class';
+      }
     });
   });
 
   window.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal-overlay')) {
       e.target.classList.remove('show');
+      if (e.target.id === 'classModal') {
+        state.activeEditClassId = null;
+        document.getElementById('classModalTitle').textContent = 'Add New Class';
+      }
     }
   });
 }
@@ -8148,30 +8422,39 @@ function switchToTab(tabName) {
 }
 
 function initToolsSection() {
+  const allPanelIds = ['cgpaCalcPanel', 'examRoutinePanel', 'divisionCalcPanel', 'coursePlannerPanel'];
+  function hideAllPanels() {
+    allPanelIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  }
+
   document.querySelectorAll('.tool-card[data-tool-action]').forEach(card => {
     card.addEventListener('click', () => {
       const action = card.dataset.toolAction;
-      if (action === 'dashboard' || action === 'notices' || action === 'setup') {
-        switchToTab(action);
+      if (action === 'dashboard') {
+        switchToTab('dashboard');
       } else if (action === 'cgpa') {
+        hideAllPanels();
         document.getElementById('cgpaCalcPanel').style.display = 'block';
-        document.getElementById('tuitionCalcPanel').style.display = 'none';
         document.getElementById('cgpaCalcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else if (action === 'tuition') {
-        document.getElementById('tuitionCalcPanel').style.display = 'block';
-        document.getElementById('cgpaCalcPanel').style.display = 'none';
-        document.getElementById('tuitionCalcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else if (action === 'holidays') {
-        switchToTab('notices');
-        setTimeout(() => {
-          const holidayChip = document.querySelector('.filter-chips .chip[data-filter="holiday"]');
-          if (holidayChip) holidayChip.click();
-        }, 200);
+      } else if (action === 'exam') {
+        hideAllPanels();
+        document.getElementById('examRoutinePanel').style.display = 'block';
+        buildExamRoutineTable();
+        document.getElementById('examRoutinePanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (action === 'division') {
+        hideAllPanels();
+        document.getElementById('divisionCalcPanel').style.display = 'block';
+        document.getElementById('divisionCalcPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (action === 'planner') {
+        hideAllPanels();
+        document.getElementById('coursePlannerPanel').style.display = 'block';
+        buildCoursePlanner();
+        document.getElementById('coursePlannerPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     });
   });
 
-  // CGPA Calculator
+  // ---- CGPA Calculator ----
   document.getElementById('btnAddCgpaSemester')?.addEventListener('click', () => {
     const list = document.getElementById('cgpaSemestersList');
     const count = list.querySelectorAll('.cgpa-semester-row').length + 1;
@@ -8189,73 +8472,236 @@ function initToolsSection() {
     const gpas = document.querySelectorAll('.cgpa-gpa-input');
     const credits = document.querySelectorAll('.cgpa-credits-input');
     let totalPoints = 0, totalCredits = 0;
-
     gpas.forEach((gpaInput, i) => {
       const gpa = parseFloat(gpaInput.value);
       const cr = parseFloat(credits[i]?.value);
-      if (!isNaN(gpa) && !isNaN(cr) && cr > 0) {
-        totalPoints += gpa * cr;
-        totalCredits += cr;
-      }
+      if (!isNaN(gpa) && !isNaN(cr) && cr > 0) { totalPoints += gpa * cr; totalCredits += cr; }
     });
-
     const cgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
     document.getElementById('cgpaResultValue').textContent = cgpa.toFixed(2);
     document.getElementById('cgpaResultCredits').textContent = `Total Credits: ${totalCredits}`;
     document.getElementById('cgpaResultBox').style.display = 'block';
   });
 
-  document.getElementById('btnCloseCgpa')?.addEventListener('click', () => {
-    document.getElementById('cgpaCalcPanel').style.display = 'none';
+  document.getElementById('btnCloseCgpa')?.addEventListener('click', () => { document.getElementById('cgpaCalcPanel').style.display = 'none'; });
+
+  // ---- Exam Routine ----
+  const examData = [
+    {day:1,time:1,code:'ENG 1011',name:'English I'},{day:1,time:1,code:'CSE 4509',name:'Operating Systems'},{day:1,time:1,code:'GED 1005',name:'AI Literacy & Prompt Engineering'},{day:1,time:1,code:'DS 4491',name:'DS Elective'},
+    {day:1,time:2,code:'ENG 1013',name:'English II'},{day:1,time:2,code:'CSE 4945',name:'UI: Concepts and Design'},{day:1,time:2,code:'DS 4217',name:'DS 4217'},{day:1,time:2,code:'DS 3885',name:'DS Elective'},
+    {day:1,time:3,code:'MATH 2183',name:'Calculus & Linear Algebra'},{day:1,time:3,code:'CSE 3313',name:'Computer Architecture'},{day:1,time:3,code:'SOC 2101',name:'Society, Technology & Ethics'},{day:1,time:3,code:'CSE 4889',name:'Machine Learning'},{day:1,time:3,code:'CSE 4813',name:'Deep Learning'},{day:1,time:3,code:'CSE 4125',name:'Ethical Hacking & Network Defense'},{day:1,time:3,code:'DS 4211',name:'DS 4211'},
+    {day:2,time:1,code:'CSE 4621',name:'Computer Graphics'},{day:2,time:1,code:'CSE 3521',name:'Database Management Systems'},
+    {day:2,time:2,code:'CSE 4325',name:'Microprocessors & Microcontrollers'},{day:2,time:2,code:'MATH 1151',name:'Fundamental Calculus'},
+    {day:2,time:3,code:'ACT 2111',name:'Financial & Managerial Accounting'},{day:2,time:3,code:'MATH 2205',name:'Probability & Statistics'},
+    {day:3,time:1,code:'CSE 3811',name:'Artificial Intelligence'},{day:3,time:1,code:'CSE 4451',name:'Human Computer Interaction'},{day:3,time:1,code:'DS 4123',name:'DS 4123'},
+    {day:3,time:2,code:'CSE 2213',name:'Discrete Mathematics'},{day:3,time:2,code:'PMG 4101',name:'Project Management'},{day:3,time:2,code:'TEC 2499',name:'Technology Entrepreneurship'},
+    {day:3,time:3,code:'CSE 1325',name:'Digital Logic Design'},{day:3,time:3,code:'BIO 3105',name:'Biology for Engineers'},{day:3,time:3,code:'CSE 4777',name:'Network Security'},
+    {day:4,time:1,code:'CSE 4611',name:'Compiler Design'},{day:4,time:1,code:'CSE 4883',name:'Digital Image Processing'},{day:4,time:1,code:'CSE 4327',name:'VLSI Design'},{day:4,time:1,code:'CSE 4811',name:'Natural Language Processing'},
+    {day:4,time:2,code:'CSE 1111',name:'Structured Programming Language'},{day:4,time:2,code:'CSE 2215',name:'Data Structure & Algorithms I'},{day:4,time:2,code:'CSE 4435',name:'Software Architecture'},{day:4,time:2,code:'DS 1501',name:'Programming for Data Science'},{day:4,time:2,code:'DS 2251',name:'DSA II (DS)'},
+    {day:4,time:3,code:'CSE 3711',name:'Computer Networks'},{day:4,time:3,code:'CSE 4893',name:'Intro to Bioinformatics'},{day:4,time:3,code:'DS 4523',name:'DS Elective'},{day:4,time:3,code:'DS 3101',name:'DS Core'},
+    {day:5,time:1,code:'MATH 2201',name:'Coordinate Geometry & Vector Analysis'},{day:5,time:1,code:'CSE 3411',name:'System Analysis & Design'},{day:5,time:1,code:'EEE 4261',name:'Green Computing'},{day:5,time:1,code:'CSE 4511',name:'CSE 4511 (DS)'},
+    {day:5,time:2,code:'CSE 2217',name:'Data Structure & Algorithms II'},{day:5,time:2,code:'DS 1101',name:'Fundamentals of Data Science'},
+    {day:5,time:3,code:'CSE 3421',name:'Software Engineering'},{day:5,time:3,code:'CSE 4587',name:'Cloud Computing'},{day:5,time:3,code:'CSE 4817',name:'Big Data Analytics'},{day:5,time:3,code:'DS 3120',name:'DS 3120'},
+    {day:6,time:1,code:'BDS 1201',name:'History of the Emergence of Bangladesh'},{day:6,time:1,code:'ECO 4101',name:'Economics'},{day:6,time:1,code:'DS 3521',name:'Database Systems (DS)'},
+    {day:6,time:2,code:'CSE 1115',name:'Object Oriented Programming'},{day:6,time:2,code:'DS 1115',name:'DS 1115'},
+    {day:6,time:3,code:'EEE 2113',name:'Electrical Circuits'},{day:6,time:3,code:'EEE 2123',name:'Electronics'},{day:6,time:3,code:'CSE 4531',name:'Computer Security'},{day:6,time:3,code:'CSE 4181',name:'Mobile Application Development'},{day:6,time:3,code:'CSE 4133',name:'Business Intelligence'},
+    {day:7,time:1,code:'CSE 4891',name:'Data Mining'},{day:7,time:1,code:'CSE 4165',name:'Web Programming'},{day:7,time:1,code:'DS 4115',name:'DS 4115'},
+    {day:7,time:2,code:'CSE 2233',name:'Theory of Computation'},{day:7,time:2,code:'CSE 4399',name:'Embedded Machine Learning'},{day:7,time:2,code:'DS 4229',name:'DS 4229'},
+    {day:7,time:3,code:'PHY 2105',name:'Physics'},{day:7,time:3,code:'CSE 4495',name:'Software Testing & QA'},{day:7,time:3,code:'DS 3881',name:'DS Elective'},
+  ];
+
+  function buildExamRoutineTable(query) {
+    const q = (query || '').toLowerCase().trim();
+    const tbody = document.getElementById('examRoutineBody');
+    tbody.innerHTML = '';
+    let matchCount = 0;
+    for (let d = 1; d <= 7; d++) {
+      const tr = document.createElement('tr');
+      const th = document.createElement('td');
+      th.style.fontWeight = '700';
+      th.style.textAlign = 'center';
+      th.style.background = 'var(--bg-card-subtle)';
+      th.textContent = `Day ${d}`;
+      tr.appendChild(th);
+      for (let t = 1; t <= 3; t++) {
+        const td = document.createElement('td');
+        const exams = examData.filter(e => e.day === d && e.time === t);
+        exams.forEach(ex => {
+          const isMatch = q && (ex.code.toLowerCase().includes(q) || ex.name.toLowerCase().includes(q));
+          if (isMatch) matchCount++;
+          const span = document.createElement('span');
+          span.className = 'exam-code' + (isMatch ? ' highlight' : '');
+          span.textContent = ex.code;
+          span.title = ex.name;
+          td.appendChild(span);
+        });
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    const badge = document.getElementById('examSearchCount');
+    if (q) {
+      badge.textContent = `${matchCount} found`;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  document.getElementById('examSearchInput')?.addEventListener('input', (e) => {
+    buildExamRoutineTable(e.target.value);
   });
 
-  // Tuition Fee Calculator
-  const tuitionRates = {
-    cse: { perCredit: 7750, labFee: 3000, devFee: 5000, regFee: 1500 },
-    bba: { perCredit: 6250, labFee: 0, devFee: 5000, regFee: 1500 },
-    pharmacy: { perCredit: 7000, labFee: 4000, devFee: 5000, regFee: 1500 },
-  };
+  document.getElementById('btnCloseExam')?.addEventListener('click', () => { document.getElementById('examRoutinePanel').style.display = 'none'; });
 
-  document.getElementById('btnCalcTuition')?.addEventListener('click', () => {
-    const dept = document.getElementById('tuitionDept').value;
-    const credits = parseInt(document.getElementById('tuitionCredits').value) || 0;
-    const waiver = parseFloat(document.getElementById('tuitionWaiver').value) || 0;
-    const installments = parseInt(document.getElementById('tuitionInstallments').value) || 3;
-    const rates = tuitionRates[dept];
+  // ---- Division Calculator ----
+  document.getElementById('btnCalcDivision')?.addEventListener('click', () => {
+    const credits = parseInt(document.getElementById('divCredits').value) || 0;
+    const prevCredits = parseInt(document.getElementById('divPrevCredits').value) || 0;
+    const creditFee = parseFloat(document.getElementById('divCreditFee').value) || 7750;
+    const semesterFee = parseFloat(document.getElementById('divSemesterFee').value) || 6500;
+    const waiverPct = parseFloat(document.getElementById('divWaiver').value) || 0;
+    const scholarPct = parseFloat(document.getElementById('divScholarship').value) || 0;
 
-    const tuitionBase = credits * rates.perCredit;
-    const waiverAmount = Math.round(tuitionBase * waiver / 100);
-    const tuitionAfterWaiver = tuitionBase - waiverAmount;
-    const totalFees = tuitionAfterWaiver + rates.labFee + rates.devFee + rates.regFee;
-    const perInstallment = Math.ceil(totalFees / installments);
+    const fmt = (n) => '৳ ' + Math.round(n).toLocaleString('en-IN');
+    let tuitionTotal = 0;
+    let explanation = '';
 
-    const fmt = (n) => '৳ ' + n.toLocaleString('en-IN');
+    if (waiverPct >= scholarPct) {
+      // Case 1: waiver >= scholarship → only waiver applies to all current credits
+      const discountedRate = creditFee * (1 - waiverPct / 100);
+      tuitionTotal = credits * discountedRate;
+      explanation = `Waiver (${waiverPct}%) applies to all ${credits} credits at ${fmt(discountedRate)}/cr`;
+    } else {
+      // Case 2: scholarship > waiver → scholarship on min(prev, current), waiver on extras
+      const scholarCredits = Math.min(prevCredits, credits);
+      const extraCredits = credits - scholarCredits;
+      const scholarRate = creditFee * (1 - scholarPct / 100);
+      const waiverRate = creditFee * (1 - waiverPct / 100);
+      tuitionTotal = (scholarCredits * scholarRate) + (extraCredits * waiverRate);
+      explanation = `Scholarship (${scholarPct}%) on ${scholarCredits} cr at ${fmt(scholarRate)}/cr`;
+      if (extraCredits > 0) {
+        explanation += ` + Waiver (${waiverPct}%) on ${extraCredits} extra cr at ${fmt(waiverRate)}/cr`;
+      }
+    }
+
+    const totalDue = tuitionTotal + semesterFee;
+    const inst1 = Math.round(totalDue * 0.4);
+    const inst2 = Math.round(totalDue * 0.3);
+    const inst3 = totalDue - inst1 - inst2;
+
     let html = `
-      <div class="tuition-breakdown-row"><span>Tuition (${credits} credits × ${fmt(rates.perCredit)})</span><span>${fmt(tuitionBase)}</span></div>
+      <div class="tuition-breakdown-row"><span>Tuition (${credits} credits × ${fmt(creditFee)})</span><span>${fmt(credits * creditFee)}</span></div>
+      <div class="tuition-breakdown-row"><span style="font-size:11px;color:var(--text-muted);">${explanation}</span><span style="color:var(--emerald);">= ${fmt(tuitionTotal)}</span></div>
+      <div class="tuition-breakdown-row"><span>Semester Fee (non-discountable)</span><span>${fmt(semesterFee)}</span></div>
+      <div class="tuition-breakdown-row total"><span>Total Due</span><span>${fmt(totalDue)}</span></div>
+      <div class="tuition-breakdown-row"><span>1st Installment (40%)</span><span>${fmt(inst1)}</span></div>
+      <div class="tuition-breakdown-row"><span>2nd Installment (30%)</span><span>${fmt(inst2)}</span></div>
+      <div class="tuition-breakdown-row"><span>3rd Installment (30%)</span><span>${fmt(inst3)}</span></div>
     `;
-    if (waiver > 0) {
-      html += `<div class="tuition-breakdown-row"><span>Waiver (${waiver}%)</span><span style="color:var(--emerald);">- ${fmt(waiverAmount)}</span></div>`;
-    }
-    if (rates.labFee > 0) {
-      html += `<div class="tuition-breakdown-row"><span>Lab Fee</span><span>${fmt(rates.labFee)}</span></div>`;
-    }
-    html += `
-      <div class="tuition-breakdown-row"><span>Development Fee</span><span>${fmt(rates.devFee)}</span></div>
-      <div class="tuition-breakdown-row"><span>Registration Fee</span><span>${fmt(rates.regFee)}</span></div>
-      <div class="tuition-breakdown-row total"><span>Total Due</span><span>${fmt(totalFees)}</span></div>
-    `;
-    if (installments > 1) {
-      html += `<div class="tuition-breakdown-row"><span>Per Installment (${installments}×)</span><span>${fmt(perInstallment)}</span></div>`;
-    }
-
-    const el = document.getElementById('tuitionBreakdown');
+    const el = document.getElementById('divisionBreakdown');
     el.innerHTML = html;
     el.style.display = 'block';
   });
 
-  document.getElementById('btnCloseTuition')?.addEventListener('click', () => {
-    document.getElementById('tuitionCalcPanel').style.display = 'none';
+  document.getElementById('btnCloseDivision')?.addEventListener('click', () => { document.getElementById('divisionCalcPanel').style.display = 'none'; });
+
+  // ---- Course Planner ----
+  const curriculum = {
+    1: [{code:'ENG 1011',name:'Intensive English',cr:3},{code:'MATH 1151',name:'Fundamental Calculus',cr:3},{code:'CSE 1111',name:'Structured Programming Language',cr:3},{code:'CSE 1112',name:'SPL Lab',cr:1,lab:true}],
+    2: [{code:'ENG 1013',name:'English II',cr:3},{code:'MATH 2201',name:'Co-ordinate Geometry & Vector Analysis',cr:3},{code:'CSE 1115',name:'Object Oriented Programming',cr:3},{code:'CSE 1116',name:'OOP Lab',cr:1,lab:true},{code:'CSE 1325',name:'Digital Logic Design',cr:3},{code:'CSE 1326',name:'DLD Lab',cr:1,lab:true}],
+    3: [{code:'MATH 2183',name:'Calculus and Linear Algebra',cr:3},{code:'CSE 2213',name:'Discrete Mathematics',cr:3},{code:'CSE 2215',name:'Data Structure & Algorithms I',cr:3},{code:'CSE 2216',name:'DSA I Lab',cr:1,lab:true},{code:'EEE 2113',name:'Electrical Circuits',cr:3},{code:'EEE 2114',name:'EC Lab',cr:1,lab:true}],
+    4: [{code:'MATH 2205',name:'Probability & Statistics',cr:3},{code:'CSE 2217',name:'Data Structure & Algorithms II',cr:3},{code:'CSE 2218',name:'DSA II Lab',cr:1,lab:true},{code:'EEE 2123',name:'Electronics',cr:3},{code:'EEE 2124',name:'Electronics Lab',cr:1,lab:true},{code:'BDS 1201',name:'History of the Emergence of Bangladesh',cr:3}],
+    5: [{code:'CSE 3313',name:'Computer Architecture',cr:3},{code:'CSE 2233',name:'Theory of Computation',cr:3},{code:'CSE 3521',name:'Database Management Systems',cr:3},{code:'CSE 3522',name:'DBMS Lab',cr:1,lab:true},{code:'SOC 2101',name:'Society, Technology & Engineering Ethics',cr:3}],
+    6: [{code:'CSE 3711',name:'Computer Networks',cr:3},{code:'CSE 3712',name:'CN Lab',cr:1,lab:true},{code:'CSE 3421',name:'Software Engineering',cr:3},{code:'CSE 3422',name:'SE Lab',cr:1,lab:true},{code:'CSE 3411',name:'System Analysis & Design',cr:3},{code:'PHY 2105',name:'Physics',cr:3},{code:'PHY 2106',name:'Physics Lab',cr:1,lab:true}],
+    7: [{code:'CSE 4509',name:'Operating Systems',cr:3},{code:'CSE 4510',name:'OS Lab',cr:1,lab:true},{code:'CSE 3811',name:'Artificial Intelligence',cr:3},{code:'CSE 3812',name:'AI Lab',cr:1,lab:true},{code:'ACT 2111',name:'Financial & Managerial Accounting',cr:3}],
+    8: [{code:'CSE 4889',name:'Machine Learning',cr:3},{code:'CSE 4890',name:'ML Lab',cr:1,lab:true},{code:'CSE 4611',name:'Compiler Design',cr:3},{code:'ECO 4101',name:'Economics',cr:3},{code:'PMG 4101',name:'Project Management',cr:3}],
+    9: [{code:'CSE 4899',name:'Senior Project I',cr:2},{code:'ELECTIVE 1',name:'CSE Elective I',cr:3},{code:'ELECTIVE 2',name:'CSE Elective II',cr:3},{code:'GED 1',name:'General Education I',cr:3}],
+    10: [{code:'CSE 4900',name:'Senior Project II',cr:2},{code:'ELECTIVE 3',name:'CSE Elective III',cr:3},{code:'ELECTIVE 4',name:'CSE Elective IV',cr:3},{code:'GED 2',name:'General Education II',cr:3}],
+    11: [{code:'ELECTIVE 5',name:'CSE Elective V',cr:3},{code:'ELECTIVE 6',name:'CSE Elective VI',cr:3},{code:'GED 3',name:'General Education III',cr:3}],
+    12: [{code:'BIO 3105',name:'Biology for Engineers',cr:3}],
+  };
+
+  const gedOptions = [
+    {code:'GED 1001',name:'World Civilization',cr:3},
+    {code:'GED 1003',name:'Bangla Language and Literature',cr:3},
+    {code:'GED 1005',name:'AI Literacy and Prompt Engineering',cr:3},
+    {code:'TEC 2499',name:'Technology Entrepreneurship',cr:3},
+  ];
+
+  const electiveTracks = [
+    {name:'Software Engineering',icon:'fa-solid fa-code',color:'#3B82F6',courses:[
+      {code:'CSE 4435',name:'Software Architecture',cr:3},{code:'CSE 4451',name:'Human Computer Interaction',cr:3},{code:'CSE 4165',name:'Web Programming',cr:3},{code:'CSE 4945',name:'UI: Concepts and Design',cr:3},{code:'CSE 4495',name:'Software Testing & QA',cr:3},{code:'CSE 4181',name:'Mobile Application Development',cr:3}]},
+    {name:'Cyber Security',icon:'fa-solid fa-shield-halved',color:'#EF4444',courses:[
+      {code:'CSE 4531',name:'Computer Security',cr:3},{code:'CSE 4777',name:'Network Security',cr:3},{code:'CSE 4125',name:'Ethical Hacking & Network Defense',cr:3}]},
+    {name:'AI & Data Science',icon:'fa-solid fa-brain',color:'#8B5CF6',courses:[
+      {code:'CSE 4813',name:'Deep Learning',cr:3},{code:'CSE 4811',name:'Natural Language Processing',cr:3},{code:'CSE 4891',name:'Data Mining',cr:3},{code:'CSE 4817',name:'Big Data Analytics',cr:3},{code:'CSE 4883',name:'Digital Image Processing',cr:3},{code:'CSE 4893',name:'Intro to Bioinformatics',cr:3},{code:'CSE 4133',name:'Business Intelligence',cr:3}]},
+    {name:'Systems & Hardware',icon:'fa-solid fa-microchip',color:'#F59E0B',courses:[
+      {code:'CSE 4325',name:'Microprocessors & Microcontrollers',cr:3},{code:'CSE 4327',name:'VLSI Design',cr:3},{code:'CSE 4621',name:'Computer Graphics',cr:3},{code:'EEE 4261',name:'Green Computing',cr:3},{code:'CSE 4399',name:'Embedded Machine Learning',cr:3}]},
+    {name:'Cloud & Infrastructure',icon:'fa-solid fa-cloud',color:'#10B981',courses:[
+      {code:'CSE 4587',name:'Cloud Computing',cr:3}]},
+  ];
+
+  let plannerBuilt = false;
+  function buildCoursePlanner() {
+    if (plannerBuilt) return;
+    plannerBuilt = true;
+
+    // Curriculum tab
+    const currEl = document.getElementById('plannerCurriculumTab');
+    let totalCr = 0;
+    Object.values(curriculum).forEach(courses => courses.forEach(c => totalCr += c.cr));
+    let currHtml = `<div style="padding:10px 12px;margin-bottom:12px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:12px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-info-circle"></i> 12 Trimesters &bull; ${totalCr} Credits (Core)</div>`;
+    for (let tri = 1; tri <= 12; tri++) {
+      const courses = curriculum[tri] || [];
+      const triCr = courses.reduce((s, c) => s + c.cr, 0);
+      const year = Math.floor((tri - 1) / 3) + 1;
+      let rows = courses.map(c => `<div class="planner-course-row"><span class="dot ${c.lab ? 'lab' : 'theory'}"></span><span class="code">${c.code}</span><span class="name">${c.name}</span><span class="cr">${c.cr}</span></div>`).join('');
+      currHtml += `<div class="planner-tri-card"><div class="planner-tri-header"><div><span class="tri-badge">T${tri}</span><span style="color:var(--text-muted);font-size:11px;">Year ${year}</span></div><span class="tri-credits">${triCr} cr</span></div>${rows}</div>`;
+    }
+    currEl.innerHTML = currHtml;
+
+    // GED tab
+    const gedEl = document.getElementById('plannerGedTab');
+    let gedHtml = `<div style="padding:10px 12px;margin-bottom:12px;background:rgba(245,158,11,0.1);border-radius:var(--radius-sm);font-size:12px;font-weight:700;color:var(--amber);display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-book-open"></i> Pick 3 GED courses across trimesters</div>`;
+    gedOptions.forEach(g => {
+      gedHtml += `<div class="planner-ged-card"><div class="ged-icon">${g.code.split(' ')[1]}</div><div class="ged-info"><div class="ged-code">${g.code}</div><div class="ged-name">${g.name}</div></div><div class="ged-cr">${g.cr} cr</div></div>`;
+    });
+    gedEl.innerHTML = gedHtml;
+
+    // Electives tab
+    const elEl = document.getElementById('plannerElectivesTab');
+    let elHtml = `<div style="padding:10px 12px;margin-bottom:12px;background:rgba(139,92,246,0.1);border-radius:var(--radius-sm);font-size:12px;font-weight:700;color:#8B5CF6;display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-code-branch"></i> Pick 6 electives (18 cr) from any track</div>`;
+    electiveTracks.forEach(track => {
+      let courseRows = track.courses.map(c => `<div class="planner-course-row"><span class="dot" style="background:${track.color};opacity:0.5;"></span><span class="code">${c.code}</span><span class="name">${c.name}</span><span class="cr" style="color:${track.color};">${c.cr} cr</span></div>`).join('');
+      elHtml += `<div class="planner-track" data-track="${track.name}"><div class="planner-track-header"><div class="track-icon" style="background:${track.color}20;color:${track.color};"><i class="${track.icon}"></i></div><div class="track-info"><div class="track-name">${track.name}</div><div class="track-count">${track.courses.length} courses</div></div><span class="track-chevron"><i class="fa-solid fa-chevron-down"></i></span></div><div class="planner-track-courses">${courseRows}</div></div>`;
+    });
+    elEl.innerHTML = elHtml;
+
+    // Track expand/collapse
+    elEl.querySelectorAll('.planner-track-header').forEach(h => {
+      h.addEventListener('click', () => {
+        const track = h.closest('.planner-track');
+        track.classList.toggle('expanded');
+        const chevron = h.querySelector('.track-chevron i');
+        chevron.className = track.classList.contains('expanded') ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+      });
+    });
+  }
+
+  // Planner tab switching
+  document.querySelectorAll('.planner-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.planner-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.plannerTab;
+      document.getElementById('plannerCurriculumTab').style.display = target === 'curriculum' ? 'block' : 'none';
+      document.getElementById('plannerGedTab').style.display = target === 'ged' ? 'block' : 'none';
+      document.getElementById('plannerElectivesTab').style.display = target === 'electives' ? 'block' : 'none';
+    });
   });
+
+  document.getElementById('btnClosePlanner')?.addEventListener('click', () => { document.getElementById('coursePlannerPanel').style.display = 'none'; });
 }
 
 // ===================== APP START =====================
@@ -8267,6 +8713,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (state.student) {
     hideAuthGate();
+    if (!state.routineRange && state.notices.length > 0) {
+      state.routineRange = autoFigureRoutineDates();
+      saveStudentSession();
+    }
     renderAll();
   } else {
     showAuthGate();

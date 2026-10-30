@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../state/calendar_state.dart';
 import '../../theme/app_theme.dart';
+import 'academic_calendar_sheet.dart';
 import 'cgpa_calculator_sheet.dart';
-import 'tuition_calculator_sheet.dart';
-import 'faculty_directory_sheet.dart';
+import 'division_calculator_sheet.dart';
+import 'exam_routine_sheet.dart';
+import 'course_planner_sheet.dart';
 
 class _ToolItem {
   final String title;
@@ -33,46 +35,60 @@ class ToolsScreen extends StatelessWidget {
   static const _tools = <_ToolItem>[
     _ToolItem(
       title: 'Academic Calendar',
-      description: 'Interactive monthly calendar with holiday conflict resolution, class schedules, exam dates, and automated reminders.',
+      description: 'Interactive calendar with holidays, class schedules, exam dates, and daily schedule view.',
       icon: Icons.calendar_month_rounded,
       color: AppTheme.primaryLight,
       bgColor: Color(0x1A3B82F6),
-      chips: ['Holidays', 'Exams', 'Reminders'],
-      action: 'dashboard',
+      chips: ['Holidays', 'Exams', 'Schedule'],
+      action: 'calendar',
     ),
     _ToolItem(
       title: 'CGPA Calculator',
       description: 'Course-by-course GPA calculator with retake support, UIU grade scale, and target CGPA planner.',
       icon: Icons.calculate_rounded,
-      color: AppTheme.examColor,
+      color: Color(0xFF8B5CF6),
       bgColor: Color(0x1A8B5CF6),
       chips: ['Retake', 'UIU Scale', 'Target CGPA'],
       action: 'cgpa',
     ),
     _ToolItem(
-      title: 'Tuition Fee Calculator',
-      description: 'Estimate trimester tuition with retake fees, waivers, scholarships, and 40/30/30 installment breakdown.',
-      icon: Icons.account_balance_wallet_rounded,
-      color: AppTheme.holidayColor,
-      bgColor: Color(0x1AEF4444),
-      chips: ['Retake', 'Scholarship', 'Installments'],
-      action: 'tuition',
+      title: 'Exam Routine',
+      description: 'Searchable final exam schedule in a Day × Time Slot grid. Find your exam slot instantly.',
+      icon: Icons.event_note_rounded,
+      color: Color(0xFFF59E0B),
+      bgColor: Color(0x1AF59E0B),
+      chips: ['Search', '7 Days', '3 Slots'],
+      action: 'exam',
     ),
     _ToolItem(
-      title: 'Faculty Directory',
-      description: 'Search and browse UIU faculty members by name or code. View instructor details and find your course instructors.',
-      icon: Icons.people_rounded,
-      color: AppTheme.accentColor,
+      title: 'Division Calculator',
+      description: 'Tuition fee calculator with waiver/scholarship logic, installment plans, and multi-semester planner.',
+      icon: Icons.account_balance_wallet_rounded,
+      color: Color(0xFFEF4444),
+      bgColor: Color(0x1AEF4444),
+      chips: ['Waiver', 'Scholarship', 'Installments'],
+      action: 'division',
+    ),
+    _ToolItem(
+      title: 'Course Planner',
+      description: 'Full UIU BSc in CSE curriculum — 12 trimesters, GED options, and elective tracks.',
+      icon: Icons.school_rounded,
+      color: Color(0xFF10B981),
       bgColor: Color(0x1A10B981),
-      chips: ['348 Faculty', 'Search'],
-      action: 'faculty',
+      chips: ['Curriculum', 'GED', 'Electives'],
+      action: 'planner',
     ),
   ];
 
   void _handleToolTap(BuildContext context, String action) {
     switch (action) {
-      case 'dashboard':
-        state.setTabIndex(0);
+      case 'calendar':
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => AcademicCalendarSheet(state: state),
+        );
       case 'cgpa':
         showModalBottomSheet(
           context: context,
@@ -80,19 +96,26 @@ class ToolsScreen extends StatelessWidget {
           backgroundColor: Colors.transparent,
           builder: (_) => const CgpaCalculatorSheet(),
         );
-      case 'tuition':
+      case 'exam':
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (_) => const TuitionCalculatorSheet(),
+          builder: (_) => const ExamRoutineSheet(),
         );
-      case 'faculty':
+      case 'division':
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (_) => const FacultyDirectorySheet(),
+          builder: (_) => const DivisionCalculatorSheet(),
+        );
+      case 'planner':
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => const CoursePlannerSheet(),
         );
     }
   }
@@ -104,7 +127,6 @@ class ToolsScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        // Hero header
         Center(
           child: Padding(
             padding: const EdgeInsets.only(bottom: 20),
@@ -137,8 +159,6 @@ class ToolsScreen extends StatelessWidget {
             ),
           ),
         ),
-
-        // Tools grid
         ..._tools.map((tool) => _ToolCard(
           tool: tool,
           isDark: isDark,
