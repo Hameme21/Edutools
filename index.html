@@ -3057,35 +3057,32 @@ body {
             </button>
             <div class="auth-or-divider"><span>or</span></div>
             <button class="auth-btn auth-btn-outline" id="agSignInSendBtn">
-              <i class="fa-solid fa-paper-plane"></i> Sign In with OTP Email
+              <i class="fa-solid fa-paper-plane"></i> Sign In with Email Link
             </button>
           </div>
-          <!-- Step 2: OTP -->
+          <!-- Step 2: Email Verification Link -->
           <div id="agSignInStep2" style="display:none;">
             <div class="auth-otp-header">
-              <span id="agSignInOtpTarget">Code sent to:</span>
+              <span id="agSignInOtpTarget">Verification link sent to:</span>
               <button id="agSignInChangeEmail">Change email</button>
             </div>
             <div class="auth-success show" id="agSignInEmailSent" style="margin-bottom: 14px;">
-              <i class="fa-solid fa-envelope-circle-check"></i>
-              <span>Check your <strong>Junk/Spam folder</strong> — university emails usually route it there. Code sent from <strong>hamimasir5@gmail.com</strong></span>
+              <i class="fa-solid fa-link"></i>
+              <span>Click the <strong>verification link</strong> in your email. This page will update automatically.</span>
             </div>
-            <div class="auth-error" id="agSignInEmailFail" style="display:none; margin-bottom: 14px;">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <span>Email may take a moment. Check your <strong>Junk/Spam folder</strong> first — university mail servers often filter it there.</span>
+            <div class="auth-success show" style="margin-bottom: 14px;">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>Check your <strong>Inbox</strong> and <strong>Spam/Junk</strong> folder. Sent from <strong>hamimasir5@gmail.com</strong></span>
             </div>
-            <div class="auth-field">
-              <label>Enter 6-Digit Code <span class="required">*</span></label>
-              <input type="text" class="auth-input otp-input" id="agSignInOtp" maxlength="6" placeholder="------">
+            <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:var(--bg-card-subtle);border-radius:var(--radius-sm);margin-bottom:12px">
+              <div class="spinner-border" style="width:16px;height:16px;border:2px solid var(--text-muted);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite"></div>
+              <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Waiting for verification...</span>
             </div>
             <div class="auth-timer">
-              <span class="timer-text" id="agSignInTimer">Expires in: 05:00</span>
-              <button class="resend-btn" id="agSignInResend">Resend Code</button>
+              <span class="timer-text" id="agSignInTimer">Expires in: 15:00</span>
+              <button class="resend-btn" id="agSignInResend" style="display:none">Resend Link</button>
             </div>
             <div class="auth-error" id="agSignInOtpError"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
-            <button class="auth-btn auth-btn-primary" id="agSignInVerifyBtn">
-              <i class="fa-solid fa-arrow-right-to-bracket"></i> Verify & Sign In
-            </button>
           </div>
 
           <div class="auth-footer">
@@ -3134,39 +3131,36 @@ body {
             </div>
             <div class="auth-hint" style="margin-bottom: 14px;">
               <i class="fa-solid fa-lock"></i>
-              <span>Password lets you sign in without waiting for OTP email</span>
+              <span>Password lets you sign in directly without email verification</span>
             </div>
             <div class="auth-error" id="agRegError"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
             <button class="auth-btn auth-btn-primary" id="agRegSendBtn">
               <i class="fa-solid fa-user-plus"></i> Register & Verify Email
             </button>
           </div>
-          <!-- Step 2: OTP -->
+          <!-- Step 2: Email Verification Link -->
           <div id="agRegStep2" style="display:none;">
             <div class="auth-otp-header">
-              <span id="agRegOtpTarget">Code sent to:</span>
+              <span id="agRegOtpTarget">Verification link sent to:</span>
               <button id="agRegChangeEmail">Change details</button>
             </div>
             <div class="auth-success show" id="agRegEmailSent" style="margin-bottom: 14px;">
-              <i class="fa-solid fa-envelope-circle-check"></i>
-              <span>Check your <strong>Junk/Spam folder</strong> — university emails usually route it there. Code sent from <strong>hamimasir5@gmail.com</strong></span>
+              <i class="fa-solid fa-link"></i>
+              <span>Click the <strong>verification link</strong> in your email to complete registration. This page will update automatically.</span>
             </div>
-            <div class="auth-error" id="agRegEmailFail" style="display:none; margin-bottom: 14px;">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <span>Email may take a moment. Check your <strong>Junk/Spam folder</strong> first — university mail servers often filter it there.</span>
+            <div class="auth-success show" style="margin-bottom: 14px;">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>Check your <strong>Inbox</strong> and <strong>Spam/Junk</strong> folder. Sent from <strong>hamimasir5@gmail.com</strong></span>
             </div>
-            <div class="auth-field">
-              <label>Enter 6-Digit Code <span class="required">*</span></label>
-              <input type="text" class="auth-input otp-input" id="agRegOtp" maxlength="6" placeholder="------">
+            <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:var(--bg-card-subtle);border-radius:var(--radius-sm);margin-bottom:12px">
+              <div class="spinner-border" style="width:16px;height:16px;border:2px solid var(--text-muted);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite"></div>
+              <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Waiting for verification...</span>
             </div>
             <div class="auth-timer">
-              <span class="timer-text" id="agRegTimer">Expires in: 05:00</span>
-              <button class="resend-btn" id="agRegResend">Resend Code</button>
+              <span class="timer-text" id="agRegTimer">Expires in: 15:00</span>
+              <button class="resend-btn" id="agRegResend" style="display:none">Resend Link</button>
             </div>
             <div class="auth-error" id="agRegOtpError"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
-            <button class="auth-btn auth-btn-primary" id="agRegVerifyBtn">
-              <i class="fa-solid fa-circle-check"></i> Verify & Complete Registration
-            </button>
           </div>
 
           <div class="auth-footer">
@@ -3930,6 +3924,72 @@ body {
           <div class="planner-tab-content" id="plannerGedTab" style="display:none;"></div>
           <div class="planner-tab-content" id="plannerElectivesTab" style="display:none;"></div>
         </div>
+
+        <!-- Academic Calendar Panel (initially hidden) -->
+        <div class="tool-panel-wrap" id="toolsCalendarPanel" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i> Academic Calendar
+              </h3>
+              <p style="font-size: 12px; color: var(--text-muted);">Interactive monthly calendar with holidays, classes, exams & daily agenda</p>
+            </div>
+            <button class="btn btn-sm btn-outline" id="btnCloseToolsCalendar" type="button"><i class="fa-solid fa-xmark"></i> Close</button>
+          </div>
+
+          <div class="dashboard-split-layout">
+            <div class="calendar-card">
+              <div class="calendar-header">
+                <h2 id="toolsCalMonthTitle">Month Year</h2>
+                <div class="cal-nav-buttons">
+                  <button class="icon-btn small" id="toolsCalPrevMonth"><i class="fa-solid fa-chevron-left"></i></button>
+                  <button class="btn btn-sm btn-outline" id="toolsCalTodayBtn">Today</button>
+                  <button class="icon-btn small" id="toolsCalNextMonth"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+              </div>
+              <div class="calendar-legend">
+                <span class="legend-item"><span class="dot dot-class"></span> Class</span>
+                <span class="legend-item"><span class="dot dot-holiday"></span> Holiday (No Class)</span>
+                <span class="legend-item"><span class="dot dot-fee"></span> Fee Deadline</span>
+                <span class="legend-item"><span class="dot dot-exam"></span> Exam</span>
+              </div>
+              <div class="calendar-grid-header">
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+              </div>
+              <div class="calendar-days-grid" id="toolsCalDaysGrid"></div>
+            </div>
+
+            <div class="agenda-card">
+              <div class="agenda-header">
+                <div>
+                  <h2 id="toolsCalDateTitle">Selected Date</h2>
+                  <span class="agenda-subtitle" id="toolsCalDateSubtitle">0 classes scheduled</span>
+                </div>
+                <div id="toolsCalHolidayTag" style="display: none;" class="badge-holiday"><i class="fa-solid fa-umbrella-beach"></i> Holiday</div>
+              </div>
+              <div class="holiday-day-banner" id="toolsCalHolidayBanner" style="display: none;">
+                <div class="banner-top">
+                  <i class="fa-solid fa-beach-umbrella"></i>
+                  <div>
+                    <span class="badge-banner">OFFICIAL ACADEMIC HOLIDAY</span>
+                    <h4 id="toolsCalHolidayTitle">Holiday Name</h4>
+                  </div>
+                </div>
+                <p id="toolsCalHolidayDesc">Campus closed.</p>
+              </div>
+              <div class="day-section" id="toolsCalNoticesSection" style="display: none;">
+                <span class="section-label">NOTICES & DEADLINES</span>
+                <div class="notices-mini-list" id="toolsCalNoticesList"></div>
+              </div>
+              <div class="day-section" id="toolsCalClassesSection">
+                <div class="section-row">
+                  <span class="section-label">CLASS TIMETABLE</span>
+                </div>
+                <div class="classes-list" id="toolsCalClassesList"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
     </main>
@@ -4466,8 +4526,8 @@ CSE-205,Database Systems,Monday,11:00,12:30,Room 301,Prof. Alan Turing</pre>
           <div class="diag-item pass">
             <i class="fa-solid fa-check text-emerald"></i>
             <div class="diag-item-content">
-              <strong>6-Digit OTP Cryptographic Hashing & 5-Min Expiration</strong>
-              <span>Generates secure HMAC-SHA256 tokens and enforces single-use invalidation.</span>
+              <strong>Email Verification Link with Cryptographic Tokens & 15-Min Expiration</strong>
+              <span>Generates secure HMAC-SHA256 verification tokens and enforces single-use invalidation.</span>
             </div>
           </div>
           <div class="diag-item pass">
@@ -6219,7 +6279,7 @@ function openAuthModal() {
     dom.authModalBody.innerHTML = `
       <div id="authStep1">
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-          Enter your official UIU student email with your degree program (e.g. <strong>@bscse.uiu.ac.bd</strong>). A 6-digit numeric OTP will be sent with a 5-minute expiration.
+          Enter your official UIU student email with your degree program (e.g. <strong>@bscse.uiu.ac.bd</strong>). A verification link will be sent to your email.
         </p>
         <div class="form-group" style="margin-bottom: 8px;">
           <label>University Email (UIU) *</label>
@@ -6245,38 +6305,41 @@ function openAuthModal() {
         </div>
         <div id="authErrorMsg" style="display: none; color: var(--danger); font-size: 12px; margin-bottom: 10px; font-weight: 600;"></div>
         <button type="button" class="btn btn-primary full-width" id="btnRequestOtp">
-          <i class="fa-solid fa-paper-plane"></i> Send 6-Digit Code
+          <i class="fa-solid fa-paper-plane"></i> Send Verification Link
         </button>
       </div>
 
       <div id="authStep2" style="display: none;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <span style="font-size: 12px; font-weight: 700; color: var(--text-main);" id="otpTargetEmail">OTP sent to:</span>
+          <span style="font-size: 12px; font-weight: 700; color: var(--text-main);" id="otpTargetEmail">Verification link sent to:</span>
           <button class="btn-text" id="btnEditEmail" style="font-size: 11px;">Change</button>
         </div>
-        <div class="form-group">
-          <label>Enter 6-Digit Passcode *</label>
-          <input type="text" id="authOtpInput" class="form-input" maxlength="6" placeholder="••••••" style="font-size: 20px; letter-spacing: 6px; text-align: center; font-family: monospace; font-weight: 800;" required>
+        <div style="padding:12px;background:var(--emerald-light);border:1px solid rgba(16,185,129,0.3);border-radius:8px;margin-bottom:12px;font-size:12px;line-height:1.5;">
+          <i class="fa-solid fa-link" style="color:var(--emerald);margin-right:6px;"></i>
+          Click the <strong>verification link</strong> in your email. This page will update automatically.
+        </div>
+        <div style="padding:10px;background:var(--bg-card-subtle);border-radius:8px;margin-bottom:12px;font-size:12px;line-height:1.5;">
+          <i class="fa-solid fa-circle-info" style="color:var(--primary);margin-right:6px;"></i>
+          Check your <strong>Inbox</strong> and <strong>Spam/Junk</strong> folder. Sent from <strong>hamimasir5@gmail.com</strong>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:var(--bg-card-subtle);border-radius:8px;margin-bottom:12px">
+          <div style="width:16px;height:16px;border:2px solid var(--text-muted);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite"></div>
+          <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Waiting for verification...</span>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <span style="font-size: 11px; font-weight: 700; color: var(--primary);" id="otpTimerText">Expires in: 05:00</span>
-          <button class="btn-text" id="btnResendOtp" style="display: none; font-size: 11px;">Resend Code</button>
-        </div>
-        <div id="authDevOtpBox" style="display: none; margin-bottom: 12px; padding: 6px 10px; background: var(--emerald-light); border: 1px solid var(--emerald-border); border-radius: 6px; font-size: 11px; color: var(--emerald); font-weight: 700;">
-          <i class="fa-solid fa-code"></i> Dev Passcode: <span id="devOtpSpan"></span>
+          <span style="font-size: 11px; font-weight: 700; color: var(--primary);" id="otpTimerText">Expires in: 15:00</span>
+          <button class="btn-text" id="btnResendOtp" style="display: none; font-size: 11px;">Resend Link</button>
         </div>
         <div id="authOtpErrorMsg" style="display: none; color: var(--danger); font-size: 12px; margin-bottom: 10px; font-weight: 600;"></div>
-        <button type="button" class="btn btn-primary full-width" id="btnVerifyOtp">
-          <i class="fa-solid fa-circle-check"></i> Verify & Sign In
-        </button>
       </div>
     `;
 
     let otpCountdownInterval = null;
-    let secondsLeft = 300;
+    let otpPollInterval = null;
+    let secondsLeft = 900;
 
     const startOtpTimer = () => {
-      secondsLeft = 300;
+      secondsLeft = 900;
       clearInterval(otpCountdownInterval);
       const timerElem = document.getElementById('otpTimerText');
       const resendBtn = document.getElementById('btnResendOtp');
@@ -6289,10 +6352,41 @@ function openAuthModal() {
           if (timerElem) timerElem.textContent = `Expires in: ${m}:${s}`;
         } else {
           clearInterval(otpCountdownInterval);
-          if (timerElem) timerElem.textContent = 'Code expired!';
+          clearInterval(otpPollInterval);
+          if (timerElem) timerElem.textContent = 'Link expired!';
           if (resendBtn) resendBtn.style.display = 'inline-block';
         }
       }, 1000);
+    };
+
+    const startOtpPolling = (email) => {
+      if (otpPollInterval) clearInterval(otpPollInterval);
+      otpPollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`${getApiBaseUrl()}/api/auth/check-verification?email=${encodeURIComponent(email)}`);
+          const data = await res.json();
+          if (data.verified) {
+            clearInterval(otpPollInterval);
+            clearInterval(otpCountdownInterval);
+            const studentData = data.student || {};
+            state.student = {
+              email: studentData.email || email,
+              studentId: studentData.studentId || email.split('@')[0].toUpperCase(),
+              fullName: studentData.fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+              department: studentData.department || 'Computer Science & Engineering',
+              token: data.token,
+              lastSyncTime: new Date().toISOString(),
+            };
+            dom.authModal.classList.remove('show');
+            saveStudentSession();
+            startCrossPlatformAutoSync();
+            syncStudentWithServer(false);
+            renderAll();
+            updateSyncStatusUI();
+            showToast(`Welcome, ${state.student.fullName}! Verified & synced.`, 'success');
+          }
+        } catch (e) { /* polling errors silently ignored */ }
+      }, 3000);
     };
 
     // Click handler for Degree Domain recommendation pills
@@ -6316,10 +6410,14 @@ function openAuthModal() {
     // Bind cross close button explicitly
     const modalCloseBtn = document.getElementById('btnCloseAuthModal');
     if (modalCloseBtn) {
-      modalCloseBtn.onclick = closeAuthModal;
+      modalCloseBtn.onclick = () => {
+        clearInterval(otpCountdownInterval);
+        clearInterval(otpPollInterval);
+        closeAuthModal();
+      };
     }
 
-    // Step 1 Click Handler: Request OTP
+    // Step 1 Click Handler: Send Verification Link
     document.getElementById('btnRequestOtp').onclick = async () => {
       const emailInput = document.getElementById('authEmailInput');
       const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
@@ -6330,7 +6428,7 @@ function openAuthModal() {
       const nowMs = Date.now();
       if (typeof lastWebOtpRequestTime !== 'undefined' && (nowMs - lastWebOtpRequestTime < 60000)) {
         const waitSec = Math.ceil((60000 - (nowMs - lastWebOtpRequestTime)) / 1000);
-        errBox.textContent = `Please wait ${waitSec}s before requesting another verification code.`;
+        errBox.textContent = `Please wait ${waitSec}s before requesting another verification link.`;
         errBox.style.display = 'block';
         return;
       }
@@ -6346,91 +6444,47 @@ function openAuthModal() {
       }
       errBox.style.display = 'none';
 
-      // Visual progress feedback
       reqBtn.disabled = true;
-      reqBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending 6-digit code...';
+      reqBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending verification link...';
 
       try {
-        const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/send-verification-link`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, isSignIn: true }),
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Failed to send verification code.');
+          throw new Error(data.error || 'Failed to send verification link.');
         }
 
         lastWebOtpRequestTime = Date.now();
         document.getElementById('authStep1').style.display = 'none';
         document.getElementById('authStep2').style.display = 'block';
-        document.getElementById('otpTargetEmail').textContent = `A 6-digit code has been sent to: ${email}`;
-
-        document.getElementById('authDevOtpBox').style.display = 'none';
+        document.getElementById('otpTargetEmail').textContent = `Verification link sent to: ${email}`;
 
         startOtpTimer();
-        showToast(`Code sent to ${email} — check your Junk/Spam folder!`, 'success');
+        startOtpPolling(email);
+        showToast(`Verification link sent to ${email} — check your Junk/Spam folder!`, 'success');
       } catch (err) {
         errBox.textContent = err.message || 'Could not reach server. Please try again.';
         errBox.style.display = 'block';
       } finally {
         reqBtn.disabled = false;
-        reqBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send 6-Digit Code';
+        reqBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Verification Link';
       }
     };
 
     document.getElementById('btnEditEmail').onclick = () => {
       clearInterval(otpCountdownInterval);
+      clearInterval(otpPollInterval);
       document.getElementById('authStep2').style.display = 'none';
       document.getElementById('authStep1').style.display = 'block';
     };
 
-    // Step 2 Click Handler: Verify OTP
-    document.getElementById('btnVerifyOtp').onclick = async () => {
-      const email = document.getElementById('authEmailInput').value.trim().toLowerCase();
-      const otp = document.getElementById('authOtpInput').value.trim();
-      const errBox = document.getElementById('authOtpErrorMsg');
-
-      if (otp.length !== 6) {
-        errBox.textContent = 'Please enter the 6-digit numeric verification code.';
-        errBox.style.display = 'block';
-        return;
-      }
-      errBox.style.display = 'none';
-
-      try {
-        const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, otp }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Invalid verification code. Please try again.');
-        }
-
-        const studentData = data.student || {};
-        state.student = {
-          email: studentData.email || email,
-          studentId: studentData.studentId || email.split('@')[0].toUpperCase(),
-          fullName: studentData.fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-          department: studentData.department || 'Computer Science & Engineering',
-          token: data.token,
-          lastSyncTime: new Date().toISOString(),
-        };
-
-        clearInterval(otpCountdownInterval);
-        dom.authModal.classList.remove('show');
-        saveStudentSession();
-        startCrossPlatformAutoSync();
-        syncStudentWithServer(false);
-        renderAll();
-        updateSyncStatusUI();
-        showToast(`Welcome, ${state.student.fullName}! Verified & synced.`, 'success');
-      } catch (err) {
-        errBox.textContent = err.message || 'Verification failed. Please check your code.';
-        errBox.style.display = 'block';
-      }
+    document.getElementById('btnResendOtp').onclick = () => {
+      document.getElementById('btnEditEmail').click();
+      document.getElementById('btnRequestOtp').click();
     };
   }
 
@@ -8004,8 +8058,10 @@ function initAuthGate() {
   // ---- SIGN IN FLOW ----
   let signInTimerInterval = null;
 
+  let signInPollInterval = null;
+
   function startSignInTimer() {
-    let sec = 300;
+    let sec = 900;
     const timerEl = document.getElementById('agSignInTimer');
     const resendEl = document.getElementById('agSignInResend');
     resendEl.style.display = 'none';
@@ -8017,10 +8073,41 @@ function initAuthGate() {
       timerEl.textContent = `Expires in: ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       if (sec <= 0) {
         clearInterval(signInTimerInterval);
-        timerEl.textContent = 'Code expired';
+        clearInterval(signInPollInterval);
+        timerEl.textContent = 'Link expired';
         resendEl.style.display = 'inline';
       }
     }, 1000);
+  }
+
+  function startSignInPolling(email) {
+    if (signInPollInterval) clearInterval(signInPollInterval);
+    signInPollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/check-verification?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        if (data.verified) {
+          clearInterval(signInPollInterval);
+          clearInterval(signInTimerInterval);
+          const s = data.student || {};
+          state.student = {
+            email: s.email || email,
+            studentId: s.studentId || email.split('@')[0].toUpperCase(),
+            fullName: s.fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            department: s.department || 'Computer Science & Engineering',
+            token: data.token,
+            lastSyncTime: new Date().toISOString(),
+          };
+          saveStudentSession();
+          startCrossPlatformAutoSync();
+          syncStudentWithServer(false);
+          hideAuthGate();
+          renderAll();
+          updateSyncStatusUI();
+          showToast(`Welcome back, ${state.student.fullName}!`, 'success');
+        }
+      } catch (e) { /* polling errors silently ignored */ }
+    }, 3000);
   }
 
   // Password Sign In handler
@@ -8086,7 +8173,7 @@ function initAuthGate() {
           return;
         }
         if (data.noPassword) {
-          errSpan.textContent = 'No password set. Use OTP email sign in below.';
+          errSpan.textContent = 'No password set. Use Email Link sign in below.';
           errEl.classList.add('show');
           return;
         }
@@ -8120,7 +8207,7 @@ function initAuthGate() {
     }
   });
 
-  // OTP Sign In handler
+  // Email Link Sign In handler
   document.getElementById('agSignInSendBtn')?.addEventListener('click', async () => {
     const email = document.getElementById('agSignInEmail').value.trim().toLowerCase();
     const errEl = document.getElementById('agSignInError');
@@ -8135,7 +8222,7 @@ function initAuthGate() {
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending code...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending verification link...';
 
     try {
       const apiBase = getApiBaseUrl();
@@ -8144,15 +8231,15 @@ function initAuthGate() {
 
       let res;
       try {
-        res = await fetch(`${apiBase}/api/auth/request-otp`, {
+        res = await fetch(`${apiBase}/api/auth/send-verification-link`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, isSignIn: true }),
           signal: controller.signal,
         });
       } catch (netErr) {
         clearTimeout(timeout);
-        console.error('[OTP Sign-In] Network/fetch error:', netErr.name, netErr.message, '| API base:', apiBase);
+        console.error('[Email Link Sign-In] Network/fetch error:', netErr.name, netErr.message, '| API base:', apiBase);
         throw new Error(netErr.name === 'AbortError'
           ? 'Request timed out — the server may be starting up. Please try again in 30 seconds.'
           : `Could not reach server (${netErr.message}). Check your internet connection.`);
@@ -8164,12 +8251,12 @@ function initAuthGate() {
         data = await res.json();
       } catch (jsonErr) {
         const text = await res.text().catch(() => '(unreadable)');
-        console.error('[OTP Sign-In] Non-JSON response:', res.status, res.statusText, text.substring(0, 500));
+        console.error('[Email Link Sign-In] Non-JSON response:', res.status, res.statusText, text.substring(0, 500));
         throw new Error(`Server returned invalid response (HTTP ${res.status}). Please try again.`);
       }
 
       if (!res.ok || !data.success) {
-        console.error('[OTP Sign-In] API error:', res.status, JSON.stringify(data));
+        console.error('[Email Link Sign-In] API error:', res.status, JSON.stringify(data));
         if (data.notRegistered) {
           errSpan.textContent = 'No account found. Please register first.';
           errEl.classList.add('show');
@@ -8181,29 +8268,23 @@ function initAuthGate() {
 
       document.getElementById('agSignInStep1').style.display = 'none';
       document.getElementById('agSignInStep2').style.display = 'block';
-      document.getElementById('agSignInOtpTarget').textContent = `Code sent to: ${email}`;
-
-      if (data.emailResult && !data.emailResult.delivered) {
-        console.warn('[OTP Sign-In] SMTP delivery issue:', JSON.stringify(data.emailResult));
-      }
-      document.getElementById('agSignInEmailSent').style.display = '';
-      document.getElementById('agSignInEmailSent').classList.add('show');
-      document.getElementById('agSignInEmailFail').style.display = 'none';
-      document.getElementById('agSignInEmailFail').classList.remove('show');
+      document.getElementById('agSignInOtpTarget').textContent = `Verification link sent to: ${email}`;
 
       startSignInTimer();
+      startSignInPolling(email);
     } catch (err) {
-      console.error('[OTP Sign-In Error]', err);
+      console.error('[Email Link Sign-In Error]', err);
       errSpan.textContent = err.message;
       errEl.classList.add('show');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Verification Code';
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Sign In with Email Link';
     }
   });
 
   document.getElementById('agSignInChangeEmail')?.addEventListener('click', () => {
     clearInterval(signInTimerInterval);
+    clearInterval(signInPollInterval);
     document.getElementById('agSignInStep2').style.display = 'none';
     document.getElementById('agSignInStep1').style.display = 'block';
   });
@@ -8213,64 +8294,14 @@ function initAuthGate() {
     document.getElementById('agSignInSendBtn').click();
   });
 
-  document.getElementById('agSignInVerifyBtn')?.addEventListener('click', async () => {
-    const email = document.getElementById('agSignInEmail').value.trim().toLowerCase();
-    const otp = document.getElementById('agSignInOtp').value.trim();
-    const errEl = document.getElementById('agSignInOtpError');
-    const errSpan = errEl.querySelector('span');
-    const btn = document.getElementById('agSignInVerifyBtn');
-    errEl.classList.remove('show');
-
-    if (otp.length !== 6) {
-      errSpan.textContent = 'Please enter the 6-digit code.';
-      errEl.classList.add('show');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
-
-    try {
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Invalid code.');
-
-      clearInterval(signInTimerInterval);
-      const s = data.student || {};
-      state.student = {
-        email: s.email || email,
-        studentId: s.studentId || email.split('@')[0].toUpperCase(),
-        fullName: s.fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-        department: s.department || 'Computer Science & Engineering',
-        token: data.token,
-        lastSyncTime: new Date().toISOString(),
-      };
-
-      saveStudentSession();
-      startCrossPlatformAutoSync();
-      syncStudentWithServer(false);
-      hideAuthGate();
-      renderAll();
-      updateSyncStatusUI();
-      showToast(`Welcome back, ${state.student.fullName}!`, 'success');
-    } catch (err) {
-      errSpan.textContent = err.message;
-      errEl.classList.add('show');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Verify & Sign In';
-    }
-  });
+  // Sign-in verification is handled by polling (startSignInPolling)
 
   // ---- REGISTER FLOW ----
   let regTimerInterval = null;
+  let regPollInterval = null;
 
   function startRegTimer() {
-    let sec = 300;
+    let sec = 900;
     const timerEl = document.getElementById('agRegTimer');
     const resendEl = document.getElementById('agRegResend');
     resendEl.style.display = 'none';
@@ -8282,10 +8313,41 @@ function initAuthGate() {
       timerEl.textContent = `Expires in: ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       if (sec <= 0) {
         clearInterval(regTimerInterval);
-        timerEl.textContent = 'Code expired';
+        clearInterval(regPollInterval);
+        timerEl.textContent = 'Link expired';
         resendEl.style.display = 'inline';
       }
     }, 1000);
+  }
+
+  function startRegPolling(email) {
+    if (regPollInterval) clearInterval(regPollInterval);
+    regPollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/check-verification?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        if (data.verified) {
+          clearInterval(regPollInterval);
+          clearInterval(regTimerInterval);
+          const s = data.student || {};
+          state.student = {
+            email: s.email || email,
+            studentId: s.studentId || document.getElementById('agRegStudentId').value.trim(),
+            fullName: s.fullName || document.getElementById('agRegName').value.trim(),
+            department: s.department || document.getElementById('agRegDept').value.trim() || 'Computer Science & Engineering',
+            token: data.token,
+            lastSyncTime: new Date().toISOString(),
+          };
+          saveStudentSession();
+          startCrossPlatformAutoSync();
+          syncStudentWithServer(false);
+          hideAuthGate();
+          renderAll();
+          updateSyncStatusUI();
+          showToast(`Welcome, ${state.student.fullName}! Registration complete.`, 'success');
+        }
+      } catch (e) { /* polling errors silently ignored */ }
+    }, 3000);
   }
 
   document.getElementById('agRegSendBtn')?.addEventListener('click', async () => {
@@ -8331,7 +8393,7 @@ function initAuthGate() {
 
       let res;
       try {
-        res = await fetch(`${apiBase}/api/auth/request-otp`, {
+        res = await fetch(`${apiBase}/api/auth/send-verification-link`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, isRegistration: true, fullName, studentId, department, semester, password }),
@@ -8339,7 +8401,7 @@ function initAuthGate() {
         });
       } catch (netErr) {
         clearTimeout(timeout);
-        console.error('[OTP Registration] Network/fetch error:', netErr.name, netErr.message, '| API base:', apiBase);
+        console.error('[Registration] Network/fetch error:', netErr.name, netErr.message, '| API base:', apiBase);
         throw new Error(netErr.name === 'AbortError'
           ? 'Request timed out — the server may be starting up. Please try again in 30 seconds.'
           : `Could not reach server (${netErr.message}). Check your internet connection.`);
@@ -8351,12 +8413,12 @@ function initAuthGate() {
         data = await res.json();
       } catch (jsonErr) {
         const text = await res.text().catch(() => '(unreadable)');
-        console.error('[OTP Registration] Non-JSON response:', res.status, res.statusText, text.substring(0, 500));
+        console.error('[Registration] Non-JSON response:', res.status, res.statusText, text.substring(0, 500));
         throw new Error(`Server returned invalid response (HTTP ${res.status}). Please try again.`);
       }
 
       if (!res.ok || !data.success) {
-        console.error('[OTP Registration] API error:', res.status, JSON.stringify(data));
+        console.error('[Registration] API error:', res.status, JSON.stringify(data));
         if (data.alreadyRegistered) {
           errSpan.textContent = 'This account is already registered. Switching to Sign In...';
           errEl.classList.add('show');
@@ -8368,29 +8430,23 @@ function initAuthGate() {
 
       document.getElementById('agRegStep1').style.display = 'none';
       document.getElementById('agRegStep2').style.display = 'block';
-      document.getElementById('agRegOtpTarget').textContent = `Code sent to: ${email}`;
-
-      if (data.emailResult && !data.emailResult.delivered) {
-        console.warn('[OTP Registration] SMTP delivery issue:', JSON.stringify(data.emailResult));
-      }
-      document.getElementById('agRegEmailSent').style.display = '';
-      document.getElementById('agRegEmailSent').classList.add('show');
-      document.getElementById('agRegEmailFail').style.display = 'none';
-      document.getElementById('agRegEmailFail').classList.remove('show');
+      document.getElementById('agRegOtpTarget').textContent = `Verification link sent to: ${email}`;
 
       startRegTimer();
+      startRegPolling(email);
     } catch (err) {
-      console.error('[OTP Registration Error]', err);
+      console.error('[Registration Error]', err);
       errSpan.textContent = err.message;
       errEl.classList.add('show');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Register & Send Code';
+      btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Register & Verify Email';
     }
   });
 
   document.getElementById('agRegChangeEmail')?.addEventListener('click', () => {
     clearInterval(regTimerInterval);
+    clearInterval(regPollInterval);
     document.getElementById('agRegStep2').style.display = 'none';
     document.getElementById('agRegStep1').style.display = 'block';
   });
@@ -8400,58 +8456,7 @@ function initAuthGate() {
     document.getElementById('agRegSendBtn').click();
   });
 
-  document.getElementById('agRegVerifyBtn')?.addEventListener('click', async () => {
-    const email = document.getElementById('agRegEmail').value.trim().toLowerCase();
-    const otp = document.getElementById('agRegOtp').value.trim();
-    const errEl = document.getElementById('agRegOtpError');
-    const errSpan = errEl.querySelector('span');
-    const btn = document.getElementById('agRegVerifyBtn');
-    errEl.classList.remove('show');
-
-    if (otp.length !== 6) {
-      errSpan.textContent = 'Please enter the 6-digit code.';
-      errEl.classList.add('show');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
-
-    try {
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Invalid code.');
-
-      clearInterval(regTimerInterval);
-      const s = data.student || {};
-      state.student = {
-        email: s.email || email,
-        studentId: s.studentId || document.getElementById('agRegStudentId').value.trim(),
-        fullName: s.fullName || document.getElementById('agRegName').value.trim(),
-        department: s.department || document.getElementById('agRegDept').value.trim() || 'Computer Science & Engineering',
-        token: data.token,
-        lastSyncTime: new Date().toISOString(),
-      };
-
-      saveStudentSession();
-      startCrossPlatformAutoSync();
-      syncStudentWithServer(false);
-      hideAuthGate();
-      renderAll();
-      updateSyncStatusUI();
-      showToast(`Welcome, ${state.student.fullName}! Registration complete.`, 'success');
-    } catch (err) {
-      errSpan.textContent = err.message;
-      errEl.classList.add('show');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verify & Complete Registration';
-    }
-  });
+  // Registration verification is handled by polling (startRegPolling)
 }
 
 // ===================== TOOLS SECTION LOGIC =====================
@@ -8464,7 +8469,7 @@ function switchToTab(tabName) {
 }
 
 function initToolsSection() {
-  const allPanelIds = ['cgpaCalcPanel', 'examRoutinePanel', 'divisionCalcPanel', 'coursePlannerPanel'];
+  const allPanelIds = ['cgpaCalcPanel', 'examRoutinePanel', 'divisionCalcPanel', 'coursePlannerPanel', 'toolsCalendarPanel'];
   function hideAllPanels() {
     allPanelIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
   }
@@ -8473,7 +8478,11 @@ function initToolsSection() {
     card.addEventListener('click', () => {
       const action = card.dataset.toolAction;
       if (action === 'dashboard') {
-        switchToTab('dashboard');
+        hideAllPanels();
+        document.getElementById('toolsCalendarPanel').style.display = 'block';
+        renderToolsCalendar();
+        renderToolsAgenda();
+        document.getElementById('toolsCalendarPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else if (action === 'cgpa') {
         hideAllPanels();
         document.getElementById('cgpaCalcPanel').style.display = 'block';
@@ -9000,6 +9009,162 @@ function initToolsSection() {
   });
 
   document.getElementById('btnClosePlanner')?.addEventListener('click', () => { document.getElementById('coursePlannerPanel').style.display = 'none'; });
+
+  // ---- Tools Calendar ----
+  let toolsCalMonth = new Date().getMonth();
+  let toolsCalYear = new Date().getFullYear();
+  let toolsCalSelectedDate = new Date();
+
+  document.getElementById('btnCloseToolsCalendar')?.addEventListener('click', () => { document.getElementById('toolsCalendarPanel').style.display = 'none'; });
+
+  document.getElementById('toolsCalPrevMonth')?.addEventListener('click', () => {
+    toolsCalMonth--;
+    if (toolsCalMonth < 0) { toolsCalMonth = 11; toolsCalYear--; }
+    renderToolsCalendar();
+  });
+
+  document.getElementById('toolsCalNextMonth')?.addEventListener('click', () => {
+    toolsCalMonth++;
+    if (toolsCalMonth > 11) { toolsCalMonth = 0; toolsCalYear++; }
+    renderToolsCalendar();
+  });
+
+  document.getElementById('toolsCalTodayBtn')?.addEventListener('click', () => {
+    const now = new Date();
+    toolsCalMonth = now.getMonth();
+    toolsCalYear = now.getFullYear();
+    toolsCalSelectedDate = now;
+    renderToolsCalendar();
+    renderToolsAgenda();
+  });
+
+  window.renderToolsCalendar = function() {
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const titleEl = document.getElementById('toolsCalMonthTitle');
+    const gridEl = document.getElementById('toolsCalDaysGrid');
+    if (!titleEl || !gridEl) return;
+    titleEl.textContent = `${months[toolsCalMonth]} ${toolsCalYear}`;
+    gridEl.innerHTML = '';
+
+    const firstDay = new Date(toolsCalYear, toolsCalMonth, 1);
+    const lastDay = new Date(toolsCalYear, toolsCalMonth + 1, 0);
+    let startDow = firstDay.getDay();
+    if (startDow === 0) startDow = 7;
+
+    const prevLastDay = new Date(toolsCalYear, toolsCalMonth, 0).getDate();
+    for (let i = startDow - 1; i > 0; i--) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-day-cell other-month';
+      cell.textContent = prevLastDay - i + 1;
+      gridEl.appendChild(cell);
+    }
+
+    const today = new Date();
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      const cellDate = new Date(toolsCalYear, toolsCalMonth, day);
+      const cell = document.createElement('div');
+      cell.className = 'cal-day-cell';
+      cell.textContent = day;
+
+      if (isSameDay(cellDate, today)) cell.classList.add('today');
+      if (isSameDay(cellDate, toolsCalSelectedDate)) cell.classList.add('selected');
+
+      const isHol = isDateHoliday(cellDate);
+      const activeClasses = getActiveClassesForDate(cellDate);
+      const otherNotices = getOtherNoticesForDate(cellDate);
+      const indBox = document.createElement('div');
+      indBox.className = 'day-indicators';
+
+      if (isHol) {
+        const d = document.createElement('span'); d.className = 'mini-dot holiday'; indBox.appendChild(d);
+      } else if (activeClasses.length > 0) {
+        const d = document.createElement('span'); d.className = 'mini-dot class'; indBox.appendChild(d);
+      }
+      if (otherNotices.some(n => n.category === 'semesterFee')) {
+        const d = document.createElement('span'); d.className = 'mini-dot fee'; indBox.appendChild(d);
+      }
+      if (otherNotices.some(n => n.category === 'exam')) {
+        const d = document.createElement('span'); d.className = 'mini-dot exam'; indBox.appendChild(d);
+      }
+      cell.appendChild(indBox);
+
+      cell.onclick = () => {
+        toolsCalSelectedDate = cellDate;
+        renderToolsCalendar();
+        renderToolsAgenda();
+      };
+      gridEl.appendChild(cell);
+    }
+  };
+
+  window.renderToolsAgenda = function() {
+    const date = toolsCalSelectedDate;
+    const weekdays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    const titleEl = document.getElementById('toolsCalDateTitle');
+    const subtitleEl = document.getElementById('toolsCalDateSubtitle');
+    const holidayTag = document.getElementById('toolsCalHolidayTag');
+    const holidayBanner = document.getElementById('toolsCalHolidayBanner');
+    const classesSection = document.getElementById('toolsCalClassesSection');
+    const classesList = document.getElementById('toolsCalClassesList');
+    const noticesSection = document.getElementById('toolsCalNoticesSection');
+    const noticesList = document.getElementById('toolsCalNoticesList');
+    if (!titleEl) return;
+
+    titleEl.textContent = `${weekdays[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
+
+    const isHol = isDateHoliday(date);
+    const isSemBrk = isSemesterBreak(date);
+    const activeClasses = getActiveClassesForDate(date);
+    const holidayNotices = getHolidayNoticesForDate(date);
+    const otherNotices = getOtherNoticesForDate(date);
+
+    if (isHol || isSemBrk) {
+      subtitleEl.textContent = isSemBrk ? 'Semester Break' : 'Academic Holiday';
+      subtitleEl.style.color = 'var(--danger)';
+      holidayTag.style.display = 'flex';
+      holidayBanner.style.display = 'block';
+      document.getElementById('toolsCalHolidayTitle').textContent = holidayNotices.map(h => h.title).join(' • ') || (isSemBrk ? 'Semester Break' : 'Academic Holiday');
+      document.getElementById('toolsCalHolidayDesc').textContent = holidayNotices.map(h => h.description).filter(Boolean).join(' ') || 'Campus closed.';
+      classesSection.style.display = 'none';
+    } else {
+      subtitleEl.textContent = `${activeClasses.length} class${activeClasses.length !== 1 ? 'es' : ''} scheduled`;
+      subtitleEl.style.color = '';
+      holidayTag.style.display = 'none';
+      holidayBanner.style.display = 'none';
+      classesSection.style.display = 'block';
+
+      if (activeClasses.length === 0) {
+        classesList.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;"><i class="fa-regular fa-calendar-xmark" style="font-size:24px;margin-bottom:8px;display:block;"></i>No classes scheduled</div>';
+      } else {
+        classesList.innerHTML = activeClasses.sort((a, b) => a.startTime.localeCompare(b.startTime)).map(c => `
+          <div class="class-item">
+            <div class="class-time-col">
+              <span class="class-start">${formatTime12(c.startTime)}</span>
+              <span class="class-end">${formatTime12(c.endTime)}</span>
+            </div>
+            <div class="class-info-col">
+              <span class="class-name">${c.courseCode} — ${c.courseName}</span>
+              <span class="class-meta">${c.room || 'Room TBA'} • ${c.instructor || ''}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    if (otherNotices.length > 0) {
+      noticesSection.style.display = 'block';
+      noticesList.innerHTML = otherNotices.map(n => `
+        <div class="mini-notice-item">
+          <span class="mini-notice-cat">${n.category}</span>
+          <span class="mini-notice-title">${n.title}</span>
+        </div>
+      `).join('');
+    } else {
+      noticesSection.style.display = 'none';
+    }
+  };
 }
 
 // ===================== APP START =====================

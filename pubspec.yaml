@@ -1,7 +1,7 @@
 name: educal
 description: "Edutools - Smart Academic Calendar and Reminder App with Holiday Conflict Resolution"
 publish_to: 'none'
-version: 1.1.4+16
+version: 1.1.5+17
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

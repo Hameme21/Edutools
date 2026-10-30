@@ -802,14 +802,54 @@ async function sendVerificationEmail(email, token) {
 }
 
 /**
- * Initiates email verification for Google Sign-In.
- * Generates a token, stores it, and sends the verification link via email.
+ * Initiates email verification via link.
+ * Supports Google Sign-In, sign-in (existing users), and registration (new users).
+ * options.isRegistration — if true, validates not-already-registered, stores pending registration data
+ * options.isSignIn — if true, validates already-registered
+ * options.fullName, studentId, department, semester, password — registration fields
  */
-async function requestEmailVerification(email, displayName) {
+async function requestEmailVerification(email, displayName, options = {}) {
   const normalizedEmail = email.trim().toLowerCase();
 
   if (!isValidEmail(normalizedEmail)) {
     throw new Error('Please enter a valid email address.');
+  }
+
+  if (options.isRegistration) {
+    if (!isUiuEmail(normalizedEmail)) {
+      throw new Error('Only UIU student emails with degree program are allowed (e.g. student@bscse.uiu.ac.bd).');
+    }
+    if (isEmailRegistered(normalizedEmail)) {
+      const err = new Error('This account is already registered. Please sign in instead.');
+      err.status = 400;
+      err.code = 'ALREADY_REGISTERED';
+      err.alreadyRegistered = true;
+      throw err;
+    }
+    if (options.password && options.password.length < 6) {
+      throw new Error('Password must be at least 6 characters long.');
+    }
+  }
+
+  if (options.isSignIn) {
+    if (!isUiuEmail(normalizedEmail)) {
+      throw new Error('Only UIU student emails with degree program are allowed (e.g. student@bscse.uiu.ac.bd).');
+    }
+    if (!isEmailRegistered(normalizedEmail)) {
+      const err = new Error('No account found for this email. Please register first.');
+      err.status = 404;
+      err.code = 'NOT_REGISTERED';
+      err.notRegistered = true;
+      throw err;
+    }
+  }
+
+  let pendingPasswordHash = null;
+  let pendingPasswordSalt = null;
+  if (options.isRegistration && options.password) {
+    const pw = hashPassword(options.password);
+    pendingPasswordHash = pw.hash;
+    pendingPasswordSalt = pw.salt;
   }
 
   const token = generateSecureToken();
@@ -820,6 +860,14 @@ async function requestEmailVerification(email, displayName) {
     expiresAt,
     verified: false,
     displayName: displayName || formatNameFromEmail(normalizedEmail),
+    isRegistration: !!options.isRegistration,
+    isSignIn: !!options.isSignIn,
+    fullName: options.fullName?.trim(),
+    studentId: options.studentId?.trim(),
+    department: options.department?.trim(),
+    semester: options.semester?.trim(),
+    pendingPasswordHash,
+    pendingPasswordSalt,
   });
 
   // Clear any previous verified status for this email so user must re-verify
@@ -873,20 +921,24 @@ function verifyEmailToken(token) {
   // Create or update student record
   const domain = record.email.split('@')[1];
   let student = studentStore.get(record.email);
-  if (!student) {
+  if (!student || record.isRegistration) {
     student = {
-      id: `STD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      studentId: record.email.split('@')[0].toUpperCase(),
-      fullName: record.displayName,
+      id: student ? student.id : `STD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      studentId: record.studentId || (student ? student.studentId : record.email.split('@')[0].toUpperCase()),
+      fullName: record.fullName || record.displayName || (student ? student.fullName : record.email.split('@')[0]),
       email: record.email,
-      department: inferDepartmentFromDomain(domain),
-      semester: 'Spring 2026',
+      department: record.department || (student ? student.department : inferDepartmentFromDomain(domain)),
+      semester: record.semester || (student ? student.semester : 'Spring 2026'),
       university: extractUniversityName(domain),
       domain,
-      createdAt: new Date().toISOString(),
+      createdAt: student ? student.createdAt : new Date().toISOString(),
       lastLogin: new Date().toISOString(),
       emailVerified: true,
     };
+    if (record.pendingPasswordHash && record.pendingPasswordSalt) {
+      student.passwordHash = record.pendingPasswordHash;
+      student.passwordSalt = record.pendingPasswordSalt;
+    }
     studentStore.set(record.email, student);
   } else {
     student.lastLogin = new Date().toISOString();

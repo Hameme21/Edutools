@@ -18,7 +18,6 @@ class StudentLoginDialog extends StatefulWidget {
 class _StudentLoginDialogState extends State<StudentLoginDialog> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _otpController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _studentIdController = TextEditingController();
   final _departmentController = TextEditingController();
@@ -26,13 +25,14 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
   final _apiService = ApiService();
 
   bool _isRegisterMode = false;
-  bool _isOtpSent = false;
+  bool _isVerificationSent = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
 
-  int _secondsRemaining = 300;
+  int _secondsRemaining = 900;
   Timer? _countdownTimer;
+  Timer? _pollTimer;
 
   @override
   void initState() {
@@ -52,24 +52,84 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _otpController.dispose();
     _fullNameController.dispose();
     _studentIdController.dispose();
     _departmentController.dispose();
     _countdownTimer?.cancel();
+    _pollTimer?.cancel();
     super.dispose();
   }
 
   void _startTimer() {
-    _secondsRemaining = 300;
+    _secondsRemaining = 900;
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_secondsRemaining > 0) {
         setState(() => _secondsRemaining--);
       } else {
         _countdownTimer?.cancel();
+        _pollTimer?.cancel();
       }
     });
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) => _pollVerification());
+  }
+
+  Future<void> _pollVerification() async {
+    final email = _emailController.text.trim().toLowerCase();
+    if (email.isEmpty) return;
+
+    try {
+      final data = await _apiService.checkEmailVerification(email);
+      if (data['verified'] == true) {
+        _pollTimer?.cancel();
+        _countdownTimer?.cancel();
+
+        if (data['token'] != null) {
+          _apiService.authToken = data['token'] as String;
+        }
+
+        final studentJson = (data['student'] as Map<String, dynamic>?) ?? {};
+        final resolvedName = studentJson['fullName'] ??
+            (_isRegisterMode && _fullNameController.text.trim().isNotEmpty
+                ? _fullNameController.text.trim()
+                : StudentProfile.formatNameFromEmail(email));
+        final resolvedId = studentJson['studentId'] ??
+            (_isRegisterMode && _studentIdController.text.trim().isNotEmpty
+                ? _studentIdController.text.trim()
+                : email.split('@').first.toUpperCase());
+        final resolvedDept = studentJson['department'] ??
+            (_isRegisterMode && _departmentController.text.trim().isNotEmpty
+                ? _departmentController.text.trim()
+                : 'Computer Science & Engineering');
+
+        widget.state.loginStudent(
+          email: email,
+          studentId: resolvedId,
+          fullName: resolvedName,
+          department: resolvedDept,
+        );
+        await widget.state.syncWithGoogleDrive();
+
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_isRegisterMode
+                  ? 'Registered and logged in as $email!'
+                  : 'Logged in as $email!'),
+              backgroundColor: const Color(0xFF10B981),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      // Polling errors are silently ignored
+    }
   }
 
   String _formatTimer(int totalSeconds) {
@@ -135,7 +195,7 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
     }
   }
 
-  Future<void> _handleRegisterOtp() async {
+  Future<void> _handleRegisterVerification() async {
     final email = _emailController.text.trim().toLowerCase();
     final password = _passwordController.text;
 
@@ -166,8 +226,9 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
     });
 
     try {
-      await _apiService.requestOtpWithPassword(
+      await _apiService.sendVerificationLink(
         email,
+        isRegistration: true,
         password: password,
         fullName: _fullNameController.text.trim(),
         studentId: _studentIdController.text.trim(),
@@ -175,10 +236,11 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
         semester: 'Spring 2026',
       );
       setState(() {
-        _isOtpSent = true;
+        _isVerificationSent = true;
         _isLoading = false;
       });
       _startTimer();
+      _startPolling();
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');
       setState(() {
@@ -186,13 +248,13 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
         _errorMessage = msg;
         if (msg.toLowerCase().contains('already registered')) {
           _isRegisterMode = false;
-          _isOtpSent = false;
+          _isVerificationSent = false;
         }
       });
     }
   }
 
-  Future<void> _handleSignInOtp() async {
+  Future<void> _handleSignInVerification() async {
     final email = _emailController.text.trim().toLowerCase();
 
     if (!ApiService.isValidEmail(email)) {
@@ -210,12 +272,13 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
     });
 
     try {
-      await _apiService.requestOtp(email);
+      await _apiService.sendVerificationLink(email, isSignIn: true);
       setState(() {
-        _isOtpSent = true;
+        _isVerificationSent = true;
         _isLoading = false;
       });
       _startTimer();
+      _startPolling();
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');
       setState(() {
@@ -223,71 +286,6 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
         _errorMessage = msg;
         if (msg.toLowerCase().contains('no account found') || msg.toLowerCase().contains('not registered')) {
           _isRegisterMode = true;
-        }
-      });
-    }
-  }
-
-  Future<void> _handleVerifyOtp() async {
-    final email = _emailController.text.trim().toLowerCase();
-    final otp = _otpController.text.trim();
-
-    if (otp.length != 6) {
-      setState(() => _errorMessage = 'Please enter the complete 6-digit OTP.');
-      return;
-    }
-
-    setState(() {
-      _errorMessage = null;
-      _isLoading = true;
-    });
-
-    try {
-      final res = await _apiService.verifyOtp(email, otp);
-      final studentJson = res['student'] as Map<String, dynamic>;
-
-      final resolvedName = studentJson['fullName'] ??
-          (_isRegisterMode && _fullNameController.text.trim().isNotEmpty
-              ? _fullNameController.text.trim()
-              : StudentProfile.formatNameFromEmail(email));
-      final resolvedId = studentJson['studentId'] ??
-          (_isRegisterMode && _studentIdController.text.trim().isNotEmpty
-              ? _studentIdController.text.trim()
-              : email.split('@').first.toUpperCase());
-      final resolvedDept = studentJson['department'] ??
-          (_isRegisterMode && _departmentController.text.trim().isNotEmpty
-              ? _departmentController.text.trim()
-              : 'Computer Science & Engineering');
-
-      widget.state.loginStudent(
-        email: email,
-        studentId: resolvedId,
-        fullName: resolvedName,
-        department: resolvedDept,
-      );
-      await widget.state.syncWithGoogleDrive();
-
-      setState(() => _isLoading = false);
-      if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isRegisterMode
-                ? 'Registered and logged in as $email!'
-                : 'Logged in as $email!'),
-            backgroundColor: const Color(0xFF10B981),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      final msg = e.toString().replaceAll('Exception: ', '');
-      setState(() {
-        _isLoading = false;
-        _errorMessage = msg;
-        if (msg.toLowerCase().contains('already registered')) {
-          _isRegisterMode = false;
-          _isOtpSent = false;
         }
       });
     }
@@ -431,11 +429,11 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
             OutlinedButton.icon(
               onPressed: () {
                 widget.state.logoutStudent();
+                _pollTimer?.cancel();
                 setState(() {
-                  _isOtpSent = false;
+                  _isVerificationSent = false;
                   _emailController.clear();
                   _passwordController.clear();
-                  _otpController.clear();
                   _fullNameController.clear();
                   _studentIdController.clear();
                   _departmentController.clear();
@@ -463,7 +461,7 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Tab switcher
-        if (!_isOtpSent)
+        if (!_isVerificationSent)
           Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(4),
@@ -484,25 +482,25 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
           ),
 
         Text(
-          _isOtpSent ? 'Verify Email' : (_isRegisterMode ? 'Create Account' : 'Welcome Back'),
+          _isVerificationSent ? 'Verify Email' : (_isRegisterMode ? 'Create Account' : 'Welcome Back'),
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
-          _isOtpSent
-              ? 'Enter the 6-digit code sent to your email.'
+          _isVerificationSent
+              ? 'Click the verification link in your email. This page will update automatically.'
               : (_isRegisterMode
                   ? 'Register with your UIU student email.'
-                  : 'Sign in with your password or OTP.'),
+                  : 'Sign in with your password or email link.'),
           style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.grey[600]),
         ),
         const SizedBox(height: 16),
 
-        if (!_isOtpSent) ...[
+        if (!_isVerificationSent) ...[
           if (_isRegisterMode) ..._buildRegisterFields(isDark),
           if (!_isRegisterMode) ..._buildSignInFields(isDark),
         ] else ...[
-          _buildOtpFields(isDark, primaryColor),
+          _buildVerificationWaiting(isDark, primaryColor),
         ],
 
         if (_errorMessage != null) ...[
@@ -524,12 +522,12 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
         ],
         const SizedBox(height: 16),
 
-        if (!_isOtpSent) ...[
+        if (!_isVerificationSent) ...[
           if (_isRegisterMode) ...[
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _isLoading ? null : _handleRegisterOtp,
+                onPressed: _isLoading ? null : _handleRegisterVerification,
                 icon: _isLoading
                     ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.person_add_rounded),
@@ -572,9 +570,9 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: _isLoading ? null : _handleSignInOtp,
-                icon: const Icon(Icons.email_outlined, size: 18),
-                label: const Text('Sign In with OTP Email'),
+                onPressed: _isLoading ? null : _handleSignInVerification,
+                icon: const Icon(Icons.link_rounded, size: 18),
+                label: const Text('Sign In with Email Link'),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   side: BorderSide(color: const Color(0xFFEA580C).withValues(alpha: 0.5)),
@@ -582,22 +580,6 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
               ),
             ),
           ],
-        ] else ...[
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _isLoading ? null : _handleVerifyOtp,
-              icon: _isLoading
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.verified_user_rounded),
-              label: Text(_isRegisterMode ? 'Verify & Complete Registration' : 'Verify & Sign In'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEA580C),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-          ),
         ],
       ],
     );
@@ -723,7 +705,7 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
           const SizedBox(width: 4),
           Expanded(
             child: Text(
-              'Password lets you sign in without waiting for OTP email.',
+              'Password lets you sign in directly without email verification.',
               style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.grey[500]),
             ),
           ),
@@ -732,7 +714,7 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
     ];
   }
 
-  Widget _buildOtpFields(bool isDark, Color primaryColor) {
+  Widget _buildVerificationWaiting(bool isDark, Color primaryColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -741,26 +723,89 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
           children: [
             Expanded(
               child: Text(
-                'Code sent to ${_emailController.text}:',
+                'Verification link sent to ${_emailController.text}',
                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             TextButton(
-              onPressed: () => setState(() => _isOtpSent = false),
+              onPressed: () {
+                _pollTimer?.cancel();
+                setState(() => _isVerificationSent = false);
+              },
               style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
               child: const Text('Change', style: TextStyle(fontSize: 11)),
             ),
           ],
         ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: _otpController,
-          keyboardType: TextInputType.number,
-          maxLength: 6,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: 10.0, fontFamily: 'monospace'),
-          decoration: const InputDecoration(hintText: '------', counterText: ''),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 16, height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Waiting for verification...',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white60 : Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.link_rounded, size: 18, color: Color(0xFF10B981)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Click the verification link in your email. This page will update automatically.',
+                  style: TextStyle(fontSize: 11, height: 1.35, color: isDark ? Colors.white70 : const Color(0xFF065F46), fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEA580C).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFEA580C).withValues(alpha: 0.25)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.mark_email_read_outlined, size: 18, color: Color(0xFFEA580C)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Check your Inbox and Spam/Junk folder. Sent from hamimasir5@gmail.com.',
+                  style: TextStyle(fontSize: 11, height: 1.35, color: isDark ? Colors.white70 : const Color(0xFF9A3412), fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         Row(
@@ -776,32 +821,10 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
             ]),
             if (_secondsRemaining == 0)
               TextButton(
-                onPressed: _isRegisterMode ? _handleRegisterOtp : _handleSignInOtp,
-                child: const Text('Resend Code', style: TextStyle(fontSize: 11)),
+                onPressed: _isRegisterMode ? _handleRegisterVerification : _handleSignInVerification,
+                child: const Text('Resend Link', style: TextStyle(fontSize: 11)),
               ),
           ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFEA580C).withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFEA580C).withValues(alpha: 0.25)),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.mark_email_read_outlined, size: 18, color: Color(0xFFEA580C)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Check your Junk/Spam folder — university emails usually filter it there. Code from hamimasir5@gmail.com.',
-                  style: TextStyle(fontSize: 11, height: 1.35, color: isDark ? Colors.white70 : const Color(0xFF9A3412), fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
         ),
       ],
     );

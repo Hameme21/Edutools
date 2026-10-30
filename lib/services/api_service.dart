@@ -345,6 +345,45 @@ class ApiService {
     );
   }
 
+  /// Send verification link for sign-in or registration (replaces OTP flow)
+  Future<Map<String, dynamic>> sendVerificationLink(
+    String email, {
+    bool isRegistration = false,
+    bool isSignIn = false,
+    String? password,
+    String? fullName,
+    String? studentId,
+    String? department,
+    String? semester,
+  }) async {
+    final norm = email.trim().toLowerCase();
+    _checkClientRateLimit(norm);
+
+    if (!isUiuEmail(norm)) {
+      throw Exception('Only UIU student emails are allowed (e.g. student@bscse.uiu.ac.bd).');
+    }
+    if (!isValidEmail(norm)) {
+      throw Exception('Please enter a valid email address.');
+    }
+
+    final res = await _postJson(
+      '/api/auth/send-verification-link',
+      {
+        'email': norm,
+        if (isRegistration) 'isRegistration': true,
+        if (isSignIn) 'isSignIn': true,
+        if (password != null && password.isNotEmpty) 'password': password,
+        if (fullName != null && fullName.isNotEmpty) 'fullName': fullName.trim(),
+        if (studentId != null && studentId.isNotEmpty) 'studentId': studentId.trim(),
+        if (department != null && department.isNotEmpty) 'department': department.trim(),
+        if (semester != null && semester.isNotEmpty) 'semester': semester.trim(),
+      },
+      timeout: const Duration(seconds: 50),
+    );
+    _recordClientOtpRequest(norm);
+    return res;
+  }
+
   /// Check if email has been verified via the link (polled by frontend)
   Future<Map<String, dynamic>> checkEmailVerification(String email) async {
     final norm = email.trim().toLowerCase();

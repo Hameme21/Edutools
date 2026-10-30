@@ -220,15 +220,24 @@ router.get('/auth/has-password', (req, res) => {
 
 /**
  * POST /api/auth/send-verification-link
- * Sends an email verification link (used for Google Sign-In flow)
+ * Sends an email verification link.
+ * Supports Google Sign-In, email sign-in, and registration flows.
  */
 router.post('/auth/send-verification-link', async (req, res) => {
   try {
-    const { email, displayName } = req.body;
+    const { email, displayName, isRegistration, isSignIn, fullName, studentId, department, semester, password } = req.body;
     if (!email) {
       return res.status(400).json({ success: false, error: 'Email address is required.' });
     }
-    const result = await authService.requestEmailVerification(email, displayName);
+    const result = await authService.requestEmailVerification(email, displayName, {
+      isRegistration,
+      isSignIn,
+      fullName,
+      studentId,
+      department,
+      semester,
+      password,
+    });
     res.json(result);
   } catch (err) {
     const status = err.status || 400;
@@ -236,6 +245,8 @@ router.post('/auth/send-verification-link', async (req, res) => {
       success: false,
       error: err.message,
       code: err.code || 'AUTH_ERROR',
+      alreadyRegistered: !!err.alreadyRegistered,
+      notRegistered: !!err.notRegistered,
     });
   }
 });
