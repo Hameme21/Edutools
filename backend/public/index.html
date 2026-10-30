@@ -3063,7 +3063,7 @@ body {
               <span class="sync-live-pulse"></span>
               <div class="sync-banner-text">
                 <strong>Google Drive Cloud Synced</strong>
-                <span>Syncs edutools_sync_data.json across App & Web via user Google Drive.</span>
+                <span>Syncs educal_sync_data.json across App & Web via user Google Drive.</span>
               </div>
               <button class="btn btn-sm btn-outline" id="btnForceCloudSync" title="Force Sync"><i class="fa-solid fa-arrows-rotate"></i></button>
             </div>
@@ -5233,7 +5233,7 @@ async function syncWithGoogleDriveWeb(push = true) {
 
   if (state.googleAccessToken) {
     try {
-      const q = encodeURIComponent("name='edutools_sync_data.json' and trashed=false");
+      const q = encodeURIComponent("name='educal_sync_data.json' and trashed=false");
       const listRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime)`, {
         headers: { Authorization: `Bearer ${state.googleAccessToken}` }
       });
@@ -5252,7 +5252,7 @@ async function syncWithGoogleDriveWeb(push = true) {
         } else {
           const boundary = '-------EdutoolsSyncBoundary';
           const metadata = JSON.stringify({
-            name: 'edutools_sync_data.json',
+            name: 'educal_sync_data.json',
             mimeType: 'application/json',
             description: 'Edutools Academic Schedule Cloud Sync snapshot',
           });
@@ -7582,6 +7582,7 @@ function initAuthGate() {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.addScope('email');
+      provider.addScope('https://www.googleapis.com/auth/drive.file');
       const result = await firebase.auth().signInWithPopup(provider);
       const user = result.user;
 
@@ -7589,6 +7590,11 @@ function initAuthGate() {
 
       const email = user.email.toLowerCase();
       const displayName = user.displayName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+      // Capture Google OAuth access token for Drive API
+      if (result.credential && result.credential.accessToken) {
+        state.googleAccessToken = result.credential.accessToken;
+      }
 
       state.student = {
         email: email,

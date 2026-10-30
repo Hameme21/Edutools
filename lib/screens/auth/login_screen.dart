@@ -53,20 +53,34 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     try {
       UserCredential userCredential;
 
+      const driveScope = 'https://www.googleapis.com/auth/drive.file';
+
       if (kIsWeb) {
         final provider = GoogleAuthProvider();
         provider.addScope('email');
+        provider.addScope(driveScope);
         userCredential = await FirebaseAuth.instance.signInWithPopup(provider);
+        final oauthCred = userCredential.credential;
+        if (oauthCred is OAuthCredential && oauthCred.accessToken != null) {
+          widget.state.driveSyncService.setAccessToken(oauthCred.accessToken);
+        }
       } else {
         final gsi = GoogleSignIn.instance;
         await gsi.initialize(
           serverClientId: '1097225985625-1tgbd5ie7vl09cda6tj2iulnoqsu9fhq.apps.googleusercontent.com',
         );
-        final account = await gsi.authenticate(scopeHint: ['email']);
+        final account = await gsi.authenticate(scopeHint: [
+          'email',
+          driveScope,
+        ]);
         final idToken = account.authentication.idToken;
         if (idToken == null) {
           throw Exception('Failed to obtain authentication token from Google.');
         }
+        try {
+          final clientAuth = await account.authorizationClient.authorizeScopes([driveScope]);
+          widget.state.driveSyncService.setAccessToken(clientAuth.accessToken);
+        } catch (_) {}
         final credential = GoogleAuthProvider.credential(idToken: idToken);
         userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
       }
