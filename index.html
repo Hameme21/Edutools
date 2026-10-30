@@ -3762,37 +3762,70 @@ body {
               <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-calculator" style="color: var(--purple);"></i> CGPA Calculator
               </h3>
-              <p style="font-size: 12px; color: var(--text-muted);">UIU 4.00 GPA Scale — add semesters below</p>
+              <p style="font-size: 12px; color: var(--text-muted);">UIU 4.00 GPA Scale — semester-based with retake</p>
             </div>
             <button class="btn btn-sm btn-outline" id="btnCloseCgpa" type="button"><i class="fa-solid fa-xmark"></i> Close</button>
           </div>
 
-          <div id="cgpaSemestersList">
-            <div class="cgpa-semester-row">
-              <label>Semester 1</label>
-              <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
-              <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
+          <!-- Previous Results -->
+          <details style="margin-bottom:14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:10px 14px;background:var(--bg-card-subtle);">
+            <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--text-main);">Previous Results (optional)</summary>
+            <div style="display:flex;gap:12px;margin-top:10px;">
+              <div style="flex:1;">
+                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Previous CGPA</label>
+                <input type="number" id="cgpaPrevGpa" placeholder="0.00" min="0" max="4" step="0.01" style="width:100%;padding:8px 10px;font-size:13px;background:var(--bg-main);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-main);font-family:var(--font);">
+              </div>
+              <div style="flex:1;">
+                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Credits Completed</label>
+                <input type="number" id="cgpaPrevCredits" placeholder="0" min="0" max="200" step="1" style="width:100%;padding:8px 10px;font-size:13px;background:var(--bg-main);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-main);font-family:var(--font);">
+              </div>
             </div>
-            <div class="cgpa-semester-row">
-              <label>Semester 2</label>
-              <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
-              <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
-            </div>
-            <div class="cgpa-semester-row">
-              <label>Semester 3</label>
-              <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
-              <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
-            </div>
+          </details>
+
+          <!-- Trimester Selector -->
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px;font-weight:700;color:var(--text-main);display:block;margin-bottom:6px;">Select Trimester</label>
+            <div id="cgpaTrimesterChips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
           </div>
+
+          <!-- Course List -->
+          <div id="cgpaCourseList" style="margin-bottom:12px;"></div>
+
           <div style="display: flex; gap: 8px; margin-top: 12px;">
-            <button class="btn btn-sm btn-outline" id="btnAddCgpaSemester" type="button"><i class="fa-solid fa-plus"></i> Add Semester</button>
-            <button class="btn btn-sm btn-primary" id="btnCalcCgpa" type="button"><i class="fa-solid fa-equals"></i> Calculate CGPA</button>
+            <button class="btn btn-sm btn-outline" id="btnAddCgpaCourse" type="button"><i class="fa-solid fa-plus"></i> Add Course</button>
+            <button class="btn btn-sm btn-primary" id="btnCalcCgpa" type="button"><i class="fa-solid fa-equals"></i> Calculate</button>
           </div>
+
           <div class="cgpa-result-box" id="cgpaResultBox" style="display: none;">
-            <div class="cgpa-label">Cumulative GPA</div>
-            <div class="cgpa-value" id="cgpaResultValue">0.00</div>
-            <div class="cgpa-label" id="cgpaResultCredits">Total Credits: 0</div>
+            <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;">
+              <div style="text-align:center;">
+                <div class="cgpa-label">Trimester GPA</div>
+                <div class="cgpa-value" id="cgpaTrimGpaValue">0.00</div>
+              </div>
+              <div style="text-align:center;">
+                <div class="cgpa-label">Cumulative CGPA</div>
+                <div class="cgpa-value" id="cgpaResultValue">0.00</div>
+              </div>
+            </div>
+            <div class="cgpa-label" id="cgpaResultCredits" style="text-align:center;margin-top:6px;">Total Credits: 0</div>
           </div>
+
+          <!-- Target CGPA Planner -->
+          <details style="margin-top:14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:10px 14px;background:var(--bg-card-subtle);">
+            <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--text-main);"><i class="fa-solid fa-bullseye" style="color:var(--danger);margin-right:6px;"></i>Target CGPA Planner</summary>
+            <div style="display:flex;gap:12px;margin-top:10px;align-items:end;">
+              <div style="flex:1;">
+                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Target CGPA</label>
+                <input type="number" id="cgpaTargetGpa" placeholder="3.50" min="0" max="4" step="0.01" style="width:100%;padding:8px 10px;font-size:13px;background:var(--bg-main);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-main);font-family:var(--font);">
+              </div>
+              <div style="flex:1;">
+                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Remaining Credits</label>
+                <input type="number" id="cgpaTargetRemaining" placeholder="30" min="1" max="200" step="1" style="width:100%;padding:8px 10px;font-size:13px;background:var(--bg-main);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-main);font-family:var(--font);">
+              </div>
+              <button class="btn btn-sm btn-primary" id="btnCalcTarget" type="button" style="white-space:nowrap;">Calculate</button>
+            </div>
+            <div id="cgpaTargetResult" style="display:none;margin-top:10px;padding:10px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;"></div>
+          </details>
         </div>
 
         <!-- Exam Routine Panel (initially hidden) -->
@@ -3847,19 +3880,28 @@ body {
             </div>
             <div class="tuition-form-group">
               <label>Credit Fee (৳)</label>
-              <input type="number" id="divCreditFee" placeholder="7750" min="0" value="7750">
+              <input type="number" id="divCreditFee" placeholder="6500" min="0" value="6500">
             </div>
             <div class="tuition-form-group">
               <label>Semester Fee (৳)</label>
               <input type="number" id="divSemesterFee" placeholder="6500" min="0" value="6500">
             </div>
             <div class="tuition-form-group">
-              <label>Waiver (%)</label>
-              <input type="number" id="divWaiver" placeholder="0" min="0" max="100" value="0">
+              <label>Waiver</label>
+              <select id="divWaiver" style="padding:9px 14px;font-size:13px;background:var(--bg-card-subtle);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-main);font-family:var(--font);">
+                <option value="0">None</option>
+                <option value="25">25%</option>
+                <option value="50">50%</option>
+              </select>
             </div>
             <div class="tuition-form-group">
-              <label>Scholarship (%)</label>
-              <input type="number" id="divScholarship" placeholder="0" min="0" max="100" value="0">
+              <label>Scholarship</label>
+              <select id="divScholarship" style="padding:9px 14px;font-size:13px;background:var(--bg-card-subtle);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-main);font-family:var(--font);">
+                <option value="0">None</option>
+                <option value="25">25%</option>
+                <option value="50">50%</option>
+                <option value="100">100%</option>
+              </select>
             </div>
           </div>
           <div style="margin-top: 12px;">
@@ -8454,60 +8496,316 @@ function initToolsSection() {
     });
   });
 
-  // ---- CGPA Calculator ----
-  document.getElementById('btnAddCgpaSemester')?.addEventListener('click', () => {
-    const list = document.getElementById('cgpaSemestersList');
-    const count = list.querySelectorAll('.cgpa-semester-row').length + 1;
-    const row = document.createElement('div');
-    row.className = 'cgpa-semester-row';
-    row.innerHTML = `
-      <label>Semester ${count}</label>
-      <input type="number" class="cgpa-gpa-input" placeholder="GPA" min="0" max="4" step="0.01">
-      <input type="number" class="cgpa-credits-input" placeholder="Credits" min="0" max="30" step="0.5">
-    `;
-    list.appendChild(row);
+  // ---- CGPA Calculator (Semester-Based) ----
+  const gradeScale = {A:4.00,'A-':3.67,'B+':3.33,B:3.00,'B-':2.67,'C+':2.33,C:2.00,'C-':1.67,'D+':1.33,D:1.00,F:0.00};
+  const gradeOptions = Object.keys(gradeScale);
+
+  const semCourses = {
+    1:[{code:'ENG 1011',name:'English I',cr:3},{code:'BDS 1201',name:'History of Bangladesh',cr:2},{code:'CSE 1110',name:'Intro to Computer Systems',cr:1},{code:'MATH 1151',name:'Fundamental Calculus',cr:3}],
+    2:[{code:'ENG 1013',name:'English II',cr:3},{code:'CSE 1111',name:'Structured Programming',cr:3},{code:'CSE 1112',name:'SPL Lab',cr:1},{code:'CSE 2213',name:'Discrete Mathematics',cr:3}],
+    3:[{code:'MATH 2183',name:'Calculus & Linear Algebra',cr:3},{code:'PHY 2105',name:'Physics',cr:3},{code:'PHY 2106',name:'Physics Lab',cr:1},{code:'CSE 2215',name:'DSA I',cr:3},{code:'CSE 2216',name:'DSA I Lab',cr:1}],
+    4:[{code:'MATH 2201',name:'Geometry & Vector Analysis',cr:3},{code:'CSE 1325',name:'Digital Logic Design',cr:3},{code:'CSE 1326',name:'DLD Lab',cr:1},{code:'CSE 1115',name:'OOP',cr:3},{code:'CSE 1116',name:'OOP Lab',cr:1}],
+    5:[{code:'MATH 2205',name:'Probability & Statistics',cr:3},{code:'SOC 2101',name:'Ethics',cr:3},{code:'CSE 2217',name:'DSA II',cr:3},{code:'CSE 2218',name:'DSA II Lab',cr:1},{code:'EEE 2113',name:'Electrical Circuits',cr:3}],
+    6:[{code:'CSE 3521',name:'DBMS',cr:3},{code:'CSE 3522',name:'DBMS Lab',cr:1},{code:'EEE 2123',name:'Electronics',cr:3},{code:'EEE 2124',name:'Electronics Lab',cr:1},{code:'CSE 4165',name:'Web Programming',cr:3}],
+    7:[{code:'CSE 3313',name:'Computer Architecture',cr:3},{code:'CSE 2118',name:'Advanced OOP Lab',cr:1},{code:'BIO 3105',name:'Biology',cr:3},{code:'CSE 3411',name:'SAD',cr:3},{code:'CSE 3412',name:'SAD Lab',cr:1}],
+    8:[{code:'CSE 4325',name:'Microprocessors',cr:3},{code:'CSE 4326',name:'Micro Lab',cr:1},{code:'CSE 3421',name:'Software Engineering',cr:3},{code:'CSE 3422',name:'SE Lab',cr:1},{code:'CSE 3811',name:'AI',cr:3},{code:'CSE 3812',name:'AI Lab',cr:1}],
+    9:[{code:'CSE 2233',name:'Theory of Computation',cr:3},{code:'GED Optional I',name:'GED Optional I',cr:3},{code:'PMG 4101',name:'Project Management',cr:3},{code:'CSE 3711',name:'Networks',cr:3},{code:'CSE 3712',name:'Networks Lab',cr:1}],
+    10:[{code:'GED Optional II',name:'GED Optional II',cr:3},{code:'CSE 4000A',name:'FYP I',cr:2},{code:'Elective I',name:'Elective I',cr:3},{code:'CSE 4509',name:'Operating Systems',cr:3},{code:'CSE 4510',name:'OS Lab',cr:1}],
+    11:[{code:'GED Optional III',name:'GED Optional III',cr:3},{code:'Elective II',name:'Elective II',cr:3},{code:'Elective III',name:'Elective III',cr:3},{code:'CSE 4000B',name:'FYP II',cr:2},{code:'CSE 4531',name:'Computer Security',cr:3}],
+    12:[{code:'CSE 4000C',name:'FYP III',cr:2},{code:'EEE 4261',name:'Green Computing',cr:3},{code:'Elective IV',name:'Elective IV',cr:3},{code:'Elective V',name:'Elective V',cr:3}],
+  };
+
+  const allCatalog = [
+    ...Object.values(semCourses).flat(),
+    {code:'GED 1005',name:'AI Literacy & Prompt Engineering',cr:3},{code:'ECO 4101',name:'Economics',cr:3},{code:'ACT 2111',name:'Accounting',cr:3},{code:'TEC 2499',name:'Tech Entrepreneurship',cr:3},
+    {code:'CSE 4125',name:'Ethical Hacking',cr:3},{code:'CSE 4777',name:'Network Security',cr:3},{code:'CSE 4587',name:'Cloud Computing',cr:3},{code:'CSE 4611',name:'Compiler Design',cr:3},
+    {code:'CSE 4621',name:'Computer Graphics',cr:3},{code:'CSE 4451',name:'HCI',cr:3},{code:'CSE 4435',name:'Software Architecture',cr:3},{code:'CSE 4181',name:'Mobile App Dev',cr:3},
+    {code:'CSE 4945',name:'UI Design',cr:3},{code:'CSE 4495',name:'Software Testing & QA',cr:3},{code:'CSE 4327',name:'VLSI Design',cr:3},{code:'CSE 4399',name:'Embedded ML',cr:3},
+    {code:'CSE 4889',name:'Machine Learning',cr:3},{code:'CSE 4891',name:'Data Mining',cr:3},{code:'CSE 4817',name:'Big Data Analytics',cr:3},{code:'CSE 4883',name:'Image Processing',cr:3},
+    {code:'CSE 4811',name:'NLP',cr:3},{code:'CSE 4813',name:'Deep Learning',cr:3},{code:'CSE 4893',name:'Bioinformatics',cr:3},{code:'CSE 4133',name:'Business Intelligence',cr:3},
+  ];
+  const uniqueCatalog = [];
+  const seenCodes = new Set();
+  allCatalog.forEach(c => { if (!seenCodes.has(c.code)) { seenCodes.add(c.code); uniqueCatalog.push(c); }});
+
+  let cgpaSelectedTrim = null;
+  let cgpaCourseRows = [];
+
+  function cgpaRenderChips() {
+    const container = document.getElementById('cgpaTrimesterChips');
+    container.innerHTML = '';
+    for (let t = 1; t <= 12; t++) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.textContent = 'T' + t;
+      chip.style.cssText = 'padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border-color);font-family:var(--font);transition:all 0.15s;';
+      if (cgpaSelectedTrim === t) {
+        chip.style.background = 'var(--primary)';
+        chip.style.color = '#fff';
+        chip.style.borderColor = 'var(--primary)';
+      } else {
+        chip.style.background = 'var(--bg-card-subtle)';
+        chip.style.color = 'var(--text-main)';
+      }
+      chip.addEventListener('click', () => { cgpaSelectedTrim = t; cgpaRenderChips(); cgpaLoadSemester(t); });
+      container.appendChild(chip);
+    }
+  }
+
+  function cgpaLoadSemester(tri) {
+    cgpaCourseRows = [];
+    const courses = semCourses[tri] || [];
+    courses.forEach(c => {
+      cgpaCourseRows.push({catalog: c, code: c.code, name: c.name, credits: c.cr, grade: '', retake: false, oldGrade: ''});
+    });
+    cgpaRenderCourses();
+  }
+
+  function cgpaSearchCourses(query) {
+    const q = query.toLowerCase().trim();
+    if (!q) return [];
+    return uniqueCatalog.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)).slice(0, 8);
+  }
+
+  function cgpaRenderCourses() {
+    const list = document.getElementById('cgpaCourseList');
+    list.innerHTML = '';
+    cgpaCourseRows.forEach((row, idx) => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;margin-bottom:6px;background:var(--bg-card-subtle);border:1px solid var(--border-color);border-radius:var(--radius-sm);position:relative;';
+
+      // Course search input
+      const searchWrap = document.createElement('div');
+      searchWrap.style.cssText = 'position:relative;flex:1;min-width:160px;';
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.value = row.code ? `${row.code} — ${row.name}` : '';
+      inp.placeholder = 'Search course...';
+      inp.style.cssText = 'width:100%;padding:6px 10px;font-size:12px;background:var(--bg-main);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-main);font-family:var(--font);';
+      inp.addEventListener('focus', () => { inp.select(); });
+      const dropdown = document.createElement('div');
+      dropdown.style.cssText = 'display:none;position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;background:var(--bg-main);border:1px solid var(--border-color);border-radius:var(--radius-sm);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
+      inp.addEventListener('input', () => {
+        const results = cgpaSearchCourses(inp.value);
+        dropdown.innerHTML = '';
+        if (results.length > 0) {
+          dropdown.style.display = 'block';
+          results.forEach(c => {
+            const opt = document.createElement('div');
+            opt.style.cssText = 'padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border-color);color:var(--text-main);';
+            opt.textContent = `${c.code} — ${c.name} (${c.cr} cr)`;
+            opt.addEventListener('mousedown', (e) => {
+              e.preventDefault();
+              row.catalog = c; row.code = c.code; row.name = c.name; row.credits = c.cr;
+              inp.value = `${c.code} — ${c.name}`;
+              dropdown.style.display = 'none';
+              cgpaRenderCourses();
+            });
+            opt.addEventListener('mouseenter', () => { opt.style.background = 'var(--primary-light)'; });
+            opt.addEventListener('mouseleave', () => { opt.style.background = 'transparent'; });
+            dropdown.appendChild(opt);
+          });
+        } else {
+          dropdown.style.display = 'none';
+        }
+      });
+      inp.addEventListener('blur', () => { setTimeout(() => dropdown.style.display = 'none', 150); });
+      searchWrap.appendChild(inp);
+      searchWrap.appendChild(dropdown);
+      div.appendChild(searchWrap);
+
+      // Credits
+      const crSel = document.createElement('select');
+      crSel.style.cssText = 'padding:6px 8px;font-size:12px;background:var(--bg-main);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-main);font-family:var(--font);width:54px;';
+      [1,2,3,4].forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v + ' cr'; if (v === row.credits) o.selected = true; crSel.appendChild(o); });
+      crSel.addEventListener('change', () => { row.credits = parseInt(crSel.value); });
+      div.appendChild(crSel);
+
+      // Grade
+      const grSel = document.createElement('select');
+      grSel.style.cssText = 'padding:6px 8px;font-size:12px;background:var(--bg-main);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-main);font-family:var(--font);width:58px;';
+      const defOpt = document.createElement('option'); defOpt.value = ''; defOpt.textContent = 'Grade'; grSel.appendChild(defOpt);
+      gradeOptions.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; if (g === row.grade) o.selected = true; grSel.appendChild(o); });
+      grSel.addEventListener('change', () => { row.grade = grSel.value; });
+      div.appendChild(grSel);
+
+      // Retake checkbox
+      const retLbl = document.createElement('label');
+      retLbl.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted);cursor:pointer;white-space:nowrap;';
+      const retChk = document.createElement('input');
+      retChk.type = 'checkbox';
+      retChk.checked = row.retake;
+      retChk.addEventListener('change', () => { row.retake = retChk.checked; cgpaRenderCourses(); });
+      retLbl.appendChild(retChk);
+      retLbl.appendChild(document.createTextNode('Retake'));
+      div.appendChild(retLbl);
+
+      // Old grade (if retake)
+      if (row.retake) {
+        const ogSel = document.createElement('select');
+        ogSel.style.cssText = 'padding:6px 8px;font-size:12px;background:var(--bg-main);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-main);font-family:var(--font);width:72px;';
+        const ogDef = document.createElement('option'); ogDef.value = ''; ogDef.textContent = 'Old Gr'; ogSel.appendChild(ogDef);
+        gradeOptions.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; if (g === row.oldGrade) o.selected = true; ogSel.appendChild(o); });
+        ogSel.addEventListener('change', () => { row.oldGrade = ogSel.value; });
+        div.appendChild(ogSel);
+      }
+
+      // Remove
+      const rmBtn = document.createElement('button');
+      rmBtn.type = 'button';
+      rmBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+      rmBtn.style.cssText = 'padding:4px 8px;font-size:12px;background:transparent;border:none;color:var(--danger);cursor:pointer;';
+      rmBtn.addEventListener('click', () => { cgpaCourseRows.splice(idx, 1); cgpaRenderCourses(); });
+      div.appendChild(rmBtn);
+
+      list.appendChild(div);
+    });
+  }
+
+  // Add course button
+  document.getElementById('btnAddCgpaCourse')?.addEventListener('click', () => {
+    cgpaCourseRows.push({catalog: null, code: '', name: '', credits: 3, grade: '', retake: false, oldGrade: ''});
+    cgpaRenderCourses();
   });
 
+  // Calculate
   document.getElementById('btnCalcCgpa')?.addEventListener('click', () => {
-    const gpas = document.querySelectorAll('.cgpa-gpa-input');
-    const credits = document.querySelectorAll('.cgpa-credits-input');
-    let totalPoints = 0, totalCredits = 0;
-    gpas.forEach((gpaInput, i) => {
-      const gpa = parseFloat(gpaInput.value);
-      const cr = parseFloat(credits[i]?.value);
-      if (!isNaN(gpa) && !isNaN(cr) && cr > 0) { totalPoints += gpa * cr; totalCredits += cr; }
+    const prevCgpa = parseFloat(document.getElementById('cgpaPrevGpa')?.value) || 0;
+    const prevCr = parseInt(document.getElementById('cgpaPrevCredits')?.value) || 0;
+    let trimPoints = 0, trimCredits = 0;
+    let cumPoints = prevCgpa * prevCr, cumCredits = prevCr;
+
+    cgpaCourseRows.forEach(r => {
+      if (!r.grade || r.credits <= 0) return;
+      const pts = gradeScale[r.grade] ?? 0;
+      const cr = r.credits;
+
+      if (r.retake && r.oldGrade) {
+        const oldPts = gradeScale[r.oldGrade] ?? 0;
+        trimPoints += pts * cr;
+        trimCredits += cr;
+        if (r.oldGrade === 'F') {
+          cumPoints += pts * cr;
+          cumCredits += cr;
+        } else {
+          cumPoints += (pts - oldPts) * cr;
+        }
+      } else {
+        trimPoints += pts * cr;
+        trimCredits += cr;
+        cumPoints += pts * cr;
+        cumCredits += cr;
+      }
     });
-    const cgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
-    document.getElementById('cgpaResultValue').textContent = cgpa.toFixed(2);
-    document.getElementById('cgpaResultCredits').textContent = `Total Credits: ${totalCredits}`;
+
+    const trimGpa = trimCredits > 0 ? (trimPoints / trimCredits) : 0;
+    const cumGpa = cumCredits > 0 ? (cumPoints / cumCredits) : 0;
+    document.getElementById('cgpaTrimGpaValue').textContent = trimGpa.toFixed(2);
+    document.getElementById('cgpaResultValue').textContent = cumGpa.toFixed(2);
+    document.getElementById('cgpaResultCredits').textContent = `Total Credits: ${cumCredits}`;
     document.getElementById('cgpaResultBox').style.display = 'block';
   });
+
+  // Target CGPA planner
+  document.getElementById('btnCalcTarget')?.addEventListener('click', () => {
+    const currentCgpa = parseFloat(document.getElementById('cgpaResultValue')?.textContent) || parseFloat(document.getElementById('cgpaPrevGpa')?.value) || 0;
+    const currentCr = parseInt(document.getElementById('cgpaResultCredits')?.textContent?.match(/\d+/)?.[0]) || parseInt(document.getElementById('cgpaPrevCredits')?.value) || 0;
+    const targetGpa = parseFloat(document.getElementById('cgpaTargetGpa')?.value) || 0;
+    const remCr = parseInt(document.getElementById('cgpaTargetRemaining')?.value) || 0;
+    const el = document.getElementById('cgpaTargetResult');
+    if (remCr <= 0) { el.textContent = 'Enter remaining credits'; el.style.display = 'block'; el.style.background = 'rgba(239,68,68,0.1)'; el.style.color = 'var(--danger)'; return; }
+    const needed = ((targetGpa * (currentCr + remCr)) - (currentCgpa * currentCr)) / remCr;
+    if (needed > 4.0) {
+      el.textContent = `Required GPA: ${needed.toFixed(2)} — Not achievable (max 4.00)`;
+      el.style.background = 'rgba(239,68,68,0.1)'; el.style.color = 'var(--danger)';
+    } else if (needed < 0) {
+      el.textContent = `Already above target! Any GPA will work.`;
+      el.style.background = 'rgba(16,185,129,0.1)'; el.style.color = 'var(--emerald)';
+    } else {
+      el.textContent = `Required GPA per remaining semester: ${needed.toFixed(2)}`;
+      el.style.background = 'rgba(99,102,241,0.1)'; el.style.color = 'var(--purple)';
+    }
+    el.style.display = 'block';
+  });
+
+  cgpaRenderChips();
 
   document.getElementById('btnCloseCgpa')?.addEventListener('click', () => { document.getElementById('cgpaCalcPanel').style.display = 'none'; });
 
   // ---- Exam Routine ----
   const examData = [
-    {day:1,time:1,code:'ENG 1011',name:'English I'},{day:1,time:1,code:'CSE 4509',name:'Operating Systems'},{day:1,time:1,code:'GED 1005',name:'AI Literacy & Prompt Engineering'},{day:1,time:1,code:'DS 4491',name:'DS Elective'},
-    {day:1,time:2,code:'ENG 1013',name:'English II'},{day:1,time:2,code:'CSE 4945',name:'UI: Concepts and Design'},{day:1,time:2,code:'DS 4217',name:'DS 4217'},{day:1,time:2,code:'DS 3885',name:'DS Elective'},
-    {day:1,time:3,code:'MATH 2183',name:'Calculus & Linear Algebra'},{day:1,time:3,code:'CSE 3313',name:'Computer Architecture'},{day:1,time:3,code:'SOC 2101',name:'Society, Technology & Ethics'},{day:1,time:3,code:'CSE 4889',name:'Machine Learning'},{day:1,time:3,code:'CSE 4813',name:'Deep Learning'},{day:1,time:3,code:'CSE 4125',name:'Ethical Hacking & Network Defense'},{day:1,time:3,code:'DS 4211',name:'DS 4211'},
-    {day:2,time:1,code:'CSE 4621',name:'Computer Graphics'},{day:2,time:1,code:'CSE 3521',name:'Database Management Systems'},
-    {day:2,time:2,code:'CSE 4325',name:'Microprocessors & Microcontrollers'},{day:2,time:2,code:'MATH 1151',name:'Fundamental Calculus'},
-    {day:2,time:3,code:'ACT 2111',name:'Financial & Managerial Accounting'},{day:2,time:3,code:'MATH 2205',name:'Probability & Statistics'},
-    {day:3,time:1,code:'CSE 3811',name:'Artificial Intelligence'},{day:3,time:1,code:'CSE 4451',name:'Human Computer Interaction'},{day:3,time:1,code:'DS 4123',name:'DS 4123'},
-    {day:3,time:2,code:'CSE 2213',name:'Discrete Mathematics'},{day:3,time:2,code:'PMG 4101',name:'Project Management'},{day:3,time:2,code:'TEC 2499',name:'Technology Entrepreneurship'},
-    {day:3,time:3,code:'CSE 1325',name:'Digital Logic Design'},{day:3,time:3,code:'BIO 3105',name:'Biology for Engineers'},{day:3,time:3,code:'CSE 4777',name:'Network Security'},
-    {day:4,time:1,code:'CSE 4611',name:'Compiler Design'},{day:4,time:1,code:'CSE 4883',name:'Digital Image Processing'},{day:4,time:1,code:'CSE 4327',name:'VLSI Design'},{day:4,time:1,code:'CSE 4811',name:'Natural Language Processing'},
-    {day:4,time:2,code:'CSE 1111',name:'Structured Programming Language'},{day:4,time:2,code:'CSE 2215',name:'Data Structure & Algorithms I'},{day:4,time:2,code:'CSE 4435',name:'Software Architecture'},{day:4,time:2,code:'DS 1501',name:'Programming for Data Science'},{day:4,time:2,code:'DS 2251',name:'DSA II (DS)'},
-    {day:4,time:3,code:'CSE 3711',name:'Computer Networks'},{day:4,time:3,code:'CSE 4893',name:'Intro to Bioinformatics'},{day:4,time:3,code:'DS 4523',name:'DS Elective'},{day:4,time:3,code:'DS 3101',name:'DS Core'},
-    {day:5,time:1,code:'MATH 2201',name:'Coordinate Geometry & Vector Analysis'},{day:5,time:1,code:'CSE 3411',name:'System Analysis & Design'},{day:5,time:1,code:'EEE 4261',name:'Green Computing'},{day:5,time:1,code:'CSE 4511',name:'CSE 4511 (DS)'},
-    {day:5,time:2,code:'CSE 2217',name:'Data Structure & Algorithms II'},{day:5,time:2,code:'DS 1101',name:'Fundamentals of Data Science'},
-    {day:5,time:3,code:'CSE 3421',name:'Software Engineering'},{day:5,time:3,code:'CSE 4587',name:'Cloud Computing'},{day:5,time:3,code:'CSE 4817',name:'Big Data Analytics'},{day:5,time:3,code:'DS 3120',name:'DS 3120'},
-    {day:6,time:1,code:'BDS 1201',name:'History of the Emergence of Bangladesh'},{day:6,time:1,code:'ECO 4101',name:'Economics'},{day:6,time:1,code:'DS 3521',name:'Database Systems (DS)'},
-    {day:6,time:2,code:'CSE 1115',name:'Object Oriented Programming'},{day:6,time:2,code:'DS 1115',name:'DS 1115'},
-    {day:6,time:3,code:'EEE 2113',name:'Electrical Circuits'},{day:6,time:3,code:'EEE 2123',name:'Electronics'},{day:6,time:3,code:'CSE 4531',name:'Computer Security'},{day:6,time:3,code:'CSE 4181',name:'Mobile Application Development'},{day:6,time:3,code:'CSE 4133',name:'Business Intelligence'},
-    {day:7,time:1,code:'CSE 4891',name:'Data Mining'},{day:7,time:1,code:'CSE 4165',name:'Web Programming'},{day:7,time:1,code:'DS 4115',name:'DS 4115'},
-    {day:7,time:2,code:'CSE 2233',name:'Theory of Computation'},{day:7,time:2,code:'CSE 4399',name:'Embedded Machine Learning'},{day:7,time:2,code:'DS 4229',name:'DS 4229'},
-    {day:7,time:3,code:'PHY 2105',name:'Physics'},{day:7,time:3,code:'CSE 4495',name:'Software Testing & QA'},{day:7,time:3,code:'DS 3881',name:'DS Elective'},
+    {day:1,time:1,code:'ENG 1011',name:'English I',kw:['eng 1','english','eng1011','intensive english','ENG 101']},
+    {day:1,time:1,code:'CSE 4509',name:'Operating Systems',kw:['os','operating','systems','csi 309','cse4509','CSI 309']},
+    {day:1,time:1,code:'GED 1005',name:'AI Literacy & Prompt Engineering',kw:['ai literacy','prompt engineering','ged','ged1005','prompt','ai prompt']},
+    {day:1,time:1,code:'DS 4491',name:'DS Elective',kw:['ds','data science']},
+    {day:1,time:2,code:'ENG 1013',name:'English II',kw:['eng 2','english','eng1013','ENG 103']},
+    {day:1,time:2,code:'CSE 4945',name:'UI: Concepts and Design',kw:['ui','ux','design','user interface','cse4945']},
+    {day:1,time:2,code:'DS 4217',name:'DS 4217',kw:['ds','data science']},
+    {day:1,time:2,code:'DS 3885',name:'DS Elective',kw:['ds','data science']},
+    {day:1,time:3,code:'MATH 2183',name:'Calculus & Linear Algebra',kw:['linear','algebra','calculus','math','math2183','MATH 183','MATH 2107']},
+    {day:1,time:3,code:'CSE 3313',name:'Computer Architecture',kw:['ca','archi','architecture','cse3313','CSE 313']},
+    {day:1,time:3,code:'SOC 2101',name:'Society, Technology & Ethics',kw:['soc','ethics','society','soc2101','SOC 101','SOC 2102']},
+    {day:1,time:3,code:'CSE 4889',name:'Machine Learning',kw:['ml','machine learning','cse4889','CSE 489','DS 4889']},
+    {day:1,time:3,code:'CSE 4813',name:'Deep Learning',kw:['dl','deep learning','neural networks','cse4813']},
+    {day:1,time:3,code:'CSE 4125',name:'Ethical Hacking & Network Defense',kw:['hacking','ethical hacking','network defense','security','defense','cse4125']},
+    {day:1,time:3,code:'DS 4211',name:'DS 4211',kw:['ds','data science']},
+    {day:2,time:1,code:'CSE 4621',name:'Computer Graphics',kw:['cg','graphics','computer graphics','cse4621','CSI 421']},
+    {day:2,time:1,code:'CSE 3521',name:'Database Management Systems',kw:['dbms','database','sql','cse3521','CSI 221']},
+    {day:2,time:2,code:'CSE 4325',name:'Microprocessors & Microcontrollers',kw:['micro','mpi','microprocessors','microcontrollers','cse4325','CSE 425']},
+    {day:2,time:2,code:'MATH 1151',name:'Fundamental Calculus',kw:['calc 1','calculus','math','math1151','MATH 151']},
+    {day:2,time:3,code:'ACT 2111',name:'Financial & Managerial Accounting',kw:['act','accounting','financial','act2111','ACT 111']},
+    {day:2,time:3,code:'MATH 2205',name:'Probability & Statistics',kw:['stat','prob','statistics','probability','math2205','STAT 205']},
+    {day:3,time:1,code:'CSE 3811',name:'Artificial Intelligence',kw:['ai','artificial intelligence','cse3811','CSI 341']},
+    {day:3,time:1,code:'CSE 4451',name:'Human Computer Interaction',kw:['hci','interaction','human computer','cse4451','CSE 451']},
+    {day:3,time:1,code:'DS 4123',name:'DS 4123',kw:['ds','data science']},
+    {day:3,time:2,code:'CSE 2213',name:'Discrete Mathematics',kw:['dm','discrete','discrete math','cse2213','CSI 219']},
+    {day:3,time:2,code:'PMG 4101',name:'Project Management',kw:['pmg','project','project management','pmg4101','CSE 469']},
+    {day:3,time:2,code:'TEC 2499',name:'Technology Entrepreneurship',kw:['tec','entrepreneurship','startup','tec2499']},
+    {day:3,time:3,code:'CSE 1325',name:'Digital Logic Design',kw:['dld','logic','digital logic','cse1325','CSE 225']},
+    {day:3,time:3,code:'BIO 3105',name:'Biology for Engineers',kw:['bio','biology','bio3105','BIO 3107']},
+    {day:3,time:3,code:'CSE 4777',name:'Network Security',kw:['netsec','network security','security','cse4777']},
+    {day:4,time:1,code:'CSE 4611',name:'Compiler Design',kw:['compiler','cd','compiler design','cse4611','CSI 411']},
+    {day:4,time:1,code:'CSE 4883',name:'Digital Image Processing',kw:['dip','image','image processing','cse4883','CSI 483']},
+    {day:4,time:1,code:'CSE 4327',name:'VLSI Design',kw:['vlsi','chip','hardware','cse4327']},
+    {day:4,time:1,code:'CSE 4811',name:'Natural Language Processing',kw:['nlp','natural language','cse4811','DS 4213']},
+    {day:4,time:2,code:'CSE 1111',name:'Structured Programming Language',kw:['spl','c programming','structured programming','cse1111','CSI 121']},
+    {day:4,time:2,code:'CSE 2215',name:'Data Structure & Algorithms I',kw:['dsa 1','dsa','data structures','cse2215','CSI 217']},
+    {day:4,time:2,code:'CSE 4435',name:'Software Architecture',kw:['sa','architecture','software architecture','cse4435']},
+    {day:4,time:2,code:'DS 1501',name:'Programming for Data Science',kw:['pds','programming','ds1501']},
+    {day:4,time:2,code:'DS 2251',name:'DSA II (DS)',kw:['dsa ds','ds2251']},
+    {day:4,time:3,code:'CSE 3711',name:'Computer Networks',kw:['network','net','cn','computer networks','cse3711','CSE 323']},
+    {day:4,time:3,code:'CSE 4893',name:'Intro to Bioinformatics',kw:['bioinformatics','bio','cse4893','CSE 493']},
+    {day:4,time:3,code:'DS 4523',name:'DS Elective',kw:['ds','data science']},
+    {day:4,time:3,code:'DS 3101',name:'DS Core',kw:['ds','data science']},
+    {day:5,time:1,code:'MATH 2201',name:'Coordinate Geometry & Vector Analysis',kw:['math 2','vector','geometry','coordinate','math2201','MATH 201','MATH 1153']},
+    {day:5,time:1,code:'CSE 3411',name:'System Analysis & Design',kw:['sad','system analysis','design','cse3411','CSI 311']},
+    {day:5,time:1,code:'EEE 4261',name:'Green Computing',kw:['green','green computing','energy','eee4261']},
+    {day:5,time:1,code:'CSE 4511',name:'CSE 4511 (DS)',kw:['ds','data science']},
+    {day:5,time:2,code:'CSE 2217',name:'Data Structure & Algorithms II',kw:['dsa 2','algo','algorithms','cse2217','CSI 227']},
+    {day:5,time:2,code:'DS 1101',name:'Fundamentals of Data Science',kw:['fds','data science','ds1101']},
+    {day:5,time:3,code:'CSE 3421',name:'Software Engineering',kw:['se','software','software engineering','cse3421','CSI 321']},
+    {day:5,time:3,code:'CSE 4587',name:'Cloud Computing',kw:['cloud','cloud computing','aws','cse4587','CSE 487']},
+    {day:5,time:3,code:'CSE 4817',name:'Big Data Analytics',kw:['big data','bda','analytics','hadoop','spark','cse4817','DS 4817']},
+    {day:5,time:3,code:'DS 3120',name:'DS 3120',kw:['ds','data science']},
+    {day:6,time:1,code:'BDS 1201',name:'History of the Emergence of Bangladesh',kw:['bds','history','bangladesh','emergence','bds1201']},
+    {day:6,time:1,code:'ECO 4101',name:'Economics',kw:['eco','economics','economy','eco4101','ECO 213']},
+    {day:6,time:1,code:'DS 3521',name:'Database Systems (DS)',kw:['database','dbms','ds3521']},
+    {day:6,time:2,code:'CSE 1115',name:'Object Oriented Programming',kw:['oop','java','object oriented','cse1115','CSI 211']},
+    {day:6,time:2,code:'DS 1115',name:'DS 1115',kw:['ds','data science']},
+    {day:6,time:3,code:'EEE 2113',name:'Electrical Circuits',kw:['circuit','electrical','ec','circuits','eee2113','CSE 113']},
+    {day:6,time:3,code:'EEE 2123',name:'Electronics',kw:['electronics','eee2123','CSE 123']},
+    {day:6,time:3,code:'CSE 4531',name:'Computer Security',kw:['security','cyber','cybersecurity','cse4531']},
+    {day:6,time:3,code:'CSE 4181',name:'Mobile Application Development',kw:['mad','android','mobile app','app dev','cse4181','CSE 481']},
+    {day:6,time:3,code:'CSE 4133',name:'Business Intelligence',kw:['bi','business intelligence','analytics','cse4133']},
+    {day:7,time:1,code:'CSE 4891',name:'Data Mining',kw:['mining','dm','data mining','cse4891','CSE 491','DS 4891']},
+    {day:7,time:1,code:'CSE 4165',name:'Web Programming',kw:['web','internet','web programming','cse4165','CSE 465']},
+    {day:7,time:1,code:'DS 4115',name:'DS 4115',kw:['ds','data science']},
+    {day:7,time:2,code:'CSE 2233',name:'Theory of Computation',kw:['toc','theory','automata','computation','cse2233','CSI 233']},
+    {day:7,time:2,code:'CSE 4399',name:'Embedded Machine Learning',kw:['embedded ml','eml','embedded machine learning','special topics','cse4399']},
+    {day:7,time:2,code:'DS 4229',name:'DS 4229',kw:['ds','data science']},
+    {day:7,time:3,code:'PHY 2105',name:'Physics',kw:['phy','physics','phy2105','PHY 105']},
+    {day:7,time:3,code:'CSE 4495',name:'Software Testing & QA',kw:['sqa','testing','qa','software testing','cse4495','CSE 495']},
+    {day:7,time:3,code:'DS 3881',name:'DS Elective',kw:['ds','data science']},
   ];
 
   function buildExamRoutineTable(query) {
@@ -8527,7 +8825,7 @@ function initToolsSection() {
         const td = document.createElement('td');
         const exams = examData.filter(e => e.day === d && e.time === t);
         exams.forEach(ex => {
-          const isMatch = q && (ex.code.toLowerCase().includes(q) || ex.name.toLowerCase().includes(q));
+          const isMatch = q && (ex.code.toLowerCase().includes(q) || ex.name.toLowerCase().includes(q) || (ex.kw && ex.kw.some(k => k.toLowerCase().includes(q))));
           if (isMatch) matchCount++;
           const span = document.createElement('span');
           span.className = 'exam-code' + (isMatch ? ' highlight' : '');
@@ -8558,7 +8856,7 @@ function initToolsSection() {
   document.getElementById('btnCalcDivision')?.addEventListener('click', () => {
     const credits = parseInt(document.getElementById('divCredits').value) || 0;
     const prevCredits = parseInt(document.getElementById('divPrevCredits').value) || 0;
-    const creditFee = parseFloat(document.getElementById('divCreditFee').value) || 7750;
+    const creditFee = parseFloat(document.getElementById('divCreditFee').value) || 6500;
     const semesterFee = parseFloat(document.getElementById('divSemesterFee').value) || 6500;
     const waiverPct = parseFloat(document.getElementById('divWaiver').value) || 0;
     const scholarPct = parseFloat(document.getElementById('divScholarship').value) || 0;
@@ -8608,38 +8906,38 @@ function initToolsSection() {
 
   // ---- Course Planner ----
   const curriculum = {
-    1: [{code:'ENG 1011',name:'Intensive English',cr:3},{code:'MATH 1151',name:'Fundamental Calculus',cr:3},{code:'CSE 1111',name:'Structured Programming Language',cr:3},{code:'CSE 1112',name:'SPL Lab',cr:1,lab:true}],
-    2: [{code:'ENG 1013',name:'English II',cr:3},{code:'MATH 2201',name:'Co-ordinate Geometry & Vector Analysis',cr:3},{code:'CSE 1115',name:'Object Oriented Programming',cr:3},{code:'CSE 1116',name:'OOP Lab',cr:1,lab:true},{code:'CSE 1325',name:'Digital Logic Design',cr:3},{code:'CSE 1326',name:'DLD Lab',cr:1,lab:true}],
-    3: [{code:'MATH 2183',name:'Calculus and Linear Algebra',cr:3},{code:'CSE 2213',name:'Discrete Mathematics',cr:3},{code:'CSE 2215',name:'Data Structure & Algorithms I',cr:3},{code:'CSE 2216',name:'DSA I Lab',cr:1,lab:true},{code:'EEE 2113',name:'Electrical Circuits',cr:3},{code:'EEE 2114',name:'EC Lab',cr:1,lab:true}],
-    4: [{code:'MATH 2205',name:'Probability & Statistics',cr:3},{code:'CSE 2217',name:'Data Structure & Algorithms II',cr:3},{code:'CSE 2218',name:'DSA II Lab',cr:1,lab:true},{code:'EEE 2123',name:'Electronics',cr:3},{code:'EEE 2124',name:'Electronics Lab',cr:1,lab:true},{code:'BDS 1201',name:'History of the Emergence of Bangladesh',cr:3}],
-    5: [{code:'CSE 3313',name:'Computer Architecture',cr:3},{code:'CSE 2233',name:'Theory of Computation',cr:3},{code:'CSE 3521',name:'Database Management Systems',cr:3},{code:'CSE 3522',name:'DBMS Lab',cr:1,lab:true},{code:'SOC 2101',name:'Society, Technology & Engineering Ethics',cr:3}],
-    6: [{code:'CSE 3711',name:'Computer Networks',cr:3},{code:'CSE 3712',name:'CN Lab',cr:1,lab:true},{code:'CSE 3421',name:'Software Engineering',cr:3},{code:'CSE 3422',name:'SE Lab',cr:1,lab:true},{code:'CSE 3411',name:'System Analysis & Design',cr:3},{code:'PHY 2105',name:'Physics',cr:3},{code:'PHY 2106',name:'Physics Lab',cr:1,lab:true}],
-    7: [{code:'CSE 4509',name:'Operating Systems',cr:3},{code:'CSE 4510',name:'OS Lab',cr:1,lab:true},{code:'CSE 3811',name:'Artificial Intelligence',cr:3},{code:'CSE 3812',name:'AI Lab',cr:1,lab:true},{code:'ACT 2111',name:'Financial & Managerial Accounting',cr:3}],
-    8: [{code:'CSE 4889',name:'Machine Learning',cr:3},{code:'CSE 4890',name:'ML Lab',cr:1,lab:true},{code:'CSE 4611',name:'Compiler Design',cr:3},{code:'ECO 4101',name:'Economics',cr:3},{code:'PMG 4101',name:'Project Management',cr:3}],
-    9: [{code:'CSE 4899',name:'Senior Project I',cr:2},{code:'ELECTIVE 1',name:'CSE Elective I',cr:3},{code:'ELECTIVE 2',name:'CSE Elective II',cr:3},{code:'GED 1',name:'General Education I',cr:3}],
-    10: [{code:'CSE 4900',name:'Senior Project II',cr:2},{code:'ELECTIVE 3',name:'CSE Elective III',cr:3},{code:'ELECTIVE 4',name:'CSE Elective IV',cr:3},{code:'GED 2',name:'General Education II',cr:3}],
-    11: [{code:'ELECTIVE 5',name:'CSE Elective V',cr:3},{code:'ELECTIVE 6',name:'CSE Elective VI',cr:3},{code:'GED 3',name:'General Education III',cr:3}],
-    12: [{code:'BIO 3105',name:'Biology for Engineers',cr:3}],
+    1: [{code:'ENG 1011',name:'English I',cr:3},{code:'BDS 1201',name:'History of Bangladesh',cr:2},{code:'CSE 1110',name:'Intro to Computer Systems',cr:1},{code:'MATH 1151',name:'Fundamental Calculus',cr:3}],
+    2: [{code:'ENG 1013',name:'English II',cr:3},{code:'CSE 1111',name:'Structured Programming',cr:3},{code:'CSE 1112',name:'SPL Lab',cr:1,lab:true},{code:'CSE 2213',name:'Discrete Mathematics',cr:3}],
+    3: [{code:'MATH 2183',name:'Calculus & Linear Algebra',cr:3},{code:'PHY 2105',name:'Physics',cr:3},{code:'PHY 2106',name:'Physics Lab',cr:1,lab:true},{code:'CSE 2215',name:'DSA I',cr:3},{code:'CSE 2216',name:'DSA I Lab',cr:1,lab:true}],
+    4: [{code:'MATH 2201',name:'Geometry & Vector Analysis',cr:3},{code:'CSE 1325',name:'Digital Logic Design',cr:3},{code:'CSE 1326',name:'DLD Lab',cr:1,lab:true},{code:'CSE 1115',name:'Object Oriented Programming',cr:3},{code:'CSE 1116',name:'OOP Lab',cr:1,lab:true}],
+    5: [{code:'MATH 2205',name:'Probability & Statistics',cr:3},{code:'SOC 2101',name:'Ethics',cr:3},{code:'CSE 2217',name:'DSA II',cr:3},{code:'CSE 2218',name:'DSA II Lab',cr:1,lab:true},{code:'EEE 2113',name:'Electrical Circuits',cr:3}],
+    6: [{code:'CSE 3521',name:'DBMS',cr:3},{code:'CSE 3522',name:'DBMS Lab',cr:1,lab:true},{code:'EEE 2123',name:'Electronics',cr:3},{code:'EEE 2124',name:'Electronics Lab',cr:1,lab:true},{code:'CSE 4165',name:'Web Programming',cr:3}],
+    7: [{code:'CSE 3313',name:'Computer Architecture',cr:3},{code:'CSE 2118',name:'Advanced OOP Lab',cr:1,lab:true},{code:'BIO 3105',name:'Biology',cr:3},{code:'CSE 3411',name:'System Analysis & Design',cr:3},{code:'CSE 3412',name:'SAD Lab',cr:1,lab:true}],
+    8: [{code:'CSE 4325',name:'Microprocessors',cr:3},{code:'CSE 4326',name:'Micro Lab',cr:1,lab:true},{code:'CSE 3421',name:'Software Engineering',cr:3},{code:'CSE 3422',name:'SE Lab',cr:1,lab:true},{code:'CSE 3811',name:'AI',cr:3},{code:'CSE 3812',name:'AI Lab',cr:1,lab:true}],
+    9: [{code:'CSE 2233',name:'Theory of Computation',cr:3},{code:'GED Optional I',name:'GED Optional I',cr:3},{code:'PMG 4101',name:'Project Management',cr:3},{code:'CSE 3711',name:'Computer Networks',cr:3},{code:'CSE 3712',name:'CN Lab',cr:1,lab:true}],
+    10: [{code:'GED Optional II',name:'GED Optional II',cr:3},{code:'CSE 4000A',name:'FYP I',cr:2},{code:'Elective I',name:'CSE Elective I',cr:3},{code:'CSE 4509',name:'Operating Systems',cr:3},{code:'CSE 4510',name:'OS Lab',cr:1,lab:true}],
+    11: [{code:'GED Optional III',name:'GED Optional III',cr:3},{code:'Elective II',name:'CSE Elective II',cr:3},{code:'Elective III',name:'CSE Elective III',cr:3},{code:'CSE 4000B',name:'FYP II',cr:2},{code:'CSE 4531',name:'Computer Security',cr:3}],
+    12: [{code:'CSE 4000C',name:'FYP III',cr:2},{code:'EEE 4261',name:'Green Computing',cr:3},{code:'Elective IV',name:'CSE Elective IV',cr:3},{code:'Elective V',name:'CSE Elective V',cr:3}],
   };
 
   const gedOptions = [
-    {code:'GED 1001',name:'World Civilization',cr:3},
-    {code:'GED 1003',name:'Bangla Language and Literature',cr:3},
     {code:'GED 1005',name:'AI Literacy and Prompt Engineering',cr:3},
+    {code:'ECO 4101',name:'Economics',cr:3},
+    {code:'ACT 2111',name:'Financial & Managerial Accounting',cr:3},
     {code:'TEC 2499',name:'Technology Entrepreneurship',cr:3},
   ];
 
   const electiveTracks = [
     {name:'Software Engineering',icon:'fa-solid fa-code',color:'#3B82F6',courses:[
-      {code:'CSE 4435',name:'Software Architecture',cr:3},{code:'CSE 4451',name:'Human Computer Interaction',cr:3},{code:'CSE 4165',name:'Web Programming',cr:3},{code:'CSE 4945',name:'UI: Concepts and Design',cr:3},{code:'CSE 4495',name:'Software Testing & QA',cr:3},{code:'CSE 4181',name:'Mobile Application Development',cr:3}]},
+      {code:'CSE 4435',name:'Software Architecture',cr:3},{code:'CSE 4451',name:'Human Computer Interaction',cr:3},{code:'CSE 4945',name:'UI: Concepts and Design',cr:3},{code:'CSE 4495',name:'Software Testing & QA',cr:3},{code:'CSE 4181',name:'Mobile Application Development',cr:3}]},
     {name:'Cyber Security',icon:'fa-solid fa-shield-halved',color:'#EF4444',courses:[
-      {code:'CSE 4531',name:'Computer Security',cr:3},{code:'CSE 4777',name:'Network Security',cr:3},{code:'CSE 4125',name:'Ethical Hacking & Network Defense',cr:3}]},
+      {code:'CSE 4125',name:'Ethical Hacking & Network Defense',cr:3},{code:'CSE 4777',name:'Network Security',cr:3}]},
     {name:'AI & Data Science',icon:'fa-solid fa-brain',color:'#8B5CF6',courses:[
-      {code:'CSE 4813',name:'Deep Learning',cr:3},{code:'CSE 4811',name:'Natural Language Processing',cr:3},{code:'CSE 4891',name:'Data Mining',cr:3},{code:'CSE 4817',name:'Big Data Analytics',cr:3},{code:'CSE 4883',name:'Digital Image Processing',cr:3},{code:'CSE 4893',name:'Intro to Bioinformatics',cr:3},{code:'CSE 4133',name:'Business Intelligence',cr:3}]},
+      {code:'CSE 4889',name:'Machine Learning',cr:3},{code:'CSE 4813',name:'Deep Learning',cr:3},{code:'CSE 4811',name:'Natural Language Processing',cr:3},{code:'CSE 4891',name:'Data Mining',cr:3},{code:'CSE 4817',name:'Big Data Analytics',cr:3},{code:'CSE 4883',name:'Digital Image Processing',cr:3},{code:'CSE 4893',name:'Intro to Bioinformatics',cr:3},{code:'CSE 4133',name:'Business Intelligence',cr:3}]},
     {name:'Systems & Hardware',icon:'fa-solid fa-microchip',color:'#F59E0B',courses:[
-      {code:'CSE 4325',name:'Microprocessors & Microcontrollers',cr:3},{code:'CSE 4327',name:'VLSI Design',cr:3},{code:'CSE 4621',name:'Computer Graphics',cr:3},{code:'EEE 4261',name:'Green Computing',cr:3},{code:'CSE 4399',name:'Embedded Machine Learning',cr:3}]},
+      {code:'CSE 4327',name:'VLSI Design',cr:3},{code:'CSE 4621',name:'Computer Graphics',cr:3},{code:'CSE 4399',name:'Embedded Machine Learning',cr:3}]},
     {name:'Cloud & Infrastructure',icon:'fa-solid fa-cloud',color:'#10B981',courses:[
-      {code:'CSE 4587',name:'Cloud Computing',cr:3}]},
+      {code:'CSE 4587',name:'Cloud Computing',cr:3},{code:'CSE 4611',name:'Compiler Design',cr:3}]},
   ];
 
   let plannerBuilt = false;

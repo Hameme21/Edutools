@@ -12,126 +12,130 @@ class _Course {
 
 const _curriculum = <int, List<_Course>>{
   1: [
-    _Course('ENG 1011', 'Intensive English', 3),
+    _Course('ENG 1011', 'English I', 3),
+    _Course('BDS 1201', 'History of the Emergence of Bangladesh', 2),
+    _Course('CSE 1110', 'Introduction to Computer Systems', 1),
     _Course('MATH 1151', 'Fundamental Calculus', 3),
-    _Course('CSE 1111', 'Structured Programming Language', 3),
-    _Course('CSE 1112', 'Structured Programming Language Lab', 1, isLab: true),
   ],
   2: [
     _Course('ENG 1013', 'English II', 3),
-    _Course('MATH 2201', 'Co-ordinate Geometry & Vector Analysis', 3),
-    _Course('CSE 1115', 'Object Oriented Programming', 3),
-    _Course('CSE 1116', 'Object Oriented Programming Lab', 1, isLab: true),
-    _Course('CSE 1325', 'Digital Logic Design', 3),
-    _Course('CSE 1326', 'Digital Logic Design Lab', 1, isLab: true),
+    _Course('CSE 1111', 'Structured Programming Language', 3),
+    _Course('CSE 1112', 'Structured Programming Language Lab', 1, isLab: true),
+    _Course('CSE 2213', 'Discrete Mathematics', 3),
   ],
   3: [
     _Course('MATH 2183', 'Calculus and Linear Algebra', 3),
-    _Course('CSE 2213', 'Discrete Mathematics', 3),
-    _Course('CSE 2215', 'Data Structure and Algorithms I', 3),
-    _Course('CSE 2216', 'Data Structure and Algorithms I Lab', 1, isLab: true),
-    _Course('EEE 2113', 'Electrical Circuits', 3),
-    _Course('EEE 2114', 'Electrical Circuits Lab', 1, isLab: true),
-  ],
-  4: [
-    _Course('MATH 2205', 'Probability and Statistics', 3),
-    _Course('CSE 2217', 'Data Structure and Algorithms II', 3),
-    _Course('CSE 2218', 'Data Structure and Algorithms II Lab', 1, isLab: true),
-    _Course('EEE 2123', 'Electronics', 3),
-    _Course('EEE 2124', 'Electronics Lab', 1, isLab: true),
-    _Course('BDS 1201', 'History of the Emergence of Bangladesh', 3),
-  ],
-  5: [
-    _Course('CSE 3313', 'Computer Architecture', 3),
-    _Course('CSE 2233', 'Theory of Computation', 3),
-    _Course('CSE 3521', 'Database Management Systems', 3),
-    _Course('CSE 3522', 'Database Management Systems Lab', 1, isLab: true),
-    _Course('SOC 2101', 'Society, Technology and Engineering Ethics', 3),
-  ],
-  6: [
-    _Course('CSE 3711', 'Computer Networks', 3),
-    _Course('CSE 3712', 'Computer Networks Lab', 1, isLab: true),
-    _Course('CSE 3421', 'Software Engineering', 3),
-    _Course('CSE 3422', 'Software Engineering Lab', 1, isLab: true),
-    _Course('CSE 3411', 'System Analysis and Design', 3),
     _Course('PHY 2105', 'Physics', 3),
     _Course('PHY 2106', 'Physics Lab', 1, isLab: true),
+    _Course('CSE 2215', 'Data Structure and Algorithms I', 3),
+    _Course('CSE 2216', 'Data Structure and Algorithms I Lab', 1, isLab: true),
+  ],
+  4: [
+    _Course('MATH 2201', 'Coordinate Geometry and Vector Analysis', 3),
+    _Course('CSE 1325', 'Digital Logic Design', 3),
+    _Course('CSE 1326', 'Digital Logic Design Lab', 1, isLab: true),
+    _Course('CSE 1115', 'Object Oriented Programming', 3),
+    _Course('CSE 1116', 'Object Oriented Programming Lab', 1, isLab: true),
+  ],
+  5: [
+    _Course('MATH 2205', 'Probability and Statistics', 3),
+    _Course('SOC 2101', 'Society, Technology and Engineering Ethics', 3),
+    _Course('CSE 2217', 'Data Structure and Algorithms II', 3),
+    _Course('CSE 2218', 'Data Structure and Algorithms II Lab', 1, isLab: true),
+    _Course('EEE 2113', 'Electrical Circuits', 3),
+  ],
+  6: [
+    _Course('CSE 3521', 'Database Management Systems', 3),
+    _Course('CSE 3522', 'Database Management Systems Lab', 1, isLab: true),
+    _Course('EEE 2123', 'Electronics', 3),
+    _Course('EEE 2124', 'Electronics Lab', 1, isLab: true),
+    _Course('CSE 4165', 'Web Programming', 3),
   ],
   7: [
-    _Course('CSE 4509', 'Operating Systems', 3),
-    _Course('CSE 4510', 'Operating Systems Lab', 1, isLab: true),
-    _Course('CSE 3811', 'Artificial Intelligence', 3),
-    _Course('CSE 3812', 'Artificial Intelligence Lab', 1, isLab: true),
-    _Course('ACT 2111', 'Financial and Managerial Accounting', 3),
+    _Course('CSE 3313', 'Computer Architecture', 3),
+    _Course('CSE 2118', 'Advanced OOP Lab', 1, isLab: true),
+    _Course('BIO 3105', 'Biology for Engineers', 3),
+    _Course('CSE 3411', 'System Analysis and Design', 3),
+    _Course('CSE 3412', 'System Analysis and Design Lab', 1, isLab: true),
   ],
   8: [
-    _Course('CSE 4889', 'Machine Learning', 3),
-    _Course('CSE 4890', 'Machine Learning Lab', 1, isLab: true),
-    _Course('CSE 4611', 'Compiler Design', 3),
-    _Course('ECO 4101', 'Economics', 3),
-    _Course('PMG 4101', 'Project Management', 3),
+    _Course('CSE 4325', 'Microprocessors and Microcontrollers', 3),
+    _Course('CSE 4326', 'Microprocessors and Microcontrollers Lab', 1, isLab: true),
+    _Course('CSE 3421', 'Software Engineering', 3),
+    _Course('CSE 3422', 'Software Engineering Lab', 1, isLab: true),
+    _Course('CSE 3811', 'Artificial Intelligence', 3),
+    _Course('CSE 3812', 'Artificial Intelligence Lab', 1, isLab: true),
   ],
   9: [
-    _Course('CSE 4899', 'Senior Project I', 2),
-    _Course('ELECTIVE 1', 'CSE Elective I', 3),
-    _Course('ELECTIVE 2', 'CSE Elective II', 3),
-    _Course('GED 1', 'General Education I', 3),
+    _Course('CSE 2233', 'Theory of Computation', 3),
+    _Course('GED OPT1', 'General Education Optional-I', 3),
+    _Course('PMG 4101', 'Project Management', 3),
+    _Course('CSE 3711', 'Computer Networks', 3),
+    _Course('CSE 3712', 'Computer Networks Lab', 1, isLab: true),
   ],
   10: [
-    _Course('CSE 4900', 'Senior Project II', 2),
-    _Course('ELECTIVE 3', 'CSE Elective III', 3),
-    _Course('ELECTIVE 4', 'CSE Elective IV', 3),
-    _Course('GED 2', 'General Education II', 3),
+    _Course('GED OPT2', 'General Education Optional-II', 3),
+    _Course('CSE 4000A', 'Final Year Design Project - I', 2),
+    _Course('ELECTIVE I', 'Major Elective I', 3),
+    _Course('CSE 4509', 'Operating Systems', 3),
+    _Course('CSE 4510', 'Operating Systems Lab', 1, isLab: true),
   ],
   11: [
-    _Course('ELECTIVE 5', 'CSE Elective V', 3),
-    _Course('ELECTIVE 6', 'CSE Elective VI', 3),
-    _Course('GED 3', 'General Education III', 3),
+    _Course('GED OPT3', 'General Education Optional-III', 3),
+    _Course('ELECTIVE II', 'Major Elective II', 3),
+    _Course('ELECTIVE III', 'Major Elective III', 3),
+    _Course('CSE 4000B', 'Final Year Design Project - II', 2),
+    _Course('CSE 4531', 'Computer Security', 3),
   ],
   12: [
-    _Course('BIO 3105', 'Biology for Engineers', 3),
+    _Course('CSE 4000C', 'Final Year Design Project - III', 2),
+    _Course('EEE 4261', 'Green Computing', 3),
+    _Course('ELECTIVE IV', 'Major Elective IV', 3),
+    _Course('ELECTIVE V', 'Major Elective V', 3),
   ],
 };
 
 const _gedOptions = <String, List<_Course>>{
-  'GED 1001 – World Civilization': [_Course('GED 1001', 'World Civilization', 3)],
-  'GED 1003 – Bangla Language and Literature': [_Course('GED 1003', 'Bangla Language and Literature', 3)],
   'GED 1005 – AI Literacy and Prompt Engineering': [_Course('GED 1005', 'AI Literacy and Prompt Engineering', 3)],
+  'ECO 4101 – Economics': [_Course('ECO 4101', 'Economics', 3)],
+  'ACT 2111 – Financial and Managerial Accounting': [_Course('ACT 2111', 'Financial and Managerial Accounting', 3)],
   'TEC 2499 – Technology Entrepreneurship': [_Course('TEC 2499', 'Technology Entrepreneurship', 3)],
 };
 
 const _electiveTracks = <String, List<_Course>>{
+  'Network & Cyber Security': [
+    _Course('CSE 4125', 'Ethical Hacking and Network Defense', 3),
+    _Course('CSE 4777', 'Network Security', 3),
+  ],
   'Software Engineering': [
-    _Course('CSE 4435', 'Software Architecture', 3),
+    _Course('CSE 4587', 'Cloud Computing', 3),
+    _Course('CSE 4611', 'Compiler Design', 3),
+    _Course('CSE 4621', 'Computer Graphics', 3),
     _Course('CSE 4451', 'Human Computer Interaction', 3),
-    _Course('CSE 4165', 'Web Programming', 3),
+    _Course('CSE 4435', 'Software Architecture', 3),
+    _Course('CSE 4181', 'Mobile Application Development', 3),
     _Course('CSE 4945', 'UI: Concepts and Design', 3),
     _Course('CSE 4495', 'Software Testing and QA', 3),
-    _Course('CSE 4181', 'Mobile Application Development', 3),
   ],
-  'Cyber Security': [
-    _Course('CSE 4531', 'Computer Security', 3),
-    _Course('CSE 4777', 'Network Security', 3),
-    _Course('CSE 4125', 'Ethical Hacking & Network Defense', 3),
+  'Embedded System & Robotics': [
+    _Course('CSE 4327', 'VLSI Design', 3),
+    _Course('CSE 4399', 'Embedded Machine Learning', 3),
   ],
   'AI & Data Science': [
-    _Course('CSE 4813', 'Deep Learning', 3),
-    _Course('CSE 4811', 'Natural Language Processing', 3),
+    _Course('CSE 4889', 'Machine Learning', 3),
     _Course('CSE 4891', 'Data Mining', 3),
     _Course('CSE 4817', 'Big Data Analytics', 3),
     _Course('CSE 4883', 'Digital Image Processing', 3),
-    _Course('CSE 4893', 'Intro to Bioinformatics', 3),
+    _Course('CSE 4811', 'Natural Language Processing', 3),
+    _Course('CSE 4813', 'Deep Learning', 3),
+    _Course('CSE 4893', 'Introduction to Bioinformatics', 3),
+  ],
+  'Business System Engineering': [
+    _Course('CSE 4451', 'Human Computer Interaction', 3),
+    _Course('CSE 4891', 'Data Mining', 3),
+    _Course('CSE 4817', 'Big Data Analytics', 3),
+    _Course('CSE 4945', 'UI: Concepts and Design', 3),
     _Course('CSE 4133', 'Business Intelligence', 3),
-  ],
-  'Systems & Hardware': [
-    _Course('CSE 4325', 'Microprocessors & Microcontrollers', 3),
-    _Course('CSE 4327', 'VLSI Design', 3),
-    _Course('CSE 4621', 'Computer Graphics', 3),
-    _Course('EEE 4261', 'Green Computing', 3),
-    _Course('CSE 4399', 'Embedded Machine Learning', 3),
-  ],
-  'Cloud & Infrastructure': [
-    _Course('CSE 4587', 'Cloud Computing', 3),
   ],
 };
 
@@ -396,11 +400,11 @@ class _CoursePlannerSheetState extends State<CoursePlannerSheet> with SingleTick
   Widget _trackCard(String track, List<_Course> courses, bool isDark) {
     final isExpanded = _expandedTrack == track;
     final trackColors = {
+      'Network & Cyber Security': const Color(0xFFEF4444),
       'Software Engineering': const Color(0xFF3B82F6),
-      'Cyber Security': const Color(0xFFEF4444),
+      'Embedded System & Robotics': const Color(0xFFF59E0B),
       'AI & Data Science': const Color(0xFF8B5CF6),
-      'Systems & Hardware': const Color(0xFFF59E0B),
-      'Cloud & Infrastructure': const Color(0xFF22C55E),
+      'Business System Engineering': const Color(0xFF22C55E),
     };
     final color = trackColors[track] ?? AppTheme.primaryLight;
 
@@ -422,11 +426,11 @@ class _CoursePlannerSheetState extends State<CoursePlannerSheet> with SingleTick
                   width: 32, height: 32,
                   decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                   child: Icon(
-                    track == 'Software Engineering' ? Icons.code_rounded
-                        : track == 'Cyber Security' ? Icons.shield_rounded
+                    track == 'Network & Cyber Security' ? Icons.shield_rounded
+                        : track == 'Software Engineering' ? Icons.code_rounded
+                        : track == 'Embedded System & Robotics' ? Icons.memory_rounded
                         : track == 'AI & Data Science' ? Icons.psychology_rounded
-                        : track == 'Systems & Hardware' ? Icons.memory_rounded
-                        : Icons.cloud_rounded,
+                        : Icons.business_center_rounded,
                     color: color, size: 18,
                   ),
                 ),
