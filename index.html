@@ -2849,6 +2849,9 @@ body {
               <label>Password <span class="required">*</span></label>
               <input type="password" class="auth-input" id="agSignInPassword" placeholder="Enter your password">
             </div>
+            <div style="text-align:right;margin:-4px 0 8px 0">
+              <button type="button" id="agForgotPasswordBtn" style="background:none;border:none;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);padding:2px 0">Forgot Password?</button>
+            </div>
             <div class="auth-error" id="agSignInError"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
             <button class="auth-btn auth-btn-primary" id="agSignInPasswordBtn">
               <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
@@ -3702,7 +3705,7 @@ body {
     </div>
   </div>
 
-  <!-- GOOGLE SIGN-IN: OTP VERIFY + PROFILE SETUP MODAL -->
+  <!-- GOOGLE SIGN-IN: EMAIL VERIFY + PROFILE SETUP MODAL -->
   <div class="modal-overlay" id="googleVerifyModal">
     <div class="modal-box" style="max-width:440px">
       <div class="modal-header">
@@ -3713,28 +3716,30 @@ body {
         <button class="modal-close" id="btnCloseGoogleVerify">&times;</button>
       </div>
       <div class="modal-body">
-        <!-- Step 1: OTP Verification -->
+        <!-- Step 1: Email Verification Link -->
         <div id="gvStep1">
           <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px;line-height:1.5">
-            We sent a <strong>6-digit code</strong> to your Google email:
+            We sent a <strong>verification link</strong> to your Google email:
           </p>
           <p style="font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px" id="gvEmailDisplay"></p>
           <div class="auth-success show" style="margin-bottom:14px">
+            <i class="fa-solid fa-link"></i>
+            <span>Click the link in your email to verify. This page will update automatically.</span>
+          </div>
+          <div class="auth-success show" style="margin-bottom:14px">
             <i class="fa-solid fa-circle-info"></i>
-            <span>Check your <strong>Inbox</strong> and <strong>Spam/Junk</strong> folder. Code sent from <strong>hamimasir5@gmail.com</strong></span>
+            <span>Check your <strong>Inbox</strong> and <strong>Spam/Junk</strong> folder. Sent from <strong>hamimasir5@gmail.com</strong></span>
           </div>
-          <div class="form-group">
-            <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Enter 6-Digit Code <span style="color:var(--danger)">*</span></label>
-            <input type="text" class="form-input" id="gvOtpInput" maxlength="6" placeholder="------" style="width:100%;padding:12px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:20px;letter-spacing:6px;text-align:center;font-family:monospace;font-weight:800">
+          <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:var(--bg-card-subtle);border-radius:var(--radius-sm);margin-bottom:12px">
+            <div class="spinner-border" style="width:16px;height:16px;border:2px solid var(--text-muted);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite"></div>
+            <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Waiting for verification...</span>
           </div>
+          <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <span style="font-size:12px;color:var(--text-muted)" id="gvTimer">Expires in: 05:00</span>
-            <button style="font-size:12px;color:var(--primary);background:none;border:none;cursor:pointer;font-weight:600;font-family:var(--font);display:none" id="gvResendBtn">Resend Code</button>
+            <span style="font-size:12px;color:var(--text-muted)" id="gvTimer">Expires in: 15:00</span>
+            <button style="font-size:12px;color:var(--primary);background:none;border:none;cursor:pointer;font-weight:600;font-family:var(--font);display:none" id="gvResendBtn">Resend Link</button>
           </div>
           <div id="gvOtpError" style="display:none;color:var(--danger);font-size:12px;font-weight:600;margin-bottom:10px"></div>
-          <button class="auth-btn auth-btn-primary" id="gvVerifyBtn" style="width:100%">
-            <i class="fa-solid fa-circle-check"></i> Verify Email
-          </button>
         </div>
 
         <!-- Step 2: Profile Setup + Password (after OTP verified) -->
@@ -3815,6 +3820,46 @@ body {
         <button class="auth-btn auth-btn-primary" id="epSaveBtn" style="width:100%">
           <i class="fa-solid fa-floppy-disk"></i> Save Changes
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD MODAL -->
+  <div class="modal-overlay" id="forgotPasswordModal">
+    <div class="modal-box" style="max-width:420px">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i class="fa-solid fa-lock-open" style="color:var(--primary)"></i>
+          <h3>Reset Password</h3>
+        </div>
+        <button class="modal-close" id="btnCloseForgotPw">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Step 1: Enter email -->
+        <div id="fpStep1">
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5">
+            Enter your email address and we'll send you a link to reset your password.
+          </p>
+          <div class="form-group">
+            <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Email Address <span style="color:var(--danger)">*</span></label>
+            <input type="email" class="form-input" id="fpEmail" placeholder="username@bscse.uiu.ac.bd" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+          </div>
+          <div id="fpError" style="display:none;color:var(--danger);font-size:12px;font-weight:600;margin-bottom:10px"></div>
+          <button class="auth-btn auth-btn-primary" id="fpSendBtn" style="width:100%">
+            <i class="fa-solid fa-paper-plane"></i> Send Reset Link
+          </button>
+        </div>
+        <!-- Step 2: Success -->
+        <div id="fpStep2" style="display:none">
+          <div class="auth-success show" style="margin-bottom:16px;text-align:center;padding:20px">
+            <i class="fa-solid fa-envelope-circle-check" style="font-size:32px;display:block;margin-bottom:10px"></i>
+            <span style="font-size:14px;font-weight:700">Reset link sent!</span>
+            <p style="font-size:12px;margin-top:8px;line-height:1.5">If an account exists for this email, a password reset link has been sent. Check your inbox and spam folder.</p>
+          </div>
+          <button class="auth-btn auth-btn-outline" id="fpDoneBtn" style="width:100%">
+            <i class="fa-solid fa-check"></i> Done
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -7286,28 +7331,31 @@ function showGoogleVerifyModal(googleEmail, googleDisplayName) {
   if (!modal) return;
 
   const emailDisplay = document.getElementById('gvEmailDisplay');
-  const otpInput = document.getElementById('gvOtpInput');
   const timerEl = document.getElementById('gvTimer');
   const resendBtn = document.getElementById('gvResendBtn');
   const errBox = document.getElementById('gvOtpError');
-  const verifyBtn = document.getElementById('gvVerifyBtn');
   const closeBtn = document.getElementById('btnCloseGoogleVerify');
   const step1 = document.getElementById('gvStep1');
   const step2 = document.getElementById('gvStep2');
 
   emailDisplay.textContent = googleEmail;
-  otpInput.value = '';
   errBox.style.display = 'none';
   step1.style.display = 'block';
   step2.style.display = 'none';
   modal.classList.add('show');
 
-  function closeModal() { modal.classList.remove('show'); clearInterval(timerInterval); }
+  let timerInterval = null;
+  let pollInterval = null;
+
+  function closeModal() {
+    modal.classList.remove('show');
+    clearInterval(timerInterval);
+    clearInterval(pollInterval);
+  }
   closeBtn.onclick = closeModal;
 
-  let timerInterval = null;
   function startTimer() {
-    let sec = 300;
+    let sec = 900; // 15 minutes
     resendBtn.style.display = 'none';
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
@@ -7315,69 +7363,62 @@ function showGoogleVerifyModal(googleEmail, googleDisplayName) {
       const m = Math.floor(sec / 60);
       const s = sec % 60;
       timerEl.textContent = `Expires in: ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-      if (sec <= 0) { clearInterval(timerInterval); timerEl.textContent = 'Code expired'; resendBtn.style.display = 'inline'; }
+      if (sec <= 0) { clearInterval(timerInterval); timerEl.textContent = 'Link expired'; resendBtn.style.display = 'inline'; }
     }, 1000);
   }
 
-  async function sendOtp() {
+  function startPolling() {
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/check-verification?email=${encodeURIComponent(googleEmail)}`);
+        const data = await res.json();
+        if (data.verified) {
+          clearInterval(pollInterval);
+          clearInterval(timerInterval);
+
+          if (data.token) {
+            state.student.token = data.token;
+          }
+
+          step1.style.display = 'none';
+          step2.style.display = 'block';
+          document.getElementById('googleVerifyTitle').textContent = 'Complete Your Profile';
+
+          document.getElementById('gvName').value = googleDisplayName;
+          document.getElementById('gvStudentId').value = googleEmail.split('@')[0].toUpperCase();
+          document.getElementById('gvDept').value = inferDepartmentFromEmail(googleEmail);
+          document.getElementById('gvPassword').value = '';
+
+          setupProfileStep(modal, googleEmail);
+        }
+      } catch (e) {
+        // Polling errors are silently ignored
+      }
+    }, 3000);
+  }
+
+  async function sendVerificationLink() {
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/request-otp`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/send-verification-link`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: googleEmail }),
+        body: JSON.stringify({ email: googleEmail, displayName: googleDisplayName }),
       });
       const data = await res.json();
-      if (!res.ok) console.warn('OTP send warning:', data.error);
+      if (!res.ok) console.warn('Verification email warning:', data.error);
       startTimer();
+      startPolling();
     } catch (e) {
-      console.error('Failed to send OTP:', e);
+      console.error('Failed to send verification email:', e);
+      errBox.textContent = 'Failed to send verification email. Please try again.';
+      errBox.style.display = 'block';
     }
   }
 
-  sendOtp();
+  sendVerificationLink();
 
-  resendBtn.onclick = () => { sendOtp(); resendBtn.style.display = 'none'; };
-
-  verifyBtn.onclick = async () => {
-    const otp = otpInput.value.trim();
-    errBox.style.display = 'none';
-    if (!otp || otp.length !== 6) {
-      errBox.textContent = 'Please enter the 6-digit code.';
-      errBox.style.display = 'block';
-      return;
-    }
-
-    verifyBtn.disabled = true;
-    verifyBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
-
-    try {
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: googleEmail, otp }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Invalid code.');
-
-      clearInterval(timerInterval);
-      step1.style.display = 'none';
-      step2.style.display = 'block';
-      document.getElementById('googleVerifyTitle').textContent = 'Complete Your Profile';
-
-      document.getElementById('gvName').value = googleDisplayName;
-      document.getElementById('gvStudentId').value = googleEmail.split('@')[0].toUpperCase();
-      document.getElementById('gvDept').value = inferDepartmentFromEmail(googleEmail);
-      document.getElementById('gvPassword').value = '';
-
-      setupProfileStep(modal, googleEmail);
-    } catch (err) {
-      errBox.textContent = err.message;
-      errBox.style.display = 'block';
-    } finally {
-      verifyBtn.disabled = false;
-      verifyBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verify Email';
-    }
-  };
+  resendBtn.onclick = () => { sendVerificationLink(); resendBtn.style.display = 'none'; };
 }
 
 function setupProfileStep(modal, email) {
@@ -7577,6 +7618,65 @@ function initAuthGate() {
       btn.disabled = false;
       btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Continue with Google';
     }
+  });
+
+  // ---- FORGOT PASSWORD ----
+  document.getElementById('agForgotPasswordBtn')?.addEventListener('click', () => {
+    const fpModal = document.getElementById('forgotPasswordModal');
+    if (!fpModal) return;
+
+    const fpEmail = document.getElementById('fpEmail');
+    const fpError = document.getElementById('fpError');
+    const fpStep1 = document.getElementById('fpStep1');
+    const fpStep2 = document.getElementById('fpStep2');
+    const fpSendBtn = document.getElementById('fpSendBtn');
+    const fpDoneBtn = document.getElementById('fpDoneBtn');
+    const fpCloseBtn = document.getElementById('btnCloseForgotPw');
+
+    // Pre-fill email from sign-in form
+    fpEmail.value = document.getElementById('agSignInEmail')?.value || '';
+    fpError.style.display = 'none';
+    fpStep1.style.display = 'block';
+    fpStep2.style.display = 'none';
+    fpModal.classList.add('show');
+
+    fpCloseBtn.onclick = () => fpModal.classList.remove('show');
+    fpModal.addEventListener('click', (e) => { if (e.target === fpModal) fpModal.classList.remove('show'); });
+
+    fpDoneBtn.onclick = () => fpModal.classList.remove('show');
+
+    fpSendBtn.onclick = async () => {
+      const email = fpEmail.value.trim().toLowerCase();
+      fpError.style.display = 'none';
+
+      if (!email || !email.includes('@')) {
+        fpError.textContent = 'Please enter a valid email address.';
+        fpError.style.display = 'block';
+        return;
+      }
+
+      fpSendBtn.disabled = true;
+      fpSendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to send reset link.');
+
+        fpStep1.style.display = 'none';
+        fpStep2.style.display = 'block';
+      } catch (err) {
+        fpError.textContent = err.message;
+        fpError.style.display = 'block';
+      } finally {
+        fpSendBtn.disabled = false;
+        fpSendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Reset Link';
+      }
+    };
   });
 
   // ---- SIGN IN FLOW ----
