@@ -2575,6 +2575,7 @@ body {
 }
 
 .auth-gate.hidden { display: none; }
+#googleVerifyModal { z-index:11001; background:var(--bg-main); }
 
 .auth-gate-inner {
   width: 100%;
@@ -3118,7 +3119,7 @@ body {
             <div class="auth-reg-row">
               <div class="auth-field">
                 <label>Department</label>
-                <input type="text" class="auth-input" id="agRegDept" placeholder="e.g. CSE" value="Computer Science & Engineering">
+                <select id="agRegDept" class="auth-input" required><option value="">Select department</option><option value="CSE">CSE</option><option value="DS">DS</option><option value="BBA">BBA</option><option value="CE">CE</option><option value="EDS">EDS</option><option value="EEE">EEE</option><option value="BSE">BSE</option></select>
               </div>
               <div class="auth-field">
                 <label>Semester</label>
@@ -4093,7 +4094,7 @@ body {
             </div>
             <div class="form-group">
               <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Department</label>
-              <input type="text" class="form-input" id="gvDept" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+              <select id="gvDept" class="form-input" required><option value="">Select department</option><option value="CSE">CSE</option><option value="DS">DS</option><option value="BBA">BBA</option><option value="CE">CE</option><option value="EDS">EDS</option><option value="EEE">EEE</option><option value="BSE">BSE</option></select>
             </div>
           </div>
           <div class="form-group">
@@ -4138,7 +4139,7 @@ body {
           </div>
           <div class="form-group">
             <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Department</label>
-            <input type="text" class="form-input" id="epDept" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+            <select id="epDept" class="form-input" required><option value="">Select department</option><option value="CSE">CSE</option><option value="DS">DS</option><option value="BBA">BBA</option><option value="CE">CE</option><option value="EDS">EDS</option><option value="EEE">EEE</option><option value="BSE">BSE</option></select>
           </div>
         </div>
         <div class="form-group">
@@ -5553,63 +5554,45 @@ function startCrossPlatformAutoSync() {
 }
 
 
-async function syncWithGoogleDriveWeb(push = true) {
-  const payload = {
-    app: 'Edutools',
-    version: Date.now(),
-    lastModified: new Date().toISOString(),
-    student: state.student,
-    classes: state.classes,
-    notices: state.notices,
-    routineRange: state.routineRange,
-    settings: state.reminderSettings,
-  };
-
-  if (state.googleAccessToken) {
-    try {
-      const q = encodeURIComponent("name='educal_sync_data.json' and trashed=false");
-      const listRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime)`, {
-        headers: { Authorization: `Bearer ${state.googleAccessToken}` }
-      });
-      if (listRes.ok) {
-        const listData = await listRes.json();
-        const existingFile = listData.files && listData.files[0];
-        if (existingFile) {
-          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=media`, {
-            method: 'PATCH',
-            headers: {
-              Authorization: `Bearer ${state.googleAccessToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          });
-        } else {
-          const boundary = '-------EdutoolsSyncBoundary';
-          const metadata = JSON.stringify({
-            name: 'educal_sync_data.json',
-            mimeType: 'application/json',
-            description: 'Edutools Academic Schedule Cloud Sync snapshot',
-          });
-          const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(payload)}\r\n--${boundary}--`;
-          await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${state.googleAccessToken}`,
-              'Content-Type': `multipart/related; boundary=${boundary}`,
-            },
-            body: body,
-          });
-        }
-      }
-    } catch (e) {
-      console.warn('Google Drive sync network error:', e);
+async function syncWithGoogleDriveWeb() {
+  if (!state.student) return false;
+  try {
+    if (!state.googleAccessToken) {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope('https://www.googleapis.com/auth/drive.file');
+      const current = firebase.auth().currentUser;
+      const sameAccount = current?.email?.toLowerCase() === state.student.email.toLowerCase();
+      const result = sameAccount ? await current.reauthenticateWithPopup(provider) : await firebase.auth().signInWithPopup(provider);
+      if (result.user.email.toLowerCase() !== state.student.email.toLowerCase()) throw new Error('Select the same Google account used in Edutools.');
+      state.googleAccessToken = result.credential.accessToken;
     }
-  }
-
-  saveStudentSession();
-  const synced = await syncStudentWithServer(push);
-  renderAll();
-  showToast(synced ? 'Account routine sync completed.' : 'Cloud sync failed. Please try again.', synced ? 'success' : 'warning');
+    const request = async (url, options = {}) => {
+      const response = await fetch(url, { ...options, signal: AbortSignal.timeout(20000), headers: { ...options.headers, Authorization: `Bearer ${state.googleAccessToken}` } });
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) state.googleAccessToken = null;
+        throw new Error(`Google Drive request failed (${response.status}).`);
+      }
+      return response;
+    };
+    const q = encodeURIComponent("name='educal_sync_data.json' and trashed=false");
+    const list = await (await request(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime desc`)).json();
+    if (list.files?.length) {
+      const data = await (await request(`https://www.googleapis.com/drive/v3/files/${list.files[0].id}?alt=media`)).json();
+      if (!Array.isArray(data.classes)) throw new Error('The Drive JSON does not contain a valid routine.');
+      if (data.student?.email && data.student.email.toLowerCase() !== state.student.email.toLowerCase()) throw new Error('The Drive routine belongs to a different account.');
+      state.classes = data.classes;
+      state.routineRange = data.routineRange || null;
+      saveStudentSession(); renderAll();
+    } else {
+      const payload = { app:'Edutools', classes:state.classes, student:state.student && {email:state.student.email}, routineRange:state.routineRange || null, version:Date.now() };
+      const boundary = 'edutools_routine_boundary';
+      const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name:'educal_sync_data.json',mimeType:'application/json'})}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(payload)}\r\n--${boundary}--`;
+      await request('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {method:'POST',headers:{'Content-Type':`multipart/related; boundary=${boundary}`},body});
+    }
+    const synced = await syncStudentWithServer(true);
+    showToast(synced ? 'Google Drive routine synced.' : 'Drive synced; account sync will retry.', synced ? 'success' : 'warning');
+    return synced;
+  } catch(error) { showToast(error.message || 'Google Drive sync failed.', 'warning'); return false; }
 }
 
 let routineSyncInFlight = null;
@@ -6283,7 +6266,7 @@ function openAuthModal() {
     };
 
     document.getElementById('btnWebLogout').onclick = () => {
-      state.student = null;
+      state.student = null; state.googleAccessToken = null;
       if (autoSyncTimer) clearInterval(autoSyncTimer);
       localStorage.removeItem('edutools_student_session');
       dom.authModal.classList.remove('show');
@@ -7166,7 +7149,7 @@ function initEventListeners() {
   const btnSignOut = document.getElementById('btnSignOutGProfile');
   if (btnSignOut) {
     btnSignOut.addEventListener('click', () => {
-      state.student = null;
+      state.student = null; state.googleAccessToken = null;
       if (autoSyncTimer) clearInterval(autoSyncTimer);
       localStorage.removeItem('edutools_student_session');
       if (googleDropdown) googleDropdown.classList.remove('show');
@@ -7184,10 +7167,7 @@ function initEventListeners() {
   }
 
   const forceSyncHandler = async () => {
-    showToast('Syncing with Cloud & Mobile App...', 'info');
-    const synced = await syncStudentWithServer(false);
-    renderAll();
-    showToast(synced ? 'Routine synced with your account.' : 'Cloud sync failed. Please try again.', synced ? 'success' : 'warning');
+    await syncWithGoogleDriveWeb();
   };
 
   const btnForceSync = document.getElementById('btnForceCloudSync');
@@ -7712,159 +7692,48 @@ function inferDepartmentFromEmail(email) {
   return 'Computer Science & Engineering';
 }
 
-function showGoogleVerifyModal(googleEmail, googleDisplayName) {
-  const modal = document.getElementById('googleVerifyModal');
-  if (!modal) return;
-
-  const emailDisplay = document.getElementById('gvEmailDisplay');
-  const timerEl = document.getElementById('gvTimer');
-  const resendBtn = document.getElementById('gvResendBtn');
-  const errBox = document.getElementById('gvOtpError');
-  const closeBtn = document.getElementById('btnCloseGoogleVerify');
-  const step1 = document.getElementById('gvStep1');
-  const step2 = document.getElementById('gvStep2');
-
-  emailDisplay.textContent = googleEmail;
-  errBox.style.display = 'none';
-  step1.style.display = 'block';
-  step2.style.display = 'none';
-  modal.classList.add('show');
-
-  let timerInterval = null;
-  let pollInterval = null;
-
-  function closeModal() {
-    modal.classList.remove('show');
-    clearInterval(timerInterval);
-    clearInterval(pollInterval);
-  }
-  closeBtn.onclick = closeModal;
-
-  function startTimer() {
-    let sec = 900; // 15 minutes
-    resendBtn.style.display = 'none';
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      sec--;
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      timerEl.textContent = `Expires in: ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-      if (sec <= 0) { clearInterval(timerInterval); timerEl.textContent = 'Link expired'; resendBtn.style.display = 'inline'; }
-    }, 1000);
-  }
-
-  function startPolling() {
-    if (pollInterval) clearInterval(pollInterval);
-    pollInterval = setInterval(async () => {
-      try {
-        const res = await fetch(`${getApiBaseUrl()}/api/auth/check-verification?email=${encodeURIComponent(googleEmail)}`);
-        const data = await res.json();
-        if (data.verified) {
-          clearInterval(pollInterval);
-          clearInterval(timerInterval);
-
-          if (data.token) {
-            state.student.token = data.token;
-          }
-
-          step1.style.display = 'none';
-          step2.style.display = 'block';
-          document.getElementById('googleVerifyTitle').textContent = 'Complete Your Profile';
-
-          document.getElementById('gvName').value = googleDisplayName;
-          document.getElementById('gvStudentId').value = googleEmail.split('@')[0].toUpperCase();
-          document.getElementById('gvDept').value = inferDepartmentFromEmail(googleEmail);
-          document.getElementById('gvPassword').value = '';
-
-          setupProfileStep(modal, googleEmail);
-        }
-      } catch (e) {
-        // Polling errors are silently ignored
-      }
-    }, 3000);
-  }
-
-  async function sendVerificationLink() {
-    try {
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/send-verification-link`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: googleEmail, displayName: googleDisplayName }),
-      });
-      const data = await res.json();
-      if (!res.ok) console.warn('Verification email warning:', data.error);
-      startTimer();
-      startPolling();
-    } catch (e) {
-      console.error('Failed to send verification email:', e);
-      errBox.textContent = 'Failed to send verification email. Please try again.';
-      errBox.style.display = 'block';
-    }
-  }
-
-  sendVerificationLink();
-
-  resendBtn.onclick = () => { sendVerificationLink(); resendBtn.style.display = 'none'; };
+function completeGoogleSession(data) {
+  state.student = { ...data.student, token: data.token, lastSyncTime: new Date().toISOString() };
+  saveStudentSession();
+  startCrossPlatformAutoSync();
+  syncStudentWithServer(false);
+  document.getElementById('googleVerifyModal').classList.remove('show');
+  hideAuthGate(); renderAll(); updateSyncStatusUI();
 }
 
-function setupProfileStep(modal, email) {
-  const saveBtn = document.getElementById('gvSaveProfileBtn');
-  const skipBtn = document.getElementById('gvSkipBtn');
-  const errBox = document.getElementById('gvProfileError');
-
-  function completeLogin() {
-    const name = document.getElementById('gvName').value.trim();
-    const studentId = document.getElementById('gvStudentId').value.trim();
-    const dept = document.getElementById('gvDept').value.trim();
-
-    if (name) state.student.fullName = name;
-    if (studentId) state.student.studentId = studentId;
-    if (dept) state.student.department = dept;
-
-    saveStudentSession();
-    syncStudentWithServer(false);
-    renderAll();
-    updateSyncStatusUI();
-    modal.classList.remove('show');
-  }
-
-  skipBtn.onclick = () => {
-    completeLogin();
-    showToast(`Welcome, ${state.student.fullName}!`, 'success');
-  };
-
-  saveBtn.onclick = async () => {
-    errBox.style.display = 'none';
-    const pw = document.getElementById('gvPassword').value;
-
-    if (pw && pw.length < 6) {
-      errBox.textContent = 'Password must be at least 6 characters.';
-      errBox.style.display = 'block';
-      return;
-    }
-
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-
+function showGoogleVerifyModal(email, displayName, idToken) {
+  const modal = document.getElementById('googleVerifyModal');
+  document.getElementById('gvStep1').style.display = 'none';
+  document.getElementById('gvStep2').style.display = 'block';
+  document.getElementById('googleVerifyTitle').textContent = 'Complete registration';
+  document.getElementById('gvName').value = displayName;
+  document.getElementById('gvStudentId').value = '';
+  document.getElementById('gvDept').value = '';
+  document.getElementById('gvPassword').value = '';
+  document.getElementById('gvSkipBtn').style.display = 'none';
+  const errorBox = document.getElementById('gvProfileError');
+  errorBox.style.display = 'none';
+  showAuthGate(); modal.classList.add('show');
+  document.getElementById('btnCloseGoogleVerify').onclick = () => modal.classList.remove('show');
+  const button = document.getElementById('gvSaveProfileBtn');
+  button.onclick = async () => {
+    button.disabled = true; errorBox.style.display = 'none';
     try {
-      if (pw) {
-        const res = await fetch(`${getApiBaseUrl()}/api/auth/set-password`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password: pw }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to set password.');
-      }
-      completeLogin();
-      showToast(`Profile saved${pw ? ' with password' : ''}! Welcome, ${state.student.fullName}!`, 'success');
-    } catch (err) {
-      errBox.textContent = err.message;
-      errBox.style.display = 'block';
-    } finally {
-      saveBtn.disabled = false;
-      saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Save & Continue';
-    }
+      const profile = {
+        fullName: document.getElementById('gvName').value.trim(),
+        studentId: document.getElementById('gvStudentId').value.trim(),
+        department: document.getElementById('gvDept').value,
+        password: document.getElementById('gvPassword').value,
+      };
+      if (!profile.fullName || !profile.studentId || !profile.department) throw new Error('Name, student ID and department are required.');
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/google-session`, {
+        method:'POST', signal:AbortSignal.timeout(30000), headers:{'Content-Type':'application/json'}, body:JSON.stringify({idToken, profile}),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Registration failed.');
+      completeGoogleSession(data);
+    } catch(error) { errorBox.textContent = error.message; errorBox.style.display = 'block'; }
+    finally { button.disabled = false; }
   };
 }
 
@@ -7968,7 +7837,6 @@ function initAuthGate() {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.addScope('email');
-      provider.addScope('https://www.googleapis.com/auth/drive.file');
       const result = await firebase.auth().signInWithPopup(provider);
       const user = result.user;
 
@@ -7977,26 +7845,14 @@ function initAuthGate() {
       const email = user.email.toLowerCase();
       const displayName = user.displayName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-      // Capture Google OAuth access token for Drive API
-      if (result.credential && result.credential.accessToken) {
-        state.googleAccessToken = result.credential.accessToken;
-      }
-
-      state.student = {
-        email: email,
-        studentId: email.split('@')[0].toUpperCase(),
-        fullName: displayName,
-        department: inferDepartmentFromEmail(email),
-        photoURL: user.photoURL || null,
-        lastSyncTime: new Date().toISOString(),
-      };
-
-      saveStudentSession();
-      startCrossPlatformAutoSync();
-      hideAuthGate();
-      renderAll();
-      updateSyncStatusUI();
-      showGoogleVerifyModal(email, displayName);
+      const idToken = await user.getIdToken();
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/google-session`, {
+        method: 'POST', signal: AbortSignal.timeout(30000), headers: {'Content-Type': 'application/json'}, body: JSON.stringify({idToken}),
+      });
+      const session = await response.json();
+      if (!response.ok || !session.success) throw new Error(session.error || 'Google sign-in failed.');
+      if (session.requiresRegistration) showGoogleVerifyModal(email, displayName, idToken);
+      else completeGoogleSession(session);
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
         btn.disabled = false;

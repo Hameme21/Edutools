@@ -1,3 +1,5 @@
+import 'google_sign_in_session.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -53,27 +55,28 @@ class GoogleDriveSyncService {
 
   /// Searches for existing sync file in Google Drive
   Future<String?> findSyncFileId() async {
-    if (!hasToken) return null;
+    if (!hasToken) throw StateError('Connect Google Drive before syncing.');
+    final query = "name='$syncFileName' and trashed=false";
+    final uri = Uri.parse('$driveApiBase?q=${Uri.encodeComponent(query)}&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc');
+    final req = await _httpClient.getUrl(uri).timeout(const Duration(seconds: 10));
+    req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_accessToken');
+    final res = await req.close().timeout(const Duration(seconds: 10));
+    if (res.statusCode != 200) throw StateError('Google Drive could not be read (${res.statusCode}).');
+    final data = jsonDecode(await utf8.decodeStream(res)) as Map<String, dynamic>;
+    final files = data['files'] as List?;
+    return files != null && files.isNotEmpty ? files.first['id'] as String : null;
+  }
 
-    try {
-      final query = "name='$syncFileName' and trashed=false";
-      final uri = Uri.parse('$driveApiBase?q=${Uri.encodeComponent(query)}&fields=files(id,name,modifiedTime)');
-
-      final req = await _httpClient.getUrl(uri);
-      req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_accessToken');
-      req.headers.set(HttpHeaders.acceptHeader, 'application/json');
-
-      final res = await req.close().timeout(const Duration(seconds: 5));
-      if (res.statusCode == 200) {
-        final bodyStr = await utf8.decodeStream(res);
-        final data = jsonDecode(bodyStr) as Map<String, dynamic>;
-        final files = data['files'] as List?;
-        if (files != null && files.isNotEmpty) {
-          return files[0]['id'] as String?;
-        }
-      }
-    } catch (_) {}
-    return null;
+  Future<void> ensureAccess({String? email}) async {
+    if (hasToken) return;
+    final google = GoogleSignIn.instance;
+    await GoogleSignInSession.initialize();
+    final account = await google.authenticate().timeout(const Duration(seconds: 90));
+    if (email == null || email.toLowerCase() != account.email.toLowerCase()) {
+      throw StateError('Select the same Google account used in Edutools.');
+    }
+    final grant = await account.authorizationClient.authorizeScopes(['https://www.googleapis.com/auth/drive.file']);
+    setAccessToken(grant.accessToken);
   }
 
   /// Downloads and parses the sync data payload from Google Drive
@@ -98,19 +101,20 @@ class GoogleDriveSyncService {
   }
 
   /// Uploads or updates the sync data payload in Google Drive
-  Future<bool> uploadToDrive(Map<String, dynamic> payload) async {
+  Future<bool> uploadToDrive(Map<String, dynamic> payload, {bool createOnly = false}) async {
     final payloadJson = jsonEncode(payload);
 
     // If no live access token, save to local drive cache for seamless offline / simulated dev
     if (!hasToken) {
       _saveLocalDriveCache(payloadJson);
-      return true;
+      return false;
     }
 
     try {
       final existingFileId = await findSyncFileId();
 
       if (existingFileId != null) {
+        if (createOnly) return false;
         // Update existing file
         final uri = Uri.parse('$driveUploadBase/$existingFileId?uploadType=media');
         final req = await _httpClient.patchUrl(uri);
@@ -151,7 +155,7 @@ class GoogleDriveSyncService {
       }
     } catch (_) {
       _saveLocalDriveCache(payloadJson);
-      return true;
+      return false;
     }
   }
 

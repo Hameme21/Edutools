@@ -1,3 +1,4 @@
+import 'android_notification_service.dart';
 import '../models/reminder_notification.dart';
 import '../models/academic_notice.dart';
 import '../models/reminder_settings.dart';
@@ -26,7 +27,7 @@ class ReminderService {
   /// - Holidays: Default 8:00 AM on holiday morning (Customizable per holiday or for all holidays).
   /// - Classes: Default 10 mins before class start time (Customizable per course or for all courses).
   /// - Normal events: Default day before at 10:00 PM (Customizable per event or for all events).
-  void refreshReminders({DateTime? referenceDate, int daysAhead = 21}) {
+  void refreshReminders({DateTime? referenceDate, int daysAhead = 21, bool scheduleNative = true}) {
     final base = referenceDate ?? DateTime.now();
     final today = DateTime(base.year, base.month, base.day);
     _notifications.clear();
@@ -173,6 +174,16 @@ class ReminderService {
 
     // Sort by scheduled time
     _notifications.sort((a, b) => a.scheduledFor.compareTo(b.scheduledFor));
+    if (scheduleNative && AndroidNotificationService.supported) {
+      final today = DateTime.now();
+      if (base.year != today.year || base.month != today.month || base.day != today.day) {
+        final current = ReminderService(_calendarService).._settings = _settings;
+        current.refreshReminders(referenceDate: today, daysAhead: daysAhead, scheduleNative: false);
+        AndroidNotificationService.schedule(current.notifications);
+      } else {
+        AndroidNotificationService.schedule(_notifications);
+      }
+    }
   }
 
   void markAsRead(String id) {
@@ -190,6 +201,7 @@ class ReminderService {
 
   void clearAll() {
     _notifications.clear();
+    AndroidNotificationService.schedule([]);
   }
 
   static String _formatDate(DateTime dt) {

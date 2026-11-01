@@ -73,6 +73,14 @@ function optionalAuth(req, res, next) {
  * GET /api/auth/check-student?email=...
  * Checks whether a student email is already registered in the system
  */
+router.post('/auth/google-session', async (req, res) => {
+  try {
+    res.json(await require('../services/google_session_service').authenticate(req.body.idToken, req.body.profile));
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
 router.get('/auth/check-student', (req, res) => {
   const email = req.query.email?.trim().toLowerCase();
   if (!email) {

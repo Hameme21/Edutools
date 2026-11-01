@@ -191,7 +191,11 @@ app.use((err, req, res, next) => {
 
 if (require.main === module) {
   const authService = require('./services/auth_service');
-  connectDB().then(() => {
+  connectDB().then(async () => {
+    if (require('./db').isConnected()) {
+      const profiles = await require('./models/RegisteredStudent').find({}).lean();
+      for (const record of profiles) authService.studentStore.set(record.email, record.profile);
+    }
     console.log('[EMAIL API] Brevo configuration:', authService.getEmailStatus());
     app.listen(PORT, () => {
       console.log(`\n🎓 ========================================================`);

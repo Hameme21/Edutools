@@ -53,13 +53,13 @@ class _GmailProfileDialogState extends State<GmailProfileDialog> {
 
   Future<void> _handleSyncNow() async {
     setState(() => _isSyncing = true);
-    await widget.state.syncWithGoogleDrive();
+    final synced = await widget.state.syncWithGoogleDrive();
     if (mounted) {
       setState(() => _isSyncing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Google Drive sync complete! Routine updated across App & Web.'),
-          backgroundColor: Color(0xFF10B981),
+        SnackBar(
+          content: Text(synced ? 'Google Drive routine synced.' : 'Sync failed. Check Google Drive access and try again.'),
+          backgroundColor: synced ? const Color(0xFF10B981) : Colors.orange,
           behavior: SnackBarBehavior.floating,
         ),
       );

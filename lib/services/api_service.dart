@@ -327,6 +327,18 @@ class ApiService {
     return false;
   }
 
+  Future<Map<String, dynamic>> googleSession(String idToken, {Map<String, dynamic>? profile}) async {
+    final result = await _postJson('/api/auth/google-session', {
+      'idToken': idToken, if (profile != null) 'profile': profile,
+    });
+    if (result['token'] is String) {
+      authToken = result['token'] as String;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('edutools_auth_token', authToken!);
+    }
+    return result;
+  }
+
   /// Request email verification link (for Google Sign-In flow)
   Future<Map<String, dynamic>> requestEmailVerification(String email, {String? displayName}) async {
     final norm = email.trim().toLowerCase();

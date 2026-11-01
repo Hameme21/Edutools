@@ -1,3 +1,4 @@
+import '../../models/departments.dart';
 import 'package:flutter/material.dart';
 import '../../state/calendar_state.dart';
 import '../../services/api_service.dart';
@@ -141,7 +142,12 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                 children: [
                   Expanded(child: _buildField('Student ID', _idCtrl, isDark)),
                   const SizedBox(width: 10),
-                  Expanded(child: _buildField('Department', _deptCtrl, isDark)),
+                  Expanded(child: DropdownButtonFormField<String>(
+                    initialValue: departments.contains(_deptCtrl.text) ? _deptCtrl.text : null,
+                    decoration: const InputDecoration(labelText: 'Department'),
+                    items: departments.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                    onChanged: (value) => _deptCtrl.text = value ?? '',
+                  )),
                 ],
               ),
               const SizedBox(height: 12),

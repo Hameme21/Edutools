@@ -1,3 +1,4 @@
+import '../../services/google_sign_in_session.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -8,7 +9,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../state/calendar_state.dart';
 import '../../theme/app_theme.dart';
 import 'student_login_dialog.dart';
-import 'google_otp_verify_dialog.dart';
+import 'google_registration_dialog.dart';
+import '../../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final CalendarState state;
@@ -26,8 +28,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-  static Future<void>? _googleInitialization;
-  static const _driveScope = 'https://www.googleapis.com/auth/drive.file';
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -51,28 +51,7 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  Future<void> _initializeGoogleSignIn() async {
-    try {
-      await (_googleInitialization ??= GoogleSignIn.instance.initialize(
-        serverClientId: '1097225985625-1tgbd5ie7vl09cda6tj2iulnoqsu9fhq.apps.googleusercontent.com',
-      )).timeout(const Duration(seconds: 15));
-    } catch (_) {
-      _googleInitialization = null;
-      rethrow;
-    }
-  }
-
-  Future<void> _authorizeDrive(GoogleSignInAccount account) async {
-    try {
-      final authorization = await account.authorizationClient
-          .authorizeScopes([_driveScope])
-          .timeout(const Duration(seconds: 60));
-      widget.state.driveSyncService.setAccessToken(authorization.accessToken);
-    } catch (error) {
-      // Optional Drive access must never prevent or undo a successful login.
-      debugPrint('Google Drive authorization did not complete: $error');
-    }
-  }
+  Future<void> _initializeGoogleSignIn() => GoogleSignInSession.initialize();
 
   Future<void> _handleGoogleSignIn() async {
     if (_isLoading) return;
@@ -83,12 +62,10 @@ class _LoginScreenState extends State<LoginScreen>
 
     try {
       UserCredential userCredential;
-      GoogleSignInAccount? googleAccount;
 
       if (kIsWeb) {
         final provider = GoogleAuthProvider();
         provider.addScope('email');
-        provider.addScope(_driveScope);
         userCredential = await FirebaseAuth.instance
             .signInWithPopup(provider)
             .timeout(const Duration(seconds: 90));
@@ -104,7 +81,6 @@ class _LoginScreenState extends State<LoginScreen>
             .authenticate(scopeHint: ['email'])
             .timeout(const Duration(seconds: 90));
         if (!mounted) return;
-        googleAccount = account;
         final idToken = account.authentication.idToken;
         if (idToken == null || idToken.isEmpty) {
           throw Exception(
@@ -127,24 +103,23 @@ class _LoginScreenState extends State<LoginScreen>
       final displayName = user.displayName ?? _formatNameFromEmail(email);
       setState(() => _isLoading = false);
 
-      final verified = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => GoogleOtpVerifyDialog(
-          email: email,
-          displayName: displayName,
-          state: widget.state,
-        ),
-      );
-
+      final idToken = await user.getIdToken();
+      if (idToken == null) throw Exception('Please sign in with Google again.');
+      var session = await ApiService().googleSession(idToken);
       if (!mounted) return;
-      if (verified == true && widget.state.isLoggedIn) {
-        widget.onLoginComplete();
-        if (googleAccount != null) {
-          // Ask for optional Drive access only after the app has logged in.
-          unawaited(_authorizeDrive(googleAccount));
-        }
+      if (session['requiresRegistration'] == true) {
+        final registered = await showDialog<Map<String, dynamic>>(
+          context: context, barrierDismissible: false,
+          builder: (_) => GoogleRegistrationDialog(idToken: idToken, email: email, displayName: displayName),
+        );
+        if (registered == null || !mounted) return;
+        session = registered;
       }
+      final profile = Map<String, dynamic>.from(session['student'] as Map);
+      widget.state.loginStudent(email: profile['email'], studentId: profile['studentId'],
+        fullName: profile['fullName'], department: profile['department']);
+      widget.onLoginComplete();
+      // Drive permission is requested by the explicit sync action.
     } on TimeoutException {
       if (!mounted) return;
       setState(() {

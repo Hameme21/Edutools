@@ -1,3 +1,4 @@
+import '../../services/android_notification_service.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,7 +8,7 @@ class NotificationPermissionScreen extends StatefulWidget {
 
   const NotificationPermissionScreen({super.key, required this.onComplete});
 
-  static const _prefKey = 'notification_permission_shown';
+  static const _prefKey = 'notification_permission_native_v2_shown';
 
   static Future<bool> shouldShow() async {
     final prefs = await SharedPreferences.getInstance();
@@ -60,8 +61,13 @@ class _NotificationPermissionScreenState
     super.dispose();
   }
 
-  void _enableNotifications() {
-    NotificationPermissionScreen.markShown();
+  Future<void> _enableNotifications() async {
+    final granted = await AndroidNotificationService.requestPermission();
+    await NotificationPermissionScreen.markShown();
+    if (!mounted) return;
+    if (!granted && AndroidNotificationService.supported) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notifications are off. You can enable them in Android app settings.')));
+    }
     widget.onComplete();
   }
 

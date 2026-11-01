@@ -1,3 +1,4 @@
+import '../../models/departments.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/student_profile.dart';
@@ -112,7 +113,7 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
           fullName: resolvedName,
           department: resolvedDept,
         );
-        await widget.state.syncWithGoogleDrive();
+        await widget.state.syncWithWebsite();
 
         if (mounted) {
           Navigator.of(context).pop();
@@ -170,7 +171,7 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
         fullName: studentJson['fullName'] ?? StudentProfile.formatNameFromEmail(email),
         department: studentJson['department'] ?? 'Computer Science & Engineering',
       );
-      await widget.state.syncWithGoogleDrive();
+      await widget.state.syncWithWebsite();
 
       setState(() => _isLoading = false);
       if (mounted) {
@@ -293,14 +294,15 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
 
   Future<void> _handleSync() async {
     setState(() => _isLoading = true);
-    await widget.state.syncWithGoogleDrive();
+    final synced = await widget.state.syncWithGoogleDrive();
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Schedule & notices synced successfully!'),
-          backgroundColor: Color(0xFF10B981),
+        SnackBar(
+          content: Text(synced ? 'Google Drive routine synced.' : 'Sync failed. Check Google Drive access and try again.'),
+          backgroundColor: synced ? const Color(0xFF10B981) : Colors.orange,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -663,14 +665,11 @@ class _StudentLoginDialogState extends State<StudentLoginDialog> {
         ),
       ),
       const SizedBox(height: 12),
-      TextField(
-        controller: _departmentController,
-        keyboardType: TextInputType.text,
-        decoration: const InputDecoration(
-          labelText: 'Department',
-          prefixIcon: Icon(Icons.account_balance_outlined, size: 20),
-          hintText: 'e.g. Computer Science & Engineering',
-        ),
+      DropdownButtonFormField<String>(
+        initialValue: departments.contains(_departmentController.text) ? _departmentController.text : null,
+        decoration: const InputDecoration(labelText: 'Department *', prefixIcon: Icon(Icons.account_balance_outlined, size: 20)),
+        items: departments.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+        onChanged: (value) => _departmentController.text = value ?? '',
       ),
       const SizedBox(height: 12),
       TextField(

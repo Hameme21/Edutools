@@ -20,7 +20,7 @@ import '../services/student_sync_service.dart';
 
 class CalendarState extends ChangeNotifier {
   final CalendarService _calendarService = CalendarService();
-  final GoogleDriveSyncService _driveSyncService = GoogleDriveSyncService();
+  final GoogleDriveSyncService _driveSyncService;
   late final ReminderService _reminderService;
 
   DateTime _selectedDate = DateTime.now();
@@ -42,8 +42,9 @@ class CalendarState extends ChangeNotifier {
   bool _syncPending = false;
   bool _disposed = false;
 
-  CalendarState({StudentSyncService? studentSyncService})
-      : _studentSyncService = studentSyncService ?? StudentSyncService() {
+  CalendarState({StudentSyncService? studentSyncService, GoogleDriveSyncService? driveSyncService})
+      : _studentSyncService = studentSyncService ?? StudentSyncService(),
+        _driveSyncService = driveSyncService ?? GoogleDriveSyncService() {
     _reminderService = ReminderService(_calendarService);
     // User requested: Keep the official academic notices, but don't add sample classes.
     _calendarService.setNotices(SampleDataService.getOfficialAcademicCalendar());
@@ -135,6 +136,7 @@ class CalendarState extends ChangeNotifier {
   }
 
   void logoutStudent() {
+    _driveSyncService.setAccessToken(null);
     _currentStudent = null;
     _scheduleDirty = false;
     _syncPending = false;
@@ -418,6 +420,7 @@ class CalendarState extends ChangeNotifier {
   }
 
   Future<bool> syncWithGoogleDrive() async {
+    if (_currentStudent == null || _isSyncing) return false;
     _isSyncing = true;
     notifyListeners();
 
@@ -430,31 +433,32 @@ class CalendarState extends ChangeNotifier {
         settings: reminderSettings,
       );
 
-      // 1. Upload snapshot to Google Drive
-      await _driveSyncService.uploadToDrive(payload);
-
-      // 2. Pull remote Google Drive updates
-      final remote = await _driveSyncService.downloadFromDrive();
-      if (remote != null) {
+      await _driveSyncService.ensureAccess(email: _currentStudent!.email);
+      final fileId = await _driveSyncService.findSyncFileId();
+      if (fileId == null) {
+        if (!await _driveSyncService.uploadToDrive(payload, createOnly: true)) throw StateError('Could not create the routine file. Please retry sync.');
+      } else {
+        final remote = await _driveSyncService.downloadFromDrive(fileId: fileId);
+        if (remote == null || remote['classes'] is! List) throw StateError('The routine JSON could not be read.');
+        final owner = remote['student'] is Map ? remote['student']['email']?.toString().toLowerCase() : null;
+        if (owner != null && owner != _currentStudent?.email.toLowerCase()) throw StateError('The Drive routine belongs to a different account.');
+        _calendarService.setClasses((remote['classes'] as List).map((c) => ClassSchedule.fromJson(Map<String, dynamic>.from(c))).toList());
+        if (remote['routineRange'] == null) _calendarService.clearRoutineDateRange();
         _applySyncPayload(remote);
       }
-    } catch (_) {}
-
-    // Broadcast update to web server as well
-    _isSyncing = false;
-    final websiteSynced = await syncWithWebsite();
-
-    if (_currentStudent != null) {
-      _currentStudent = _currentStudent!.copyWith(
-        isSynced: websiteSynced,
-        lastSyncTime: DateTime.now(),
-      );
+      _scheduleDirty = true;
+      _scheduleRevision++;
+      _reminderService.refreshReminders(referenceDate: DateTime.now());
+      await _saveSessionToDisk();
+    } catch (error) {
+      debugPrint('Drive sync failed: $error');
+      _isSyncing = false;
+      if (_currentStudent != null) _currentStudent = _currentStudent!.copyWith(isSynced: false);
+      notifyListeners();
+      return false;
     }
-
-    _saveSessionToDisk();
     _isSyncing = false;
-    notifyListeners();
-    return websiteSynced;
+    return await syncWithWebsite();
   }
 
   void _applySyncPayload(Map<String, dynamic> data) {

@@ -49,6 +49,12 @@ function saveRegisteredStudents() {
     }
     const data = Object.fromEntries(studentStore.entries());
     fs.writeFileSync(STUDENTS_DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    if (require('../db').isConnected()) {
+      const RegisteredStudent = require('../models/RegisteredStudent');
+      RegisteredStudent.bulkWrite(Object.entries(data).map(([email, profile]) => ({
+        updateOne: { filter: { email }, update: { $set: { profile } }, upsert: true },
+      }))).catch(error => console.warn('[STUDENT DB] Persistence failed:', error.message));
+    }
   } catch (err) {
     console.error('[STUDENT DB] Failed to save students_db.json:', err.message);
   }
@@ -326,6 +332,15 @@ async function requestOtp(email, options = {}) {
 
   // 3. Check registration/sign-in specific rules
   if (options.isRegistration) {
+    const departmentAliases = {
+      'Computer Science & Engineering': 'CSE', 'Electrical & Electronic Engineering': 'EEE',
+      'Civil Engineering': 'CE', 'Data Science': 'DS', 'Business Administration': 'BBA',
+    };
+    options.department = departmentAliases[options.department] || options.department;
+    if (!['CSE', 'DS', 'BBA', 'CE', 'EDS', 'EEE', 'BSE'].includes(options.department)) {
+      throw new Error('Please select a valid department.');
+    }
+
     if (isEmailRegistered(normalizedEmail)) {
       const err = new Error('This account is already registered. Please sign in with your credentials.');
       err.status = 400;
@@ -696,6 +711,15 @@ async function requestEmailVerification(email, displayName, options = {}) {
   }
 
   if (options.isRegistration) {
+    const departmentAliases = {
+      'Computer Science & Engineering': 'CSE', 'Electrical & Electronic Engineering': 'EEE',
+      'Civil Engineering': 'CE', 'Data Science': 'DS', 'Business Administration': 'BBA',
+    };
+    options.department = departmentAliases[options.department] || options.department;
+    if (!['CSE', 'DS', 'BBA', 'CE', 'EDS', 'EEE', 'BSE'].includes(options.department)) {
+      throw new Error('Please select a valid department.');
+    }
+
     if (!isUiuEmail(normalizedEmail)) {
       throw new Error('Only UIU student emails with degree program are allowed (e.g. student@bscse.uiu.ac.bd).');
     }
