@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test_suite.js"
+    "test": "node test_suite.js",
+    "test:email": "node --test tests/email_service.test.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -16,7 +17,6 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.24.7",
-    "multer": "^1.4.5-lts.1",
-    "nodemailer": "^10.2.0"
+    "multer": "^1.4.5-lts.1"
   }
 }

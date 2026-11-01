@@ -2,7 +2,7 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const emailService = require('./email_service');
 const fs = require('fs');
 const path = require('path');
 
@@ -13,37 +13,8 @@ const RESET_TTL_MS = 15 * 60 * 1000; // 15 minutes for password reset links
 
 const BACKEND_URL = process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL || 'http://localhost:3000';
 
-// SMTP credentials loaded from backend/.env
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_FROM_EMAIL = process.env.SMTP_FROM_EMAIL || SMTP_USER;
-
-console.log(`[SMTP CONFIG] HOST=${SMTP_HOST} PORT=${SMTP_PORT}`);
-console.log(`[SMTP CONFIG] USER=${SMTP_USER ? SMTP_USER : '(MISSING — check backend/.env)'}`);
-console.log(`[SMTP CONFIG] PASS=${SMTP_PASS ? SMTP_PASS.substring(0, 4) + '****' : '(MISSING — check backend/.env)'}`);
-
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_PORT === 465,
-    family: 4,
-    pool: true,
-    maxConnections: 2,
-    maxMessages: 10,
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
-}
-
-let transporter = createTransporter();
+// Email delivery uses Brevo over HTTPS; credentials stay on the backend.
+const EMAIL_FROM = process.env.EMAIL_FROM?.trim();
 
 // Persistent data storage paths
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -211,36 +182,26 @@ function extractUniversityName(domain) {
 }
 
 /**
- * Dispatches OTP email via SMTP (Nodemailer)
+ * Dispatches OTP email via the Brevo HTTPS API
  */
 async function sendEmailOtp(email, otp) {
   const norm = email.trim().toLowerCase();
-  const domain = norm.split('@')[1] || '';
-
-  if (
-    process.env.NODE_ENV === 'test' ||
-    norm.startsWith('john.doe@') ||
-    norm.startsWith('alex.chen@') ||
-    domain === 'mit.edu' ||
-    domain === 'stanford.edu' ||
-    domain === 'example.com' ||
-    domain === 'test.com'
-  ) {
-    console.log(`[TEST/DEV OTP MOCK] Skipping live SMTP send to ${norm}. Mock OTP is: ${otp}`);
+  if (process.env.NODE_ENV === 'test') {
+    console.log(`[TEST/DEV OTP MOCK] Skipping live EMAIL_API send to ${norm}. Mock OTP is: ${otp}`);
     return { delivered: true, messageId: 'mock-test-id', timestamp: new Date().toISOString() };
   }
 
   console.log(`\n========================================`);
   console.log(`📧 [DISPATCHING LIVE OTP EMAIL]`);
-  console.log(`From: ${SMTP_FROM_EMAIL}`);
+  console.log(`From: ${EMAIL_FROM}`);
   console.log(`To: ${norm}`);
   console.log(`Subject: Edutools UIU - Verification Code`);
   console.log(`========================================\n`);
 
   const mailOptions = {
-    from: `"Edutools UIU Academic Portal" <${SMTP_FROM_EMAIL}>`,
+    from: { name: 'Edutools UIU Academic Portal', email: EMAIL_FROM },
     to: norm,
-    replyTo: SMTP_FROM_EMAIL,
+    replyTo: EMAIL_FROM,
     subject: `Edutools UIU - Your Verification Code: ${otp}`,
     text: `Welcome to Edutools (United International University)!\n\nYour 6-digit verification code is: ${otp}\n\nThis code will expire in 5 minutes.\nIf you did not request this code, please ignore this email.`,
     html: `
@@ -257,42 +218,16 @@ async function sendEmailOtp(email, otp) {
           <p style="color: #ef4444; font-size: 12px; margin: 12px 0 0 0; font-weight: 600;">⏱ Valid for 5 minutes only</p>
         </div>
         <p style="color: #64748b; font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
-          Sent from <strong>${SMTP_FROM_EMAIL}</strong>.<br/>
+          Sent from <strong>${EMAIL_FROM}</strong>.<br/>
           If you did not request this login or registration code, you can safely ignore this email.
         </p>
       </div>
     `,
   };
 
-  let info;
-  try {
-    info = await transporter.sendMail(mailOptions);
-  } catch (sendErr) {
-    console.error(`❌ [transporter.sendMail ATTEMPT 1 FAILED]`);
-    console.error(`   message: ${sendErr.message}`);
-    console.error(`   code: ${sendErr.code || 'none'}`);
-    console.error(`   responseCode: ${sendErr.responseCode || 'none'}`);
+  const info = await emailService.sendEmail(mailOptions);
 
-    console.log(`🔄 [SMTP RETRY] Creating fresh transporter and retrying...`);
-    try {
-      transporter.close();
-    } catch (_) {}
-    transporter = createTransporter();
-
-    try {
-      info = await transporter.sendMail(mailOptions);
-      console.log(`✅ [SMTP RETRY OK] Delivered on second attempt.`);
-    } catch (retryErr) {
-      console.error(`❌ [transporter.sendMail ATTEMPT 2 FAILED]`);
-      console.error(`   message: ${retryErr.message}`);
-      console.error(`   code: ${retryErr.code || 'none'}`);
-      console.error(`   responseCode: ${retryErr.responseCode || 'none'}`);
-      console.error(`   response: ${retryErr.response || 'none'}`);
-      console.error(`   command: ${retryErr.command || 'none'}`);
-      throw retryErr;
-    }
-  }
-  console.log(`✅ [SMTP SENT] MessageId: ${info.messageId} | accepted: ${JSON.stringify(info.accepted)} | rejected: ${JSON.stringify(info.rejected)}`);
+  console.log(`✅ [EMAIL API ACCEPTED] MessageId: ${info.messageId} | accepted: ${JSON.stringify(info.accepted)} | rejected: ${JSON.stringify(info.rejected)}`);
   return { delivered: true, messageId: info.messageId, timestamp: new Date().toISOString() };
 }
 
@@ -418,7 +353,6 @@ async function requestOtp(email, options = {}) {
   recordDeviceOtpRequest(options.deviceId);
 
   const otp = generate6DigitOtp();
-  console.log(`\n🔑 [OTP GENERATED] Email: ${normalizedEmail} | OTP: ${otp} | Mode: ${options.isRegistration ? 'REGISTRATION' : 'SIGN-IN'}`);
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = hashOtp(otp, salt);
   const expiresAt = Date.now() + OTP_TTL_MS;
@@ -446,31 +380,27 @@ async function requestOtp(email, options = {}) {
     pendingPasswordSalt,
   });
 
-  // SMTP email dispatch with fallback timeout
+  // The shared HTTPS sender enforces its own request timeout.
   let emailResult = null;
   try {
-    emailResult = await Promise.race([
-      sendEmailOtp(normalizedEmail, otp),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (45s) — server could not reach mail server after retry')), 45000))
-    ]);
-    console.log(`✅ [SMTP OK] Email delivered to ${normalizedEmail} | MessageId: ${emailResult.messageId}`);
+    emailResult = await sendEmailOtp(normalizedEmail, otp);
+    console.log(`✅ [EMAIL_API OK] Email accepted for ${normalizedEmail} | MessageId: ${emailResult.messageId}`);
   } catch (err) {
-    console.error(`❌ [SMTP DISPATCH FAILED] To: ${normalizedEmail}`);
+    console.error(`❌ [EMAIL_API DISPATCH FAILED] To: ${normalizedEmail}`);
     console.error(`   Error: ${err.message}`);
     console.error(`   err.code: ${err.code || 'none'}`);
     console.error(`   err.command: ${err.command || 'none'}`);
     console.error(`   err.responseCode: ${err.responseCode || 'none'}`);
     console.error(`   err.response: ${err.response || 'none'}`);
     console.error(`   Stack: ${err.stack}`);
-    console.error(`   OTP was: ${otp} (generated for ${normalizedEmail})`);
 
     otpStore.delete(normalizedEmail);
     console.error(`   OTP removed from store — user must retry.`);
 
-    const smtpErr = new Error(`Email delivery failed: ${err.message}. Please try again in a moment.`);
-    smtpErr.status = 500;
-    smtpErr.code = 'SMTP_FAILED';
-    throw smtpErr;
+    const emailErr = new Error(`Email delivery failed: ${err.message}. Please try again in a moment.`);
+    emailErr.status = 500;
+    emailErr.code = 'EMAIL_API_FAILED';
+    throw emailErr;
   }
 
   return {
@@ -644,34 +574,6 @@ async function loginWithPassword(email, password) {
   };
 }
 
-/**
- * Verifies SMTP transporter connectivity at startup
- */
-async function verifySMTP() {
-  if (!SMTP_USER || !SMTP_PASS) {
-    console.warn('[SMTP] ⚠️  SMTP_USER or SMTP_PASS not set in backend/.env — OTP emails will not work.');
-    return false;
-  }
-  try {
-    await transporter.verify();
-    console.log('[SMTP] Transporter verified — ready to send emails.');
-    return true;
-  } catch (err) {
-    console.warn('[SMTP] Transporter verification failed:', err.message);
-    console.warn('[SMTP] Recreating transporter for fresh connection...');
-    try { transporter.close(); } catch (_) {}
-    transporter = createTransporter();
-    try {
-      await transporter.verify();
-      console.log('[SMTP] Fresh transporter verified — ready to send emails.');
-      return true;
-    } catch (retryErr) {
-      console.warn('[SMTP] Fresh transporter also failed:', retryErr.message);
-      console.warn('[SMTP] OTP emails may not be delivered. Password login still works.');
-      return false;
-    }
-  }
-}
 
 /**
  * Sets or updates a password for an existing student account.
@@ -735,9 +637,9 @@ async function sendVerificationEmail(email, token) {
   const verifyUrl = `${BACKEND_URL}/api/auth/verify-email?token=${token}`;
 
   const mailOptions = {
-    from: `"Edutools UIU Academic Portal" <${SMTP_FROM_EMAIL}>`,
+    from: { name: 'Edutools UIU Academic Portal', email: EMAIL_FROM },
     to: norm,
-    replyTo: SMTP_FROM_EMAIL,
+    replyTo: EMAIL_FROM,
     subject: 'Edutools UIU - Verify Your Email Address',
     text: `Welcome to Edutools (United International University)!\n\nClick the link below to verify your email address:\n${verifyUrl}\n\nThis link will expire in 15 minutes.\nIf you did not request this, please ignore this email.`,
     html: `
@@ -758,46 +660,24 @@ async function sendVerificationEmail(email, token) {
           <a href="${verifyUrl}" style="color: #2563eb; word-break: break-all;">${verifyUrl}</a>
         </p>
         <p style="color: #94a3b8; font-size: 11px; line-height: 1.5; margin: 12px 0 0 0; text-align: center;">
-          Sent from <strong>${SMTP_FROM_EMAIL}</strong>.<br/>
+          Sent from <strong>${EMAIL_FROM}</strong>.<br/>
           If you did not request this, you can safely ignore this email.
         </p>
       </div>
     `,
   };
 
-  // Skip real SMTP for test/dev emails
-  const domain = norm.split('@')[1] || '';
-  if (
-    process.env.NODE_ENV === 'test' ||
-    norm.startsWith('john.doe@') ||
-    norm.startsWith('alex.chen@') ||
-    domain === 'mit.edu' ||
-    domain === 'stanford.edu' ||
-    domain === 'example.com' ||
-    domain === 'test.com'
-  ) {
+  // Suppress delivery only in explicit test mode.
+  if (process.env.NODE_ENV === 'test') {
     console.log(`[TEST/DEV] Mock verification email to ${norm}. Link: ${verifyUrl}`);
     return { delivered: true, messageId: 'mock-verify-id', timestamp: new Date().toISOString() };
   }
 
   console.log(`📧 [DISPATCHING VERIFICATION EMAIL] To: ${norm}`);
 
-  let info;
-  try {
-    info = await transporter.sendMail(mailOptions);
-  } catch (sendErr) {
-    console.error(`❌ [Verification email ATTEMPT 1 FAILED] ${sendErr.message}`);
-    try { transporter.close(); } catch (_) {}
-    transporter = createTransporter();
-    try {
-      info = await transporter.sendMail(mailOptions);
-    } catch (retryErr) {
-      console.error(`❌ [Verification email ATTEMPT 2 FAILED] ${retryErr.message}`);
-      throw retryErr;
-    }
-  }
+  const info = await emailService.sendEmail(mailOptions);
 
-  console.log(`✅ [VERIFICATION EMAIL SENT] MessageId: ${info.messageId}`);
+  console.log(`✅ [VERIFICATION EMAIL ACCEPTED] MessageId: ${info.messageId}`);
   return { delivered: true, messageId: info.messageId, timestamp: new Date().toISOString() };
 }
 
@@ -874,16 +754,13 @@ async function requestEmailVerification(email, displayName, options = {}) {
   emailVerifiedSet.delete(normalizedEmail);
 
   try {
-    await Promise.race([
-      sendVerificationEmail(normalizedEmail, token),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (45s)')), 45000)),
-    ]);
+    await sendVerificationEmail(normalizedEmail, token);
   } catch (err) {
     emailVerificationStore.delete(token);
-    const smtpErr = new Error(`Failed to send verification email: ${err.message}. Please try again.`);
-    smtpErr.status = 500;
-    smtpErr.code = 'SMTP_FAILED';
-    throw smtpErr;
+    const emailErr = new Error(`Failed to send verification email: ${err.message}. Please try again.`);
+    emailErr.status = 500;
+    emailErr.code = 'EMAIL_API_FAILED';
+    throw emailErr;
   }
 
   return {
@@ -1003,9 +880,9 @@ async function sendPasswordResetEmail(email, token) {
   const resetUrl = `${BACKEND_URL}/api/auth/reset-password?token=${token}`;
 
   const mailOptions = {
-    from: `"Edutools UIU Academic Portal" <${SMTP_FROM_EMAIL}>`,
+    from: { name: 'Edutools UIU Academic Portal', email: EMAIL_FROM },
     to: norm,
-    replyTo: SMTP_FROM_EMAIL,
+    replyTo: EMAIL_FROM,
     subject: 'Edutools UIU - Reset Your Password',
     text: `You requested a password reset for your Edutools account.\n\nClick the link below to set a new password:\n${resetUrl}\n\nThis link will expire in 15 minutes.\nIf you did not request this, please ignore this email.`,
     html: `
@@ -1032,34 +909,17 @@ async function sendPasswordResetEmail(email, token) {
     `,
   };
 
-  // Skip for test/dev
-  const domain = norm.split('@')[1] || '';
-  if (
-    process.env.NODE_ENV === 'test' ||
-    domain === 'example.com' ||
-    domain === 'test.com'
-  ) {
+  // Suppress delivery only in explicit test mode.
+  if (process.env.NODE_ENV === 'test') {
     console.log(`[TEST/DEV] Mock reset email to ${norm}. Link: ${resetUrl}`);
     return { delivered: true, messageId: 'mock-reset-id' };
   }
 
   console.log(`📧 [DISPATCHING PASSWORD RESET EMAIL] To: ${norm}`);
 
-  let info;
-  try {
-    info = await transporter.sendMail(mailOptions);
-  } catch (sendErr) {
-    console.error(`❌ [Reset email ATTEMPT 1 FAILED] ${sendErr.message}`);
-    try { transporter.close(); } catch (_) {}
-    transporter = createTransporter();
-    try {
-      info = await transporter.sendMail(mailOptions);
-    } catch (retryErr) {
-      throw retryErr;
-    }
-  }
+  const info = await emailService.sendEmail(mailOptions);
 
-  console.log(`✅ [RESET EMAIL SENT] MessageId: ${info.messageId}`);
+  console.log(`✅ [RESET EMAIL ACCEPTED] MessageId: ${info.messageId}`);
   return { delivered: true, messageId: info.messageId };
 }
 
@@ -1092,10 +952,7 @@ async function requestPasswordReset(email) {
   });
 
   try {
-    await Promise.race([
-      sendPasswordResetEmail(normalizedEmail, token),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout (45s)')), 45000)),
-    ]);
+    await sendPasswordResetEmail(normalizedEmail, token);
   } catch (err) {
     passwordResetStore.delete(token);
     console.error(`❌ [RESET EMAIL FAILED] ${err.message}`);
@@ -1166,7 +1023,6 @@ function resetPasswordWithToken(token, newPassword) {
 }
 
 module.exports = {
-  transporter,
   isValidEmail,
   isUiuEmail,
   isUniversityEmail,
@@ -1177,7 +1033,7 @@ module.exports = {
   setPassword,
   checkHasPassword,
   verifySessionToken,
-  verifySMTP,
+  getEmailStatus: emailService.getEmailStatus,
   formatNameFromEmail,
   studentStore,
   otpStore,

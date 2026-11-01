@@ -46,20 +46,13 @@ app.get('/', async (req, res) => {
     frontendStatus = `UNREACHABLE (${e.code || e.message})`;
   }
 
-  let smtpStatus = 'UNKNOWN';
-  try {
-    const authService = require('./services/auth_service');
-    await authService.transporter.verify();
-    smtpStatus = 'CONNECTED';
-  } catch (e) {
-    smtpStatus = `FAILED (${e.code || e.message})`;
-  }
+  const emailStatus = require('./services/auth_service').getEmailStatus();
 
   const uptimeSeconds = Math.floor(process.uptime());
   const uptimeStr = `${Math.floor(uptimeSeconds / 3600)}h ${Math.floor((uptimeSeconds % 3600) / 60)}m ${uptimeSeconds % 60}s`;
 
   if (req.accepts('html') && (req.headers['sec-fetch-dest'] === 'document' || req.headers['user-agent']?.includes('Mozilla'))) {
-    const smtpDot = smtpStatus === 'CONNECTED' ? '#4ade80' : '#f87171';
+    const emailDot = emailStatus === 'CONFIGURED' ? '#4ade80' : '#f87171';
     const frontendDot = frontendStatus === 'REACHABLE' ? '#4ade80' : '#f87171';
     return res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -121,8 +114,8 @@ app.get('/', async (req, res) => {
       <span class="status-val">${frontendStatus}${frontendLatency !== null ? `<span class="latency">${frontendLatency}ms</span>` : ''}</span>
     </div>
     <div class="status-row">
-      <span class="status-label"><span class="dot" style="background:${smtpDot}"></span>Email (SMTP)</span>
-      <span class="status-val">${smtpStatus}</span>
+      <span class="status-label"><span class="dot" style="background:${emailDot}"></span>Email (Brevo API)</span>
+      <span class="status-val">${emailStatus}</span>
     </div>
     <div class="status-row">
       <span class="status-label"><span class="dot" style="background:#4ade80"></span>Uptime</span>
@@ -153,7 +146,7 @@ app.get('/', async (req, res) => {
     status: 'ONLINE',
     uptime: uptimeStr,
     frontend: { url: FRONTEND_URL, status: frontendStatus, latencyMs: frontendLatency },
-    smtp: smtpStatus,
+    email: { provider: 'brevo', status: emailStatus },
     endpoints: {
       webApp: '/app',
       health: '/api/health',
@@ -199,7 +192,7 @@ app.use((err, req, res, next) => {
 if (require.main === module) {
   const authService = require('./services/auth_service');
   connectDB().then(() => {
-    authService.verifySMTP();
+    console.log('[EMAIL API] Brevo configuration:', authService.getEmailStatus());
     app.listen(PORT, () => {
       console.log(`\n🎓 ========================================================`);
       console.log(`🚀 Edutools Full-Stack Server listening on http://localhost:${PORT}`);

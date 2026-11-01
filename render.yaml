@@ -9,9 +9,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: EMAIL_USER
-        value: hamimasir5@gmail.com
-      - key: EMAIL_PASS
-        value: faixfyjgwixzbisl
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: JWT_SECRET
+        sync: false
       - key: MONGODB_URI
         sync: false
