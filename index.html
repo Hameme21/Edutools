@@ -5607,103 +5607,119 @@ async function syncWithGoogleDriveWeb(push = true) {
   }
 
   saveStudentSession();
-  await syncStudentWithServer(push);
+  const synced = await syncStudentWithServer(push);
   renderAll();
-  showToast('Google Drive & Web sync completed successfully!', 'success');
+  showToast(synced ? 'Account routine sync completed.' : 'Cloud sync failed. Please try again.', synced ? 'success' : 'warning');
+}
+
+let routineSyncInFlight = null;
+let routineSyncPendingPush = false;
+
+async function syncOfficialNoticesWithServer(push) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    if (push) {
+      if (!Array.isArray(state.notices) || state.notices.length === 0) return;
+      await fetch(`${getApiBaseUrl()}/api/calendar/global-update`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: state.student.email, notices: state.notices }),
+        signal: controller.signal,
+      });
+    } else {
+      const response = await fetch(`${getApiBaseUrl()}/api/calendar/global-sync`, { signal: controller.signal });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (Array.isArray(data.notices) && data.notices.length > 0 &&
+          JSON.stringify(data.notices) !== JSON.stringify(state.notices)) {
+        state.notices = data.notices;
+        renderAll();
+      }
+    }
+  } catch (error) {
+    console.warn('Official notice sync failed:', error);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function syncStudentWithServer(push = true) {
-  try {
-    if (push) {
-      // 1. Broadcast global update to all users & devices (never push empty notices to avoid wiping others)
-      const globalPayload = {
-        source: state.student ? state.student.email : 'PC Web User',
-        classes: state.classes,
-      };
-      if (state.notices.length > 0) globalPayload.notices = state.notices;
-      await fetch(`${getApiBaseUrl()}/api/calendar/global-update`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(globalPayload),
-      });
+  if (!state.student) return false;
+  const dirtyKey = `edutools_routine_dirty:${state.student.email.trim().toLowerCase()}`;
+  if (push) {
+    routineSyncPendingPush = true;
+    localStorage.setItem(dirtyKey, '1');
+  }
+  if (!routineSyncInFlight && localStorage.getItem(dirtyKey) === '1') routineSyncPendingPush = true;
+  if (routineSyncInFlight) return routineSyncInFlight;
 
-      // 2. Push to student profile if logged in
-      if (state.student) {
-        const res = await fetch(`${getApiBaseUrl()}/api/student/sync`, {
+  routineSyncInFlight = (async () => {
+    do {
+      const shouldPush = routineSyncPendingPush;
+      routineSyncPendingPush = false;
+      const email = state.student.email.trim().toLowerCase();
+      try {
+        const options = shouldPush ? {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: state.student.email,
-            student: state.student,
-            classes: state.classes,
+            email, student: state.student, classes: state.classes,
+            routineRange: state.routineRange || null,
+            syncVersion: 1,
           }),
-        });
-        const data = await res.json();
-        if (data.classes && Array.isArray(data.classes)) {
-          state.classes = data.classes;
+        } : {};
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 20000);
+        let data;
+        try {
+          const path = shouldPush ? '/api/student/sync' : `/api/student/sync?email=${encodeURIComponent(email)}`;
+          const response = await fetch(`${getApiBaseUrl()}${path}`, { ...options, signal: controller.signal });
+          data = await response.json();
+          if (!response.ok || data.success !== true) throw new Error(data.error || 'Routine sync failed');
+        } finally {
+          clearTimeout(timer);
         }
-      }
-    } else {
-      // 1. Pull global network broadcast
-      const gRes = await fetch(`${getApiBaseUrl()}/api/calendar/global-sync`);
-      const gData = await gRes.json();
-      if (gData.version && gData.version > lastKnownGlobalVersion) {
-        lastKnownGlobalVersion = gData.version;
-        let hasChanges = false;
-
-        if (gData.classes && Array.isArray(gData.classes) && gData.classes.length > 0) {
-          if (JSON.stringify(gData.classes) !== JSON.stringify(state.classes)) {
-            state.classes = gData.classes;
-            hasChanges = true;
-          }
-        }
-
-        if (gData.notices && Array.isArray(gData.notices) && gData.notices.length > 0) {
-          if (gData.notices.length !== state.notices.length) {
-            state.notices = gData.notices;
-            hasChanges = true;
-          }
-        }
-
-        if (hasChanges) {
-          if (!state.routineRange && state.notices.length > 0) {
-            state.routineRange = autoFigureRoutineDates();
-          }
-          renderAll();
-          saveStudentSession();
-          showToast(`⚡ Live Schedule Updated from PC (${gData.source || 'Admin'})!`, 'info');
-        }
-      }
-
-      // 2. Pull student profile & schedule if logged in
-      if (state.student) {
-        const res = await fetch(`${getApiBaseUrl()}/api/student/sync?email=${encodeURIComponent(state.student.email)}`);
-        const data = await res.json();
-        let changed = false;
-
-        if (data.student && data.student.fullName && data.student.email) {
-          const remote = data.student;
-          if (remote.fullName !== state.student.fullName || remote.studentId !== state.student.studentId || remote.department !== state.student.department) {
-            state.student = { ...state.student, fullName: remote.fullName, studentId: remote.studentId || state.student.studentId, department: remote.department || state.student.department };
-            changed = true;
-          }
-        }
-
-        if (data.classes && Array.isArray(data.classes) && data.classes.length > 0) {
-          if (JSON.stringify(data.classes) !== JSON.stringify(state.classes)) {
+        if (!state.student || state.student.email.trim().toLowerCase() !== email) return false;
+        if (shouldPush && !routineSyncPendingPush) localStorage.removeItem(dirtyKey);
+        // An import/edit during a pending pull must not be overwritten by its reply.
+        if (!shouldPush && !routineSyncPendingPush) {
+          const legacyEmpty = !data.syncVersion && Array.isArray(data.classes) && data.classes.length === 0 && state.classes.length > 0;
+          const hasSchedule = !legacyEmpty && (data.hasSchedule === true || (Array.isArray(data.classes) && data.classes.length > 0));
+          if (hasSchedule && Array.isArray(data.classes)) {
             state.classes = data.classes;
-            changed = true;
+            if (Object.hasOwn(data, 'routineRange')) state.routineRange = data.routineRange;
+          } else if ((data.hasSchedule === false || legacyEmpty) && state.classes.length > 0) {
+            routineSyncPendingPush = true;
           }
-        }
-
-        if (changed) {
+          if (data.student && data.student.email) {
+            const remote = data.student;
+            state.student = { ...state.student,
+              fullName: remote.fullName || state.student.fullName,
+              studentId: remote.studentId || state.student.studentId,
+              department: remote.department || state.student.department,
+            };
+          }
           renderAll();
           saveStudentSession();
         }
+        await syncOfficialNoticesWithServer(shouldPush);
+      } catch (error) {
+        // Retry a failed local edit on the next polling tick, without a busy loop.
+        routineSyncPendingPush = routineSyncPendingPush || shouldPush;
+        console.warn('Routine sync failed:', error);
+        if (shouldPush) showToast('Routine saved on this device. Cloud sync failed; it will retry.', 'warning');
+        return false;
       }
-    }
-  } catch (_) {}
+    } while (routineSyncPendingPush);
+    return true;
+  })();
+  try {
+    return await routineSyncInFlight;
+  } finally {
+    routineSyncInFlight = null;
+  }
 }
+
 
 function renderNextMilestone() {
   const now = new Date();
@@ -7169,9 +7185,9 @@ function initEventListeners() {
 
   const forceSyncHandler = async () => {
     showToast('Syncing with Cloud & Mobile App...', 'info');
-    await syncStudentWithServer(true);
+    const synced = await syncStudentWithServer(false);
     renderAll();
-    showToast('Cloud sync complete! Up to date with Mobile App.', 'success');
+    showToast(synced ? 'Routine synced with your account.' : 'Cloud sync failed. Please try again.', synced ? 'success' : 'warning');
   };
 
   const btnForceSync = document.getElementById('btnForceCloudSync');

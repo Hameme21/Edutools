@@ -708,11 +708,17 @@ router.get('/student/sync', async (req, res) => {
 
   let syncedStudent = null;
   let syncedClasses = [];
+  let routineRange = null;
+  let hasSchedule = false;
+  let syncVersion = 0;
 
   try {
     if (isConnected()) {
       const doc = await StudentSchedule.findOne({ email }).lean();
       if (doc) {
+        hasSchedule = true;
+        routineRange = doc.routineRange || null;
+        syncVersion = doc.syncVersion || 0;
         syncedStudent = doc.student || null;
         syncedClasses = doc.classes || [];
       }
@@ -721,8 +727,11 @@ router.get('/student/sync', async (req, res) => {
     console.warn('[SYNC] MongoDB student read failed:', err.message);
   }
 
-  if (!syncedStudent) {
+  if (!hasSchedule) {
     const record = memStudentStore.get(email) || { classes: [], student: null };
+    hasSchedule = memStudentStore.has(email);
+    routineRange = record.routineRange || null;
+    syncVersion = record.syncVersion || 0;
     syncedStudent = record.student || null;
     if (record.classes && record.classes.length > 0) syncedClasses = record.classes;
   }
@@ -740,7 +749,7 @@ router.get('/student/sync', async (req, res) => {
     syncedStudent = authProfile;
   }
 
-  res.json({ success: true, classes: syncedClasses, student: syncedStudent });
+  res.json({ success: true, classes: syncedClasses, student: syncedStudent, routineRange, hasSchedule, syncVersion });
 });
 
 /**
@@ -748,23 +757,30 @@ router.get('/student/sync', async (req, res) => {
  * Persists student profile & schedule to MongoDB (with in-memory fallback)
  */
 router.post('/student/sync', async (req, res) => {
-  const { email, student, classes } = req.body;
+  const { email, student, classes, routineRange } = req.body;
   const targetEmail = (email || student?.email || '').trim().toLowerCase();
   if (!targetEmail) {
-    return res.json({ success: true, classes: classes || [] });
+    return res.status(400).json({ success: false, error: 'Email is required for routine sync.' });
   }
 
-  const classArray = Array.isArray(classes) ? classes : [];
+  if (!Array.isArray(classes)) {
+    return res.status(400).json({ success: false, error: 'Classes must be an array.' });
+  }
+  const classArray = classes;
   const now = new Date();
 
   // Always update in-memory
-  memStudentStore.set(targetEmail, { student, classes: classArray, updatedAt: now.toISOString() });
+  const previous = memStudentStore.get(targetEmail);
+  const snapshot = { student, classes: classArray, updatedAt: now.toISOString(), syncVersion: req.body.syncVersion === 1 ? 1 : 0 };
+  if (Object.hasOwn(req.body, 'routineRange')) snapshot.routineRange = routineRange;
+  else if (previous && Object.hasOwn(previous, 'routineRange')) snapshot.routineRange = previous.routineRange;
+  memStudentStore.set(targetEmail, snapshot);
 
   try {
     if (isConnected()) {
       await StudentSchedule.findOneAndUpdate(
         { email: targetEmail },
-        { $set: { student, classes: classArray, updatedAt: now } },
+        { $set: snapshot },
         { upsert: true, new: true }
       );
     }

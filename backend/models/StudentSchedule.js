@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const studentScheduleSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   student: { type: mongoose.Schema.Types.Mixed, default: null },
+  routineRange: { type: mongoose.Schema.Types.Mixed, default: null },
+  syncVersion: { type: Number, default: 0 },
   classes: { type: [mongoose.Schema.Types.Mixed], default: [] },
   updatedAt: { type: Date, default: Date.now },
 }, { timestamps: true });

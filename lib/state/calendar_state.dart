@@ -16,6 +16,7 @@ import '../services/file_parser_service.dart';
 import '../services/sample_data_service.dart';
 import '../services/google_drive_sync_service.dart';
 import '../services/api_service.dart';
+import '../services/student_sync_service.dart';
 
 class CalendarState extends ChangeNotifier {
   final CalendarService _calendarService = CalendarService();
@@ -35,7 +36,14 @@ class CalendarState extends ChangeNotifier {
 
   static String get _serverBaseUrl => ApiService.defaultBaseUrl;
 
-  CalendarState() {
+  final StudentSyncService _studentSyncService;
+  bool _scheduleDirty = false;
+  int _scheduleRevision = 0;
+  bool _syncPending = false;
+  bool _disposed = false;
+
+  CalendarState({StudentSyncService? studentSyncService})
+      : _studentSyncService = studentSyncService ?? StudentSyncService() {
     _reminderService = ReminderService(_calendarService);
     // User requested: Keep the official academic notices, but don't add sample classes.
     _calendarService.setNotices(SampleDataService.getOfficialAcademicCalendar());
@@ -47,6 +55,7 @@ class CalendarState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _autoSyncTimer?.cancel();
     super.dispose();
   }
@@ -108,7 +117,7 @@ class CalendarState extends ChangeNotifier {
 
     _saveSessionToDisk();
     _startAutoSync();
-    syncWithWebsite();
+    syncWithWebsite(push: false);
     notifyListeners();
   }
 
@@ -127,6 +136,11 @@ class CalendarState extends ChangeNotifier {
 
   void logoutStudent() {
     _currentStudent = null;
+    _scheduleDirty = false;
+    _syncPending = false;
+    _scheduleRevision++;
+    _calendarService.setClasses([]);
+    _calendarService.clearRoutineDateRange();
     _autoSyncTimer?.cancel();
     _autoSyncTimer = null;
     _deleteSessionFromDisk();
@@ -134,6 +148,7 @@ class CalendarState extends ChangeNotifier {
   }
 
   static List<File> _getCandidateSessionFiles() {
+    if (Platform.environment.containsKey('FLUTTER_TEST')) return [];
     final List<File> files = [];
     try {
       if (Platform.isAndroid) {
@@ -165,6 +180,8 @@ class CalendarState extends ChangeNotifier {
               profile.email != 'student@university.edu' &&
               profile.fullName != 'Alex Chen') {
             _currentStudent = profile;
+            _scheduleDirty = data['scheduleDirty'] == true;
+            if (data['routineRange'] is Map) _applySyncPayload({'routineRange': data['routineRange']});
             _startAutoSync();
           }
           if (data['classes'] != null && data['classes'] is List) {
@@ -197,6 +214,8 @@ class CalendarState extends ChangeNotifier {
                   profile.email != 'student@university.edu' &&
                   profile.fullName != 'Alex Chen') {
                 _currentStudent = profile;
+            _scheduleDirty = data['scheduleDirty'] == true;
+            if (data['routineRange'] is Map) _applySyncPayload({'routineRange': data['routineRange']});
                 _startAutoSync();
               }
               if (data['classes'] != null && data['classes'] is List) {
@@ -221,6 +240,8 @@ class CalendarState extends ChangeNotifier {
   Future<void> _saveSessionToDisk() async {
     final data = {
       'student': _currentStudent?.toJson(),
+      'routineRange': routineRange?.toJson(),
+      'scheduleDirty': _scheduleDirty,
       'classes': _calendarService.classes.map((c) => c.toJson()).toList(),
       'savedAt': DateTime.now().toIso8601String(),
     };
@@ -270,10 +291,11 @@ class CalendarState extends ChangeNotifier {
 
   Future<void> _pullServerUpdatesSilently() async {
     if (Platform.environment.containsKey('FLUTTER_TEST')) return;
+    await syncWithWebsite(silent: true);
+    if (_disposed) return;
+    // Global broadcasts carry official notices, never personal class routines.
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
     try {
-      final client = HttpClient();
-      client.connectionTimeout = const Duration(seconds: 2);
-
       // 1. Pull Global Network Broadcast (updates from any PC or admin)
       final globalUri = Uri.parse('$_serverBaseUrl/api/calendar/global-sync');
       final gReq = await client.getUrl(globalUri);
@@ -281,22 +303,12 @@ class CalendarState extends ChangeNotifier {
       if (gRes.statusCode == 200) {
         final bodyStr = await gRes.transform(utf8.decoder).join();
         final gData = jsonDecode(bodyStr) as Map<String, dynamic>;
+        if (_disposed) return;
         final int serverVersion = gData['version'] ?? 0;
 
         if (serverVersion > _lastKnownGlobalVersion) {
           _lastKnownGlobalVersion = serverVersion;
           bool hasChanges = false;
-
-          if (gData['classes'] != null && gData['classes'] is List) {
-            final List<ClassSchedule> parsed = [];
-            for (var item in gData['classes']) {
-              if (item is Map) parsed.add(ClassSchedule.fromJson(Map<String, dynamic>.from(item)));
-            }
-            if (parsed.isNotEmpty && _hasScheduleChanged(parsed, _calendarService.classes)) {
-              _calendarService.setClasses(parsed);
-              hasChanges = true;
-            }
-          }
 
           if (gData['notices'] != null && gData['notices'] is List) {
             final List<AcademicNotice> parsedNotices = [];
@@ -317,100 +329,92 @@ class CalendarState extends ChangeNotifier {
         }
       }
 
-      // 2. Pull Student-specific sync if logged in
-      if (_currentStudent != null) {
-        final userUri = Uri.parse('$_serverBaseUrl/api/student/sync?email=${Uri.encodeComponent(_currentStudent!.email)}');
-        final uReq = await client.getUrl(userUri);
-        final uRes = await uReq.close();
-        if (uRes.statusCode == 200) {
-          final bodyStr = await uRes.transform(utf8.decoder).join();
-          final uData = jsonDecode(bodyStr) as Map<String, dynamic>;
-          if (uData['classes'] != null && uData['classes'] is List) {
-            final List<ClassSchedule> parsed = [];
-            for (var item in uData['classes']) {
-              if (item is Map) parsed.add(ClassSchedule.fromJson(Map<String, dynamic>.from(item)));
-            }
-            if (parsed.isNotEmpty && _hasScheduleChanged(parsed, _calendarService.classes)) {
+    } catch (error) {
+      debugPrint('Notice sync failed: $error');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  bool _hasScheduleChanged(List<ClassSchedule> a, List<ClassSchedule> b) =>
+      jsonEncode(a.map((c) => c.toJson()).toList()) !=
+      jsonEncode(b.map((c) => c.toJson()).toList());
+
+  Future<bool> syncWithWebsite({bool push = false, bool silent = false}) async {
+    if (_currentStudent == null || _disposed) return false;
+    if (_isSyncing) {
+      _syncPending = _syncPending || push || _scheduleDirty;
+      return false;
+    }
+    _isSyncing = true;
+    if (!silent) notifyListeners();
+    final email = _currentStudent!.email;
+    final revision = _scheduleRevision;
+    try {
+      if (push || _scheduleDirty) {
+        await _studentSyncService.write({
+          'email': email,
+          'student': _currentStudent!.toJson(),
+          'classes': _calendarService.classes.map((c) => c.toJson()).toList(),
+          'routineRange': routineRange?.toJson(),
+          'syncVersion': 1,
+        });
+        if (revision == _scheduleRevision) _scheduleDirty = false;
+      } else {
+        final data = await _studentSyncService.read(email);
+        if (_disposed || _currentStudent?.email != email) return false;
+        // An edit made while this request was in flight must win over its reply.
+        if (revision == _scheduleRevision && !_scheduleDirty) {
+          final remoteClasses = data['classes'];
+          final legacyEmpty = (data['syncVersion'] ?? 0) == 0 &&
+              remoteClasses is List && remoteClasses.isEmpty &&
+              _calendarService.classes.isNotEmpty;
+          final hasSchedule = !legacyEmpty && (data['hasSchedule'] == true ||
+              (remoteClasses is List && remoteClasses.isNotEmpty));
+          if (hasSchedule && remoteClasses is List) {
+            final parsed = remoteClasses.map((c) => ClassSchedule.fromJson(
+              Map<String, dynamic>.from(c as Map),
+            )).toList();
+            if (_hasScheduleChanged(parsed, _calendarService.classes)) {
               _calendarService.setClasses(parsed);
-              _reminderService.refreshReminders(referenceDate: _selectedDate);
-              _saveSessionToDisk();
-              notifyListeners();
             }
+            if (data.containsKey('routineRange')) {
+              if (data['routineRange'] == null) {
+                _calendarService.clearRoutineDateRange();
+              } else {
+                _applySyncPayload({'routineRange': data['routineRange']});
+              }
+            }
+          } else if ((data['hasSchedule'] == false || legacyEmpty) && _calendarService.classes.isNotEmpty) {
+            // Migrate an existing local routine only when the account has none.
+            _scheduleDirty = true;
+            _syncPending = true;
           }
         }
       }
-
-      client.close();
-    } catch (_) {}
-  }
-
-  bool _hasScheduleChanged(List<ClassSchedule> a, List<ClassSchedule> b) {
-    if (a.length != b.length) return true;
-    for (int i = 0; i < a.length; i++) {
-      if (a[i].courseCode != b[i].courseCode ||
-          a[i].dayOfWeek != b[i].dayOfWeek ||
-          a[i].startTime != b[i].startTime) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  Future<bool> syncWithWebsite() async {
-    _isSyncing = true;
-    notifyListeners();
-
-    try {
-      final client = HttpClient();
-      client.connectionTimeout = const Duration(seconds: 3);
-
-      // Broadcast globally to all users
-      final globalUri = Uri.parse('$_serverBaseUrl/api/calendar/global-update');
-      final gReq = await client.postUrl(globalUri);
-      gReq.headers.set('content-type', 'application/json');
-      final noticesList = _calendarService.notices.map((n) => n.toJson()).toList();
-      final gPayload = <String, dynamic>{
-        'source': _currentStudent?.email ?? 'PC Client',
-        'classes': _calendarService.classes.map((c) => c.toJson()).toList(),
-      };
-      if (noticesList.isNotEmpty) gPayload['notices'] = noticesList;
-      gReq.add(utf8.encode(jsonEncode(gPayload)));
-      await gReq.close();
-
-      // Push to student profile if logged in
-      if (_currentStudent != null) {
-        final uri = Uri.parse('$_serverBaseUrl/api/student/sync');
-        final req = await client.postUrl(uri);
-        req.headers.set('content-type', 'application/json');
-        final payload = {
-          'email': _currentStudent!.email,
-          'student': _currentStudent!.toJson(),
-          'classes': _calendarService.classes.map((c) => c.toJson()).toList(),
-        };
-        req.add(utf8.encode(jsonEncode(payload)));
-        await req.close();
-      }
-
-      client.close();
-    } catch (_) {}
-
-    if (_currentStudent != null) {
-      _currentStudent = StudentProfile(
-        email: _currentStudent!.email,
-        studentId: _currentStudent!.studentId,
-        fullName: _currentStudent!.fullName,
-        department: _currentStudent!.department,
-        semester: _currentStudent!.semester,
-        isSynced: true,
-        lastSyncTime: DateTime.now(),
+      if (_disposed || _currentStudent?.email != email) return false;
+      _currentStudent = _currentStudent!.copyWith(
+        isSynced: !_scheduleDirty, lastSyncTime: DateTime.now(),
       );
+      _reminderService.refreshReminders(referenceDate: _selectedDate);
+      await _saveSessionToDisk();
+      return true;
+    } catch (error) {
+      debugPrint('Routine sync failed: $error');
+      if (_currentStudent?.email == email) {
+        _currentStudent = _currentStudent!.copyWith(isSynced: false);
+      }
+      return false;
+    } finally {
+      _isSyncing = false;
+      if (!_disposed) {
+        notifyListeners();
+        if (_syncPending) {
+          _syncPending = false;
+          unawaited(syncWithWebsite(silent: true));
+        }
+      }
     }
-
-    _reminderService.refreshReminders(referenceDate: _selectedDate);
-    _saveSessionToDisk();
-    _isSyncing = false;
-    notifyListeners();
-    return true;
   }
 
   Future<bool> syncWithGoogleDrive() async {
@@ -437,11 +441,12 @@ class CalendarState extends ChangeNotifier {
     } catch (_) {}
 
     // Broadcast update to web server as well
-    await syncWithWebsite();
+    _isSyncing = false;
+    final websiteSynced = await syncWithWebsite();
 
     if (_currentStudent != null) {
       _currentStudent = _currentStudent!.copyWith(
-        isSynced: true,
+        isSynced: websiteSynced,
         lastSyncTime: DateTime.now(),
       );
     }
@@ -449,7 +454,7 @@ class CalendarState extends ChangeNotifier {
     _saveSessionToDisk();
     _isSyncing = false;
     notifyListeners();
-    return true;
+    return websiteSynced;
   }
 
   void _applySyncPayload(Map<String, dynamic> data) {
@@ -488,8 +493,11 @@ class CalendarState extends ChangeNotifier {
   }
 
   void _pushChangesToServer() {
+    _scheduleDirty = true;
+    _scheduleRevision++;
+    _currentStudent = _currentStudent?.copyWith(isSynced: false);
     _saveSessionToDisk();
-    syncWithGoogleDrive();
+    unawaited(syncWithWebsite());
   }
 
   // Actions
