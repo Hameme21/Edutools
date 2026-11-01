@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
 import '../../state/calendar_state.dart';
 import '../../theme/app_theme.dart';
 import 'student_login_dialog.dart';
@@ -21,7 +24,11 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
+  static Future<void>? _googleInitialization;
+  static const _driveScope = 'https://www.googleapis.com/auth/drive.file';
+
   bool _isLoading = false;
   String? _errorMessage;
   late AnimationController _animController;
@@ -44,7 +51,31 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     super.dispose();
   }
 
+  Future<void> _initializeGoogleSignIn() async {
+    try {
+      await (_googleInitialization ??= GoogleSignIn.instance.initialize(
+        serverClientId: '1097225985625-1tgbd5ie7vl09cda6tj2iulnoqsu9fhq.apps.googleusercontent.com',
+      )).timeout(const Duration(seconds: 15));
+    } catch (_) {
+      _googleInitialization = null;
+      rethrow;
+    }
+  }
+
+  Future<void> _authorizeDrive(GoogleSignInAccount account) async {
+    try {
+      final authorization = await account.authorizationClient
+          .authorizeScopes([_driveScope])
+          .timeout(const Duration(seconds: 60));
+      widget.state.driveSyncService.setAccessToken(authorization.accessToken);
+    } catch (error) {
+      // Optional Drive access must never prevent or undo a successful login.
+      debugPrint('Google Drive authorization did not complete: $error');
+    }
+  }
+
   Future<void> _handleGoogleSignIn() async {
+    if (_isLoading) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -52,54 +83,50 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
     try {
       UserCredential userCredential;
-
-      const driveScope = 'https://www.googleapis.com/auth/drive.file';
+      GoogleSignInAccount? googleAccount;
 
       if (kIsWeb) {
         final provider = GoogleAuthProvider();
         provider.addScope('email');
-        provider.addScope(driveScope);
-        userCredential = await FirebaseAuth.instance.signInWithPopup(provider);
+        provider.addScope(_driveScope);
+        userCredential = await FirebaseAuth.instance
+            .signInWithPopup(provider)
+            .timeout(const Duration(seconds: 90));
+        if (!mounted) return;
         final oauthCred = userCredential.credential;
         if (oauthCred is OAuthCredential && oauthCred.accessToken != null) {
           widget.state.driveSyncService.setAccessToken(oauthCred.accessToken);
         }
       } else {
-        final gsi = GoogleSignIn.instance;
-        await gsi.initialize(
-          serverClientId: '1097225985625-1tgbd5ie7vl09cda6tj2iulnoqsu9fhq.apps.googleusercontent.com',
-        );
-        final account = await gsi.authenticate(scopeHint: [
-          'email',
-          driveScope,
-        ]);
+        await _initializeGoogleSignIn();
+        if (!mounted) return;
+        final account = await GoogleSignIn.instance
+            .authenticate(scopeHint: ['email'])
+            .timeout(const Duration(seconds: 90));
+        if (!mounted) return;
+        googleAccount = account;
         final idToken = account.authentication.idToken;
-        if (idToken == null) {
-          throw Exception('Failed to obtain authentication token from Google.');
+        if (idToken == null || idToken.isEmpty) {
+          throw Exception(
+            'Google could not complete sign-in. Please try again.',
+          );
         }
-        try {
-          final clientAuth = await account.authorizationClient.authorizeScopes([driveScope]);
-          widget.state.driveSyncService.setAccessToken(clientAuth.accessToken);
-        } catch (_) {}
         final credential = GoogleAuthProvider.credential(idToken: idToken);
-        userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+        userCredential = await FirebaseAuth.instance
+            .signInWithCredential(credential)
+            .timeout(const Duration(seconds: 30));
       }
 
+      if (!mounted) return;
       final user = userCredential.user;
       if (user == null || user.email == null) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Sign-in failed. Please try again.';
-        });
-        return;
+        throw Exception('Sign-in failed. Please try again.');
       }
 
       final email = user.email!.toLowerCase();
       final displayName = user.displayName ?? _formatNameFromEmail(email);
-
       setState(() => _isLoading = false);
 
-      if (!mounted) return;
       final verified = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
@@ -110,28 +137,43 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         ),
       );
 
+      if (!mounted) return;
       if (verified == true && widget.state.isLoggedIn) {
         widget.onLoginComplete();
+        if (googleAccount != null) {
+          // Ask for optional Drive access only after the app has logged in.
+          unawaited(_authorizeDrive(googleAccount));
+        }
       }
-    } on FirebaseAuthException catch (e) {
+    } on TimeoutException {
+      if (!mounted) return;
       setState(() {
-        _isLoading = false;
-        _errorMessage = e.message ?? 'Authentication failed.';
+        _errorMessage = 'Google sign-in took too long. Check your connection and try again.';
+      });
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Firebase Google sign-in failed (${e.code}): ${e.message}');
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.message ?? 'Authentication failed. Please try again.';
       });
     } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) {
-        setState(() => _isLoading = false);
-        return;
-      }
+      // Android can report configuration failures as cancellation, even after
+      // an account is selected. Always show feedback instead of returning silently.
+      debugPrint('Google sign-in failed (${e.code}): ${e.description}');
+      if (!mounted) return;
       setState(() {
-        _isLoading = false;
-        _errorMessage = e.description ?? 'Google Sign-In failed.';
+        _errorMessage = e.code == GoogleSignInExceptionCode.canceled
+            ? 'Google sign-in did not finish. Please try again or use email sign-in.'
+            : e.description ?? 'Google sign-in failed. Please try again.';
       });
     } catch (e) {
+      debugPrint('Google sign-in failed: $e');
+      if (!mounted) return;
       setState(() {
-        _isLoading = false;
         _errorMessage = e.toString().replaceAll('Exception: ', '');
       });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
