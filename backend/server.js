@@ -193,8 +193,13 @@ if (require.main === module) {
   const authService = require('./services/auth_service');
   connectDB().then(async () => {
     if (require('./db').isConnected()) {
-      const profiles = await require('./models/RegisteredStudent').find({}).lean();
-      for (const record of profiles) authService.studentStore.set(record.email, record.profile);
+      try {
+        const profiles = await require('./models/RegisteredStudent').find({}).lean();
+        for (const record of profiles) authService.studentStore.set(record.email, record.profile);
+      } catch (error) {
+        // Keep diagnostics available; Google login performs its own durable lookup.
+        console.warn('[REGISTRATION STORE] Startup load unavailable:', error.name, error.code || '');
+      }
     }
     console.log('[EMAIL API] Brevo configuration:', authService.getEmailStatus());
     app.listen(PORT, () => {

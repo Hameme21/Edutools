@@ -5557,19 +5557,40 @@ function startCrossPlatformAutoSync() {
 async function syncWithGoogleDriveWeb() {
   if (!state.student) return false;
   try {
-    if (!state.googleAccessToken) {
+    const email = state.student.email.trim().toLowerCase();
+    const cachedForAccount = () => state.googleAccessToken && state.googleAccessTokenEmail === email && state.googleAccessTokenExpiresAt > Date.now();
+    if (!cachedForAccount()) {
+      clearGoogleDriveAuthorization(false);
+      try {
+        const cached = JSON.parse(sessionStorage.getItem('edutools_drive_authorization') || 'null');
+        if (cached?.email === email && cached.expiresAt > Date.now() && cached.accessToken) {
+          state.googleAccessToken = cached.accessToken;
+          state.googleAccessTokenEmail = cached.email;
+          state.googleAccessTokenExpiresAt = cached.expiresAt;
+        }
+      } catch (_) { /* A blocked browser store does not prevent authorization. */ }
+    }
+    if (!cachedForAccount()) {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.addScope('https://www.googleapis.com/auth/drive.file');
+      provider.setCustomParameters({ login_hint: email, prompt: '' });
       const current = firebase.auth().currentUser;
-      const sameAccount = current?.email?.toLowerCase() === state.student.email.toLowerCase();
+      const sameAccount = current?.email?.toLowerCase() === email;
       const result = sameAccount ? await current.reauthenticateWithPopup(provider) : await firebase.auth().signInWithPopup(provider);
-      if (result.user.email.toLowerCase() !== state.student.email.toLowerCase()) throw new Error('Select the same Google account used in Edutools.');
-      state.googleAccessToken = result.credential.accessToken;
+      if (result.user.email.toLowerCase() !== email) throw new Error('Google Drive must use your signed-in Edutools account.');
+      const accessToken = result.credential?.accessToken;
+      if (!accessToken) throw new Error('Allow Edutools to access its routine files in Google Drive, then try sync again.');
+      state.googleAccessToken = accessToken;
+      state.googleAccessTokenEmail = email;
+      state.googleAccessTokenExpiresAt = Date.now() + 45 * 60 * 1000;
+      try {
+        sessionStorage.setItem('edutools_drive_authorization', JSON.stringify({ email, accessToken, expiresAt: state.googleAccessTokenExpiresAt }));
+      } catch (_) { /* Reuse in memory when session storage is unavailable. */ }
     }
     const request = async (url, options = {}) => {
       const response = await fetch(url, { ...options, signal: AbortSignal.timeout(20000), headers: { ...options.headers, Authorization: `Bearer ${state.googleAccessToken}` } });
       if (!response.ok) {
-        if (response.status === 401 || response.status === 403) state.googleAccessToken = null;
+        if (response.status === 401 || response.status === 403) clearGoogleDriveAuthorization();
         throw new Error(`Google Drive request failed (${response.status}).`);
       }
       return response;
@@ -5593,6 +5614,15 @@ async function syncWithGoogleDriveWeb() {
     showToast(synced ? 'Google Drive routine synced.' : 'Drive synced; account sync will retry.', synced ? 'success' : 'warning');
     return synced;
   } catch(error) { showToast(error.message || 'Google Drive sync failed.', 'warning'); return false; }
+}
+
+function clearGoogleDriveAuthorization(clearStorage = true) {
+  state.googleAccessToken = null;
+  state.googleAccessTokenEmail = null;
+  state.googleAccessTokenExpiresAt = 0;
+  if (clearStorage) {
+    try { sessionStorage.removeItem('edutools_drive_authorization'); } catch (_) {}
+  }
 }
 
 let routineSyncInFlight = null;
@@ -6266,7 +6296,7 @@ function openAuthModal() {
     };
 
     document.getElementById('btnWebLogout').onclick = () => {
-      state.student = null; state.googleAccessToken = null;
+      state.student = null; clearGoogleDriveAuthorization();
       if (autoSyncTimer) clearInterval(autoSyncTimer);
       localStorage.removeItem('edutools_student_session');
       dom.authModal.classList.remove('show');
@@ -7149,7 +7179,7 @@ function initEventListeners() {
   const btnSignOut = document.getElementById('btnSignOutGProfile');
   if (btnSignOut) {
     btnSignOut.addEventListener('click', () => {
-      state.student = null; state.googleAccessToken = null;
+      state.student = null; clearGoogleDriveAuthorization();
       if (autoSyncTimer) clearInterval(autoSyncTimer);
       localStorage.removeItem('edutools_student_session');
       if (googleDropdown) googleDropdown.classList.remove('show');

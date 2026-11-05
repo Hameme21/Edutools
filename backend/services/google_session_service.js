@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 const auth = require('./auth_service');
-const { isConnected } = require('../db');
-const RegisteredStudent = require('../models/RegisteredStudent');
-const DEPARTMENTS = ['CSE', 'DS', 'BBA', 'CE', 'EDS', 'EEE', 'BSE'];
+const crypto = require('node:crypto');
+const registrations = require('./registration_repository');
+const { DEPARTMENTS, RegistrationStoreError } = registrations;
 const projectId = process.env.FIREBASE_PROJECT_ID || 'edutools-e2558';
 let cachedCertificates, certificatesExpireAt = 0;
 
@@ -29,29 +29,44 @@ async function verifyGoogleIdentity(idToken, fetchImpl = fetch) {
   return { email: claims.email.trim().toLowerCase(), uid: claims.sub, name: claims.name || '' };
 }
 
-async function authenticate(idToken, registration, verify = verifyGoogleIdentity) {
-  const identity = await verify(idToken);
-  let student = auth.studentStore.get(identity.email);
-  if (!student && isConnected()) {
-    const doc = await RegisteredStudent.findOne({ email: identity.email }).lean();
-    if (doc) student = doc.profile;
+async function registrationOperation(operation) {
+  try { return await operation(); }
+  catch (error) {
+    console.warn('[REGISTRATION STORE]', error.name, error.code || '');
+    throw error instanceof RegistrationStoreError ? error : new RegistrationStoreError();
   }
-  if (!student && !registration) return { success: true, requiresRegistration: true, email: identity.email, displayName: identity.name };
+}
+
+async function authenticate(idToken, registration, verify = verifyGoogleIdentity, store = registrations) {
+  const identity = await verify(idToken);
+  const cached = auth.studentStore.get(identity.email);
+  const found = cached || await registrationOperation(() => store.find(identity));
+  if (!found && !registration) return { success: true, requiresRegistration: true, email: identity.email, displayName: identity.name };
+  let student = found ? { ...found } : null;
   if (!student) {
     const fullName = registration.fullName?.trim();
     const studentId = registration.studentId?.trim();
     const department = registration.department?.trim();
     if (!fullName || !studentId || !DEPARTMENTS.includes(department)) throw new Error('Name, student ID and a valid department are required.');
-    if (registration.password && registration.password.length < 6) throw new Error('Password must be at least 6 characters.');
+    if (registration.password && (typeof registration.password !== 'string' || registration.password.length < 6)) throw new Error('Password must be at least 6 characters.');
     student = { id: `STD-${identity.uid}`, email: identity.email, fullName, studentId, department,
       semester: registration.semester?.trim() || '', university: 'United International University',
       createdAt: new Date().toISOString(), emailVerified: true, registrationComplete: true };
+    if (registration.password) {
+      student.passwordSalt = crypto.randomBytes(32).toString('hex');
+      student.passwordHash = crypto.pbkdf2Sync(registration.password, student.passwordSalt, 100000, 64, 'sha512').toString('hex');
+    }
   }
+  const previousEmail = student.email;
+  student.email = identity.email;
+  student.firebaseUid = identity.uid;
+  student.registrationComplete = true;
   student.lastLogin = new Date().toISOString();
   student.emailVerified = true;
+  // Do not grant a session or mark registration complete until storage acknowledges it.
+  await registrationOperation(() => store.save(identity, student));
+  if (previousEmail && previousEmail !== identity.email) auth.studentStore.delete(previousEmail);
   auth.studentStore.set(identity.email, student);
-  if (registration?.password && !student.passwordHash) auth.setPassword(identity.email, registration.password);
-  if (isConnected()) await RegisteredStudent.findOneAndUpdate({ email: identity.email }, { $set: { profile: student } }, { upsert: true });
   auth.saveRegisteredStudents();
   const token = jwt.sign({ email: identity.email, studentId: student.studentId, fullName: student.fullName, university: student.university },
     process.env.JWT_SECRET || 'edutools-secure-jwt-secret-key-2026-academic', { expiresIn: '7d' });

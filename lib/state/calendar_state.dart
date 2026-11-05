@@ -1,3 +1,4 @@
+import '../services/google_sign_in_session.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -136,6 +137,7 @@ class CalendarState extends ChangeNotifier {
   }
 
   void logoutStudent() {
+    unawaited(GoogleSignInSession.clear());
     _driveSyncService.setAccessToken(null);
     _currentStudent = null;
     _scheduleDirty = false;

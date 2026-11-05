@@ -77,7 +77,7 @@ router.post('/auth/google-session', async (req, res) => {
   try {
     res.json(await require('../services/google_session_service').authenticate(req.body.idToken, req.body.profile));
   } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
+    res.status(error.status || 400).json({ success: false, error: error.message, code: error.code });
   }
 });
 
@@ -624,6 +624,7 @@ router.get('/health', (req, res) => {
       calendarSyncVerification: 'active',
     },
     version: '1.0.0',
+    database: { connected: require('../db').isConnected(), configured: Boolean(process.env.MONGODB_URI) },
   });
 });
 

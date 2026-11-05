@@ -1,5 +1,5 @@
+import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
 import 'google_sign_in_session.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -17,12 +17,16 @@ class GoogleDriveSyncService {
   static const String driveUploadBase = 'https://www.googleapis.com/upload/drive/v3/files';
 
   String? _accessToken;
+  String? _accessTokenEmail;
+  DateTime? _accessTokenExpiresAt;
   final HttpClient _httpClient = HttpClient();
 
   GoogleDriveSyncService({String? accessToken}) : _accessToken = accessToken;
 
-  void setAccessToken(String? token) {
+  void setAccessToken(String? token, {String? email, DateTime? expiresAt}) {
     _accessToken = token;
+    _accessTokenEmail = email?.trim().toLowerCase();
+    _accessTokenExpiresAt = token == null ? null : expiresAt ?? DateTime.now().add(const Duration(minutes: 45));
   }
 
   bool get hasToken => _accessToken != null && _accessToken!.isNotEmpty;
@@ -61,6 +65,7 @@ class GoogleDriveSyncService {
     final req = await _httpClient.getUrl(uri).timeout(const Duration(seconds: 10));
     req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_accessToken');
     final res = await req.close().timeout(const Duration(seconds: 10));
+      await _invalidateRejectedToken(res.statusCode);
     if (res.statusCode != 200) throw StateError('Google Drive could not be read (${res.statusCode}).');
     final data = jsonDecode(await utf8.decodeStream(res)) as Map<String, dynamic>;
     final files = data['files'] as List?;
@@ -68,15 +73,32 @@ class GoogleDriveSyncService {
   }
 
   Future<void> ensureAccess({String? email}) async {
-    if (hasToken) return;
-    final google = GoogleSignIn.instance;
-    await GoogleSignInSession.initialize();
-    final account = await google.authenticate().timeout(const Duration(seconds: 90));
-    if (email == null || email.toLowerCase() != account.email.toLowerCase()) {
-      throw StateError('Select the same Google account used in Edutools.');
+    if (email == null || email.trim().isEmpty) throw StateError('Sign in before syncing.');
+    final expected = email.trim().toLowerCase();
+    if (hasToken && _accessTokenEmail == expected && (_accessTokenExpiresAt?.isAfter(DateTime.now()) ?? false)) return;
+    setAccessToken(null);
+    final identity = await GoogleSignInSession.identityFor(expected);
+    Future<ClientAuthorizationTokenData?> authorize(bool prompt) => GoogleSignInPlatform.instance.clientAuthorizationTokensForScopes(
+      ClientAuthorizationTokensForScopesParameters(request: AuthorizationRequestDetails(
+        scopes: const ['https://www.googleapis.com/auth/drive.file'],
+        userId: identity.id, email: identity.email, promptIfUnauthorized: prompt,
+      )),
+    );
+    final existing = await authorize(false).timeout(const Duration(seconds: 15));
+    final grant = existing ?? await authorize(true).timeout(const Duration(seconds: 90));
+    if (grant == null) throw StateError('Google Drive permission was not granted.');
+    setAccessToken(grant.accessToken, email: expected);
+  }
+
+  Future<void> _invalidateRejectedToken(int status) async {
+    if (status != 401 && status != 403) return;
+    final token = _accessToken;
+    setAccessToken(null);
+    if (token != null) {
+      try {
+        await GoogleSignInPlatform.instance.clearAuthorizationToken(ClearAuthorizationTokenParams(accessToken: token)).timeout(const Duration(seconds: 5));
+      } catch (_) { /* A later explicit sync can reconnect the authorization. */ }
     }
-    final grant = await account.authorizationClient.authorizeScopes(['https://www.googleapis.com/auth/drive.file']);
-    setAccessToken(grant.accessToken);
   }
 
   /// Downloads and parses the sync data payload from Google Drive
@@ -92,6 +114,7 @@ class GoogleDriveSyncService {
       req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_accessToken');
 
       final res = await req.close().timeout(const Duration(seconds: 6));
+      await _invalidateRejectedToken(res.statusCode);
       if (res.statusCode == 200) {
         final bodyStr = await utf8.decodeStream(res);
         return jsonDecode(bodyStr) as Map<String, dynamic>;
@@ -123,6 +146,7 @@ class GoogleDriveSyncService {
         req.write(payloadJson);
 
         final res = await req.close().timeout(const Duration(seconds: 8));
+      await _invalidateRejectedToken(res.statusCode);
         return res.statusCode == 200;
       } else {
         // Create new file via multipart upload
@@ -151,6 +175,7 @@ class GoogleDriveSyncService {
 
         req.write(body.toString());
         final res = await req.close().timeout(const Duration(seconds: 8));
+      await _invalidateRejectedToken(res.statusCode);
         return res.statusCode == 200 || res.statusCode == 201;
       }
     } catch (_) {

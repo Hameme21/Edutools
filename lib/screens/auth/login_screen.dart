@@ -70,10 +70,6 @@ class _LoginScreenState extends State<LoginScreen>
             .signInWithPopup(provider)
             .timeout(const Duration(seconds: 90));
         if (!mounted) return;
-        final oauthCred = userCredential.credential;
-        if (oauthCred is OAuthCredential && oauthCred.accessToken != null) {
-          widget.state.driveSyncService.setAccessToken(oauthCred.accessToken);
-        }
       } else {
         await _initializeGoogleSignIn();
         if (!mounted) return;
@@ -81,6 +77,7 @@ class _LoginScreenState extends State<LoginScreen>
             .authenticate(scopeHint: ['email'])
             .timeout(const Duration(seconds: 90));
         if (!mounted) return;
+        await GoogleSignInSession.remember(account);
         final idToken = account.authentication.idToken;
         if (idToken == null || idToken.isEmpty) {
           throw Exception(
