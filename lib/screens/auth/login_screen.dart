@@ -15,11 +15,15 @@ import '../../services/api_service.dart';
 class LoginScreen extends StatefulWidget {
   final CalendarState state;
   final VoidCallback onLoginComplete;
+  final Future<UserCredential> Function()? googleAuthenticator;
+  final ApiService? apiService;
 
   const LoginScreen({
     super.key,
     required this.state,
     required this.onLoginComplete,
+    this.googleAuthenticator,
+    this.apiService,
   });
 
   @override
@@ -28,9 +32,9 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-
   bool _isLoading = false;
   String? _errorMessage;
+  String? _progressMessage;
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
 
@@ -58,12 +62,16 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _progressMessage = 'Opening Google sign-in…';
     });
 
     try {
       UserCredential userCredential;
 
-      if (kIsWeb) {
+      if (widget.googleAuthenticator != null) {
+        userCredential = await widget.googleAuthenticator!()
+            .timeout(const Duration(seconds: 90));
+      } else if (kIsWeb) {
         final provider = GoogleAuthProvider();
         provider.addScope('email');
         userCredential = await FirebaseAuth.instance
@@ -73,11 +81,11 @@ class _LoginScreenState extends State<LoginScreen>
       } else {
         await _initializeGoogleSignIn();
         if (!mounted) return;
-        final account = await GoogleSignIn.instance
-            .authenticate(scopeHint: ['email'])
-            .timeout(const Duration(seconds: 90));
+        final account = await GoogleSignIn.instance.authenticate(
+            scopeHint: ['email']).timeout(const Duration(seconds: 90));
         if (!mounted) return;
-        await GoogleSignInSession.remember(account);
+        await GoogleSignInSession.remember(account)
+            .timeout(const Duration(seconds: 5));
         final idToken = account.authentication.idToken;
         if (idToken == null || idToken.isEmpty) {
           throw Exception(
@@ -85,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen>
           );
         }
         final credential = GoogleAuthProvider.credential(idToken: idToken);
+        setState(() => _progressMessage = 'Verifying your Google account…');
         userCredential = await FirebaseAuth.instance
             .signInWithCredential(credential)
             .timeout(const Duration(seconds: 30));
@@ -98,29 +107,52 @@ class _LoginScreenState extends State<LoginScreen>
 
       final email = user.email!.toLowerCase();
       final displayName = user.displayName ?? _formatNameFromEmail(email);
-      setState(() => _isLoading = false);
+      setState(() => _progressMessage =
+          'Completing sign-in. The server may take up to a minute to respond…');
 
-      final idToken = await user.getIdToken();
+      final idToken =
+          await user.getIdToken().timeout(const Duration(seconds: 20));
       if (idToken == null) throw Exception('Please sign in with Google again.');
-      var session = await ApiService().googleSession(idToken);
+      if (!mounted) return;
+      final api = widget.apiService ?? ApiService();
+      var session =
+          await api.googleSession(idToken).timeout(const Duration(seconds: 60));
       if (!mounted) return;
       if (session['requiresRegistration'] == true) {
         final registered = await showDialog<Map<String, dynamic>>(
-          context: context, barrierDismissible: false,
-          builder: (_) => GoogleRegistrationDialog(idToken: idToken, email: email, displayName: displayName),
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => GoogleRegistrationDialog(
+              idToken: idToken,
+              email: email,
+              displayName: displayName,
+              apiService: api),
         );
-        if (registered == null || !mounted) return;
+        if (!mounted) return;
+        if (registered == null) {
+          setState(() =>
+              _errorMessage = 'Complete registration to finish signing in.');
+          return;
+        }
         session = registered;
       }
+      if (session['student'] is! Map || session['token'] is! String) {
+        throw Exception(
+            'The server could not complete sign-in. Please try again.');
+      }
       final profile = Map<String, dynamic>.from(session['student'] as Map);
-      widget.state.loginStudent(email: profile['email'], studentId: profile['studentId'],
-        fullName: profile['fullName'], department: profile['department']);
+      widget.state.loginStudent(
+          email: profile['email'],
+          studentId: profile['studentId'],
+          fullName: profile['fullName'],
+          department: profile['department']);
       widget.onLoginComplete();
       // Drive permission is requested by the explicit sync action.
     } on TimeoutException {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Google sign-in took too long. Check your connection and try again.';
+        _errorMessage =
+            'Google sign-in took too long. Check your connection and try again.';
       });
     } on FirebaseAuthException catch (e) {
       debugPrint('Firebase Google sign-in failed (${e.code}): ${e.message}');
@@ -145,7 +177,12 @@ class _LoginScreenState extends State<LoginScreen>
         _errorMessage = e.toString().replaceAll('Exception: ', '');
       });
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _progressMessage = null;
+        });
+      }
     }
   }
 
@@ -204,7 +241,8 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.school_rounded, color: Colors.white, size: 40),
+                    child: const Icon(Icons.school_rounded,
+                        color: Colors.white, size: 40),
                   ),
                   const SizedBox(height: 24),
 
@@ -242,11 +280,14 @@ class _LoginScreenState extends State<LoginScreen>
                     decoration: BoxDecoration(
                       color: const Color(0xFFEA580C).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFEA580C).withValues(alpha: 0.2)),
+                      border: Border.all(
+                          color:
+                              const Color(0xFFEA580C).withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFFEA580C)),
+                        const Icon(Icons.info_outline_rounded,
+                            size: 18, color: Color(0xFFEA580C)),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -255,7 +296,9 @@ class _LoginScreenState extends State<LoginScreen>
                               fontSize: 12,
                               height: 1.4,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? const Color(0xFFFDBA74) : const Color(0xFF9A3412),
+                              color: isDark
+                                  ? const Color(0xFFFDBA74)
+                                  : const Color(0xFF9A3412),
                             ),
                           ),
                         ),
@@ -271,13 +314,17 @@ class _LoginScreenState extends State<LoginScreen>
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleGoogleSignIn,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                        foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                        backgroundColor:
+                            isDark ? const Color(0xFF1E293B) : Colors.white,
+                        foregroundColor:
+                            isDark ? Colors.white : const Color(0xFF0F172A),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: BorderSide(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFE2E8F0),
                           ),
                         ),
                       ),
@@ -285,7 +332,8 @@ class _LoginScreenState extends State<LoginScreen>
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5),
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2.5),
                             )
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -298,7 +346,9 @@ class _LoginScreenState extends State<LoginScreen>
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   padding: const EdgeInsets.all(2),
-                                  child: const Text('G', textAlign: TextAlign.center,
+                                  child: const Text(
+                                    'G',
+                                    textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w800,
@@ -310,7 +360,9 @@ class _LoginScreenState extends State<LoginScreen>
                                 const SizedBox(width: 12),
                                 const Text(
                                   'Continue with Google',
-                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),
@@ -318,9 +370,20 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                   const SizedBox(height: 16),
 
+                  if (_isLoading && _progressMessage != null) ...[
+                    Text(_progressMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 12)),
+                    const SizedBox(height: 16),
+                  ],
+
                   Row(
                     children: [
-                      Expanded(child: Divider(color: isDark ? Colors.white24 : const Color(0xFFE2E8F0))),
+                      Expanded(
+                          child: Divider(
+                              color: isDark
+                                  ? Colors.white24
+                                  : const Color(0xFFE2E8F0))),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
@@ -328,11 +391,17 @@ class _LoginScreenState extends State<LoginScreen>
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                            color: isDark
+                                ? Colors.white38
+                                : const Color(0xFF94A3B8),
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: isDark ? Colors.white24 : const Color(0xFFE2E8F0))),
+                      Expanded(
+                          child: Divider(
+                              color: isDark
+                                  ? Colors.white24
+                                  : const Color(0xFFE2E8F0))),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -346,12 +415,16 @@ class _LoginScreenState extends State<LoginScreen>
                       icon: const Icon(Icons.email_outlined, size: 20),
                       label: const Text(
                         'Sign in with UIU Email',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w600),
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFFEA580C),
-                        side: BorderSide(color: const Color(0xFFEA580C).withValues(alpha: 0.4)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        side: BorderSide(
+                            color:
+                                const Color(0xFFEA580C).withValues(alpha: 0.4)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
                   ),
@@ -366,12 +439,14 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded, size: 16, color: Color(0xFFEF4444)),
+                          const Icon(Icons.error_outline_rounded,
+                              size: 16, color: Color(0xFFEF4444)),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12),
+                              style: const TextStyle(
+                                  color: Color(0xFFEF4444), fontSize: 12),
                             ),
                           ),
                         ],

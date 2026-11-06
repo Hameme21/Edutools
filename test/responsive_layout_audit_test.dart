@@ -59,7 +59,7 @@ void main() {
       expect(tester.takeException(), isNull, reason: 'Dashboard tab had overflow');
 
       // 2. Academic Notices Tab
-      await tester.tap(find.text('Academic Notices'));
+      await tester.tap(find.text('Notices'));
       await tester.pumpAndSettle();
       expect(find.text('All Notices'), findsOneWidget);
       final err = tester.takeException();

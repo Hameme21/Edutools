@@ -8,11 +8,11 @@ void main() {
 
     // Verify 3 navigation tabs
     expect(find.text('Dashboard'), findsOneWidget);
-    expect(find.text('Academic Notices'), findsOneWidget);
+    expect(find.text('Notices'), findsOneWidget);
     expect(find.text('Class Setup'), findsOneWidget);
 
     // Switch to Academic Notices tab
-    await tester.tap(find.text('Academic Notices'));
+    await tester.tap(find.text('Notices'));
     await tester.pumpAndSettle();
     expect(find.text('Add Notice'), findsOneWidget);
 

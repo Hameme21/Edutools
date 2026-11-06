@@ -14,7 +14,7 @@ void main() {
     expect(find.text('Classes Today'), findsOneWidget);
 
     // Tap Academic Notices (tab index 1)
-    await tester.tap(find.text('Academic Notices'));
+    await tester.tap(find.text('Notices'));
     await tester.pumpAndSettle();
 
     expect(state.currentTabIndex, 1);

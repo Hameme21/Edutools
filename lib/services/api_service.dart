@@ -116,8 +116,9 @@ class ApiService {
     Map<String, dynamic> body, {
     String? token,
     Duration timeout = const Duration(seconds: 30),
+    bool allowFallback = true,
   }) async {
-    final targets = _configuredBaseUrl != null ? [_configuredBaseUrl] : candidateBaseUrls;
+    final targets = _configuredBaseUrl != null || !allowFallback ? [baseUrl] : candidateBaseUrls;
     dynamic lastConnectionError;
 
     for (final host in targets) {
@@ -129,7 +130,7 @@ class ApiService {
         }
         req.write(jsonEncode(body));
         final res = await req.close().timeout(timeout);
-        final respBody = await utf8.decodeStream(res);
+        final respBody = await utf8.decodeStream(res).timeout(timeout);
         final data = jsonDecode(respBody) as Map<String, dynamic>;
         if (res.statusCode != 200 || data['success'] != true) {
           throw Exception(data['error'] ?? 'Request failed with status ${res.statusCode}');
@@ -330,7 +331,8 @@ class ApiService {
   Future<Map<String, dynamic>> googleSession(String idToken, {Map<String, dynamic>? profile}) async {
     final result = await _postJson('/api/auth/google-session', {
       'idToken': idToken, if (profile != null) 'profile': profile,
-    });
+    }, allowFallback: false, timeout: const Duration(seconds: 60))
+        .timeout(const Duration(seconds: 60));
     if (result['token'] is String) {
       authToken = result['token'] as String;
       final prefs = await SharedPreferences.getInstance();

@@ -29,9 +29,10 @@ test('new Google user stays behind an opaque registration gate until required de
   assert.equal(node('authGate').classList.contains('hidden'), false);
   assert.equal(node('googleVerifyModal').classList.contains('show'), true);
   assert.equal(node('gvSkipBtn').style.display, 'none');
+  assert.equal(node('gvName').value, '');
   await node('gvSaveProfileBtn').onclick();
   assert.equal(context.state.student, null);
-  node('gvStudentId').value = '123'; node('gvDept').value = 'CSE';
+  node('gvName').value = 'Student'; node('gvStudentId').value = '123'; node('gvDept').value = 'CSE';
   await node('gvSaveProfileBtn').onclick();
   assert.equal(context.state.student.department, 'CSE');
   assert.equal(node('authGate').classList.contains('hidden'), true);

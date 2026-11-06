@@ -318,7 +318,8 @@ class _MainScreenState extends State<MainScreen> {
           NavigationDestination(
             icon: Icon(Icons.campaign_outlined),
             selectedIcon: Icon(Icons.campaign_rounded),
-            label: 'Academic Notices',
+            label: 'Notices',
+            tooltip: 'Academic Notices',
           ),
           NavigationDestination(
             icon: Icon(Icons.tune_outlined),

@@ -167,6 +167,7 @@ body {
 }
 
 .nav-tab {
+  white-space: nowrap;
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -2576,6 +2577,12 @@ body {
 
 .auth-gate.hidden { display: none; }
 #googleVerifyModal { z-index:11001; background:var(--bg-main); }
+#googleVerifyModal .modal-box { width:calc(100% - 32px); border-radius:20px; }
+#gvStep2 .form-group { margin-bottom:18px; }
+#gvStep2 .registration-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; }
+#gvStep2 .form-input { box-sizing:border-box; width:100%; min-width:0; min-height:48px; padding:11px 14px; border:1px solid var(--border-color); border-radius:var(--radius-sm); background:var(--bg-card-subtle); color:var(--text-main); font:inherit; font-size:14px; }
+#gvStep2 .form-input:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+@media(max-width:480px) { #gvStep2 .registration-grid { grid-template-columns:1fr; gap:0; } }
 
 .auth-gate-inner {
   width: 100%;
@@ -4084,16 +4091,16 @@ body {
             <span>Email verified! Complete your profile below.</span>
           </div>
           <div class="form-group">
-            <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Full Name</label>
-            <input type="text" class="form-input" id="gvName" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
+            <label for="gvName" style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Full Name</label>
+            <input type="text" class="form-input" id="gvName" placeholder="Enter your full name" autocomplete="off" required style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="registration-grid">
             <div class="form-group">
-              <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Student ID</label>
+              <label for="gvStudentId" style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Student ID</label>
               <input type="text" class="form-input" id="gvStudentId" placeholder="e.g. 011251234" style="width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-card-subtle);color:var(--text-main);font-size:14px;font-family:var(--font)">
             </div>
             <div class="form-group">
-              <label style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Department</label>
+              <label for="gvDept" style="font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;display:block">Department</label>
               <select id="gvDept" class="form-input" required><option value="">Select department</option><option value="CSE">CSE</option><option value="DS">DS</option><option value="BBA">BBA</option><option value="CE">CE</option><option value="EDS">EDS</option><option value="EEE">EEE</option><option value="BSE">BSE</option></select>
             </div>
           </div>
@@ -7736,7 +7743,7 @@ function showGoogleVerifyModal(email, displayName, idToken) {
   document.getElementById('gvStep1').style.display = 'none';
   document.getElementById('gvStep2').style.display = 'block';
   document.getElementById('googleVerifyTitle').textContent = 'Complete registration';
-  document.getElementById('gvName').value = displayName;
+  document.getElementById('gvName').value = '';
   document.getElementById('gvStudentId').value = '';
   document.getElementById('gvDept').value = '';
   document.getElementById('gvPassword').value = '';
