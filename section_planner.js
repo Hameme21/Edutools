@@ -24,7 +24,23 @@
     const matches = catalog.filter(c => normalize(c.name) === normalize(title));
     return matches.length === 1 ? matches[0].code : null;
   }
-  const api = {key, normalize, minutes, overlaps, clashes, unifiedMeetings, applySections, resolveCode};
+  function matchesSectionFaculty(s,query) {
+    const q=query.trim().toLowerCase();
+    return [s.section,s.facultyName,s.facultyCode].some(value=>String(value).toLowerCase().includes(q));
+  }
+  function expiredPlannerEnd(range,now=new Date()) {
+    if(!range?.endDate || !/^\d{4}-\d{2}-\d{2}$/.test(range.endDate)) return null;
+    const today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    return today>range.endDate?range.endDate:null;
+  }
+  function rolloverSectionDraft(saved,expiredEnd,now=new Date()) {
+    const draft={...(saved||{})};
+    if(!expiredEnd || draft.clearedForEndDate===expiredEnd) return draft;
+    const [y,m,d]=expiredEnd.split('-').map(Number),boundary=new Date(y,m-1,d+1).getTime();
+    if((Number(draft.savedAtMs)||0)<boundary){draft.selected=[];draft.primary={};draft.savedAtMs=now.getTime();}
+    draft.clearedForEndDate=expiredEnd;return draft;
+  }
+  const api = {key, normalize, minutes, overlaps, clashes, unifiedMeetings, applySections, resolveCode, matchesSectionFaculty, expiredPlannerEnd, rolloverSectionDraft};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document === 'undefined') return;
   root.SectionPlanner = api;
@@ -39,21 +55,39 @@
   const panel = el('section', '', 'tool-panel-wrap section-planner');
   panel.id = 'sectionPlannerPanel'; panel.style.display = 'none'; anchor.after(panel);
   const card = el('button', '', 'tool-card'); card.type = 'button'; card.dataset.toolAction = 'sections';
-  card.append(el('h3', 'Section Planner'), el('p', 'Fall 2026 CSE / DS sections, faculty, exact times and clash checks. Save backup sections per course.'));
+  const cardTop=el('div','','tool-card-top'), iconBox=el('div','','tool-icon-box teal');
+  const blueprint=el('i','','fa-solid fa-compass-drafting'); blueprint.setAttribute('aria-hidden','true');iconBox.append(blueprint);
+  cardTop.append(iconBox,el('span','Active','tool-badge'));
+  const cardFooter=el('div','','tool-card-footer'),features=el('div','','tool-features');
+  ['Sections','Clash check','Backups'].forEach(text=>features.append(el('span',text,'tool-feat-chip')));
+  const arrow=el('div','','tool-card-arrow');arrow.append(el('i','','fa-solid fa-arrow-right'));cardFooter.append(features,arrow);
+  card.append(cardTop,el('h3', 'Section Planner'), el('p', 'Fall 2026 CSE / DS sections, faculty, exact times and clash checks. Save backup sections per course.'),cardFooter);
   grid.append(card);
   grid.addEventListener('click', event => { const target = event.target.closest('[data-tool-action]'); if (target && target !== card) panel.style.display = 'none'; });
   let sections = [], selected = new Set(), primary = {}, query = '', sectionQuery = '', program = 'All', limit = 12;
+  let clearedForEndDate=null,savedAtMs=0;
+  let ready=false;
   const draftKey = () => `section_plan_fall2026_${state.student?.email?.toLowerCase() || 'guest'}`;
   const chosen = () => sections.filter(s => selected.has(s.id));
   const active = () => chosen().filter(s => primary[key(s.courseCode)] === s.id);
-  let planList, optionList, summary, applyButton, message, timetable, clashSummary;
+  let planList, optionList, summary, applyButton, message, timetable, clashSummary,termNotice;
+  const configuredForPlanner=()=>expiredPlannerEnd(state.routineRange)?[]:(state.classes||[]);
+  function refreshExpiredPlan() {
+    const expired=expiredPlannerEnd(state.routineRange);
+    if(!expired || expired===clearedForEndDate) return;
+    const refreshed=rolloverSectionDraft({selected:[...selected],primary,clearedForEndDate,savedAtMs},expired);
+    selected=new Set(refreshed.selected||[]);primary=refreshed.primary||{};clearedForEndDate=refreshed.clearedForEndDate;savedAtMs=refreshed.savedAtMs||0;
+    save();
+  }
+  panel.addEventListener('click',refreshExpiredPlan,true);
+  panel.addEventListener('input',refreshExpiredPlan,true);
   function removeSection(s) {
     selected.delete(s.id);
     if (primary[key(s.courseCode)] === s.id) { delete primary[key(s.courseCode)]; const next = chosen().find(other => key(other.courseCode) === key(s.courseCode)); if (next) primary[key(s.courseCode)] = next.id; }
     save(); render();
   }
   function renderTimetable() {
-    const entries = unifiedMeetings(active(), state.classes || []);
+    const entries = unifiedMeetings(active(), configuredForPlanner());
     const meta = new Map(active().flatMap(s => s.meetings.map((_, i) => [`${s.id}-${i}`,s])));
     const first = Math.min(8,...entries.map(m => Math.floor(minutes(m.startTime)/60)));
     const last = Math.max(17,...entries.map(m => Math.ceil(minutes(m.endTime)/60)));
@@ -91,9 +125,10 @@
     }
     timetable.append(canvas);
   }
-  function save() { try { localStorage.setItem(draftKey(), JSON.stringify({selected: [...selected], primary})); } catch (_) { message.textContent = 'This draft could not be saved on this device.'; } }
+  function save() { savedAtMs=Date.now();try { localStorage.setItem(draftKey(), JSON.stringify({selected: [...selected], primary,clearedForEndDate,savedAtMs})); } catch (_) { if(message)message.textContent = 'This draft could not be saved on this device.'; } }
   function render() {
-    const current = active(), existing = state.classes || [];
+    refreshExpiredPlan();
+    const current = active(), existing = configuredForPlanner();
     planList.replaceChildren(); optionList.replaceChildren();
     summary.textContent = `My plan · ${current.length} active courses · ${chosen().length - current.length} backups`;
     function sectionCard(s, isChosen) {
@@ -115,7 +150,7 @@
     }
     chosen().forEach(s => planList.append(sectionCard(s, true)));
     const courseQuery = query.split(' — ')[0];
-    const matches = sections.filter(s => query.trim() && !selected.has(s.id) && (program === 'All' || s.program === program) && s.section.toUpperCase().includes(sectionQuery.trim().toUpperCase()) &&
+    const matches = sections.filter(s => query.trim() && !selected.has(s.id) && (program === 'All' || s.program === program) && matchesSectionFaculty(s,sectionQuery) &&
       (`${s.courseCode} ${s.title} ${s.facultyName} ${s.facultyCode}`.toLowerCase().includes(courseQuery.toLowerCase()) || key(s.courseCode).includes(key(courseQuery))));
     optionList.append(el('h3', `Available sections · ${matches.length}`));
     matches.slice(0, limit).forEach(s => optionList.append(sectionCard(s, false)));
@@ -125,15 +160,20 @@
     applyButton.disabled = !current.length || blocked;
     applyButton.textContent = `Apply ${current.length} active sections to routine`;
     message.textContent = blocked ? 'Resolve active-section clashes before applying.' : 'Apply replaces configured meetings for these courses. Other courses stay in place. Backups stay in this planner.';
+    if(expiredPlannerEnd(state.routineRange)) message.textContent=blocked?'Resolve active-section clashes before applying.':'Apply starts a new routine without the previous semester’s classes. Set the new routine dates in Class Setup afterward.';
+    termNotice.textContent=expiredPlannerEnd(state.routineRange)?`The previous routine ended on ${state.routineRange.endDate}. Old semester classes are cleared from this planner. Your new selections are kept.`:'';
     renderTimetable();
   }
   card.addEventListener('click', async () => {
+    ready=false;
     ['cgpaCalcPanel','examRoutinePanel','divisionCalcPanel','coursePlannerPanel','toolsCalendarPanel'].forEach(id => { const p = document.getElementById(id); if (p) p.style.display = 'none'; });
     panel.style.display = 'block'; panel.replaceChildren(el('p', 'Loading Fall 2026 sections…'));
     try {
       const [, , catalog] = await data; sections = catalog.offerings;
       selected = new Set(); primary = {}; query = ''; sectionQuery=''; program = 'All'; limit = 12;
       let saved; try { saved = JSON.parse(localStorage.getItem(draftKey()) || 'null'); } catch (_) {}
+      saved=rolloverSectionDraft(saved,expiredPlannerEnd(state.routineRange));
+      clearedForEndDate=saved.clearedForEndDate||null;savedAtMs=saved.savedAtMs||0;
       const valid = new Set(sections.map(s => s.id));
       (saved?.selected || []).filter(id => valid.has(id)).forEach(id => selected.add(id));
       chosen().forEach(s => { primary[key(s.courseCode)] ||= s.id; if (saved?.primary?.[key(s.courseCode)] === s.id) primary[key(s.courseCode)] = s.id; });
@@ -144,25 +184,27 @@
       [...new Map(sections.map(s=>[s.courseCode,s])).values()].forEach(s=>{const o=el('option');o.value=`${s.courseCode} — ${s.title}`;courseOptions.append(o);});
       search.setAttribute('list','sectionCourseOptions');
       search.addEventListener('input', () => { query = search.value; limit = 12; render(); });
-      const sectionSearch=el('input','','form-input');sectionSearch.type='search';sectionSearch.placeholder='Search section, e.g. A or BA';sectionSearch.setAttribute('aria-label','Search section');
+      const sectionSearch=el('input','','form-input');sectionSearch.type='search';sectionSearch.placeholder='Section, faculty name or initial';sectionSearch.setAttribute('aria-label','Search section or faculty');
       sectionSearch.addEventListener('input',()=>{sectionQuery=sectionSearch.value;limit=12;render();});
       const filter = el('select', '', 'form-input'); filter.setAttribute('aria-label', 'Program');
       ['All','BSCSE','BSDS'].forEach(p => { const o = el('option', p); o.value = p; filter.append(o); });
       filter.addEventListener('change', () => { program = filter.value; limit = 12; render(); });
       summary = el('h3'); planList = el('div'); optionList = el('div'); message = el('p');
       applyButton = button('Apply to routine', () => {
-        try { state.classes = applySections(active(), state.classes || []); saveStudentSession(); renderAll(); syncStudentWithServer(true); showToast('Active sections added. Backups remain in the planner.', 'success'); render(); }
+        try { const expired=expiredPlannerEnd(state.routineRange);state.classes = applySections(active(), configuredForPlanner());if(expired)state.routineRange=null;saveStudentSession(); renderAll(); syncStudentWithServer(true); showToast('Active sections added. Backups remain in the planner.', 'success'); render(); }
         catch (error) { message.textContent = error.message; }
       });
       const selectors=el('div','','section-selectors');
-      for(const [text,input] of [['1. Search course',search],['2. Search section',sectionSearch],['Program',filter]]){const label=el('label',text);label.append(input);selectors.append(label);}
+      for(const [text,input] of [['1. Search course',search],['2. Search section or faculty',sectionSearch],['Program',filter]]){const label=el('label',text);label.append(input);selectors.append(label);}
       const tableHeading=el('div','','unified-heading');tableHeading.append(el('h3','Unified Class Routine'),button('Clear section plan',()=>{selected.clear();primary={};save();render();}));
       timetable=el('div','','unified-scroll');timetable.setAttribute('role','region');timetable.setAttribute('aria-label','Unified Class Routine');timetable.tabIndex=0;
       clashSummary=el('p');
-      panel.append(selectors,courseOptions,optionList,tableHeading,el('p','Swipe or scroll horizontally to see all hours. Cards use exact meeting times.'),timetable,clashSummary,el('h3','Section plan'),summary,planList,message,applyButton); render();
+      termNotice=el('p','','section-term-notice');
+      panel.append(termNotice,selectors,courseOptions,optionList,tableHeading,el('p','Swipe or scroll horizontally to see all hours. Cards use exact meeting times.'),timetable,clashSummary,el('h3','Section plan'),summary,planList,message,applyButton);ready=true;render();save();
     } catch (error) { panel.replaceChildren(el('p', error.message)); }
     panel.scrollIntoView({behavior: 'smooth', block: 'start'});
   });
+  setInterval(()=>{if(ready && panel.style.display!=='none' && expiredPlannerEnd(state.routineRange)!==clearedForEndDate && expiredPlannerEnd(state.routineRange)) render();},60000);
   data.then(([courses, faculty]) => {
     api.courses = courses;
     function datalist(id, inputId, values) {

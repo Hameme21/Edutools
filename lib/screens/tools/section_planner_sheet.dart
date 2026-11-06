@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/section_offering.dart';
+import '../../models/section_plan_lifecycle.dart';
+import '../../models/class_schedule.dart';
 import '../../services/section_catalog_service.dart';
 import '../../state/calendar_state.dart';
 import '../../widgets/searchable_input.dart';
@@ -18,7 +21,8 @@ class SectionPlannerSheet extends StatefulWidget {
   State<SectionPlannerSheet> createState() => _SectionPlannerSheetState();
 }
 
-class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
+class _SectionPlannerSheetState extends State<SectionPlannerSheet>
+    with WidgetsBindingObserver {
   List<SectionOffering>? _catalog;
   final Set<String> _selected = {};
   final Map<String, String> _primary = {};
@@ -27,6 +31,13 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
   final _sectionSearch = TextEditingController();
   String? _error;
   int _limit = 12;
+  String? _clearedForEndDate;
+  int _savedAtMs = 0;
+  Timer? _termTimer;
+  String? get _expiredEnd =>
+      expiredPlannerEnd(widget.state.routineRange, DateTime.now());
+  List<ClassSchedule> get _configured =>
+      _expiredEnd == null ? widget.state.classes : [];
   String get _key =>
       'section_plan_fall2026_${widget.state.currentStudent?.email.toLowerCase() ?? 'guest'}';
   List<SectionOffering> get _chosen =>
@@ -36,11 +47,30 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _termTimer =
+        Timer.periodic(const Duration(minutes: 1), (_) => _checkTerm());
     _load();
+  }
+
+  void _checkTerm() {
+    if (mounted &&
+        _catalog != null &&
+        _expiredEnd != null &&
+        _expiredEnd != _clearedForEndDate) {
+      _change(() {});
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _checkTerm();
   }
 
   @override
   void dispose() {
+    _termTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     _courseSearch.dispose();
     _sectionSearch.dispose();
     super.dispose();
@@ -68,9 +98,12 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
       try {
         saved = jsonDecode(prefs.getString(_key) ?? 'null') as Map?;
       } catch (_) {}
+      saved = rolloverSectionDraft(saved, _expiredEnd, DateTime.now());
       if (!mounted) return;
       setState(() {
         _catalog = catalog;
+        _clearedForEndDate = saved?['clearedForEndDate'] as String?;
+        _savedAtMs = (saved?['savedAtMs'] as num?)?.toInt() ?? 0;
         final valid = catalog.map((s) => s.id).toSet();
         _selected.addAll((saved?['selected'] as List? ?? [])
             .whereType<String>()
@@ -82,6 +115,7 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
           }
         }
       });
+      if (_expiredEnd != null) await _persistDraft();
     } catch (_) {
       if (mounted) {
         setState(() => _error =
@@ -91,11 +125,40 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
   }
 
   Future<void> _change(VoidCallback action) async {
-    setState(action);
+    if (!mounted) return;
+    setState(() {
+      if (_expiredEnd != null && _expiredEnd != _clearedForEndDate) {
+        final fresh = rolloverSectionDraft({
+          'selected': _selected.toList(),
+          'primary': _primary,
+          'clearedForEndDate': _clearedForEndDate,
+          'savedAtMs': _savedAtMs
+        }, _expiredEnd, DateTime.now());
+        _selected
+          ..clear()
+          ..addAll((fresh['selected'] as List).cast<String>());
+        _primary
+          ..clear()
+          ..addAll(Map<String, String>.from(fresh['primary'] as Map));
+        _clearedForEndDate = fresh['clearedForEndDate'];
+      }
+      action();
+    });
+    await _persistDraft();
+  }
+
+  Future<void> _persistDraft() async {
     try {
+      _savedAtMs = DateTime.now().millisecondsSinceEpoch;
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_key,
-          jsonEncode({'selected': _selected.toList(), 'primary': _primary}));
+      await prefs.setString(
+          _key,
+          jsonEncode({
+            'selected': _selected.toList(),
+            'primary': _primary,
+            'clearedForEndDate': _clearedForEndDate,
+            'savedAtMs': _savedAtMs
+          }));
     } catch (_) {
       if (mounted) {
         setState(
@@ -105,7 +168,7 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
   }
 
   List<String> _clashes(SectionOffering section) =>
-      sectionClashes(section, _active, widget.state.classes)
+      sectionClashes(section, _active, _configured)
           .map((c) => '${c.courseCode} · ${c.dayName} ${c.timeRangeFormatted}')
           .toSet()
           .toList();
@@ -188,9 +251,7 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
             _query.trim().isNotEmpty &&
             !_selected.contains(s.id) &&
             (_program == 'All' || s.program == _program) &&
-            s.section
-                .toUpperCase()
-                .contains(_sectionQuery.trim().toUpperCase()) &&
+            matchesSectionFaculty(s, _sectionQuery) &&
             ('${s.courseCode} ${s.title} ${s.facultyName} ${s.facultyCode}'
                     .toLowerCase()
                     .contains(_query.split(' — ').first.toLowerCase()) ||
@@ -218,6 +279,11 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
                   ])),
               Expanded(
                   child: ListView(padding: const EdgeInsets.all(16), children: [
+                if (_expiredEnd != null)
+                  Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                          'The previous routine ended on $_expiredEnd. Old semester classes are cleared from this planner. Your new selections are kept.')),
                 const Text(
                     'BSCSE / BSDS offerings from the supplied routine. TBA means To be announced. Backups are alternatives and are not added to your routine.'),
                 const SizedBox(height: 12),
@@ -237,8 +303,8 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
                 TextField(
                     controller: _sectionSearch,
                     decoration: const InputDecoration(
-                        labelText: '2. Search section',
-                        hintText: 'e.g. A or BA',
+                        labelText: '2. Search section or faculty',
+                        hintText: 'Section, faculty name or initial',
                         prefixIcon: Icon(Icons.filter_list)),
                     onChanged: (value) => setState(() {
                           _sectionQuery = value;
@@ -290,7 +356,7 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
                                 }))),
                 UnifiedRoutineGrid(
                     active: _active,
-                    configured: widget.state.classes,
+                    configured: _configured,
                     onRemove: _removeSection),
                 const SizedBox(height: 20),
                 const Text('Section plan',
@@ -308,7 +374,9 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
                         Text(
                             hasClashes
                                 ? 'Resolve active-section clashes before applying.'
-                                : 'Apply replaces configured meetings for these courses. Other courses stay in place.',
+                                : _expiredEnd != null
+                                    ? 'Apply starts a new routine without the previous semester’s classes. Set the new routine dates in Class Setup afterward.'
+                                    : 'Apply replaces configured meetings for these courses. Other courses stay in place.',
                             style: const TextStyle(fontSize: 12)),
                         const SizedBox(height: 8),
                         FilledButton(

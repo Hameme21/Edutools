@@ -88,7 +88,7 @@ class ToolsScreen extends StatelessWidget {
         title: 'Section Planner',
         description:
             'Fall 2026 CSE / DS sections, faculty, exact meeting times and clash checks. Keep backup sections for each course.',
-        icon: Icons.view_week_outlined,
+        icon: Icons.architecture_outlined,
         color: Color(0xFF0891B2),
         bgColor: Color(0x1A0891B2),
         chips: ['Sections', 'Clash check', 'Backups'],

@@ -681,14 +681,20 @@ class CalendarState extends ChangeNotifier {
   }
 
   void applyPlannedSections(List<SectionOffering> sections) {
+    final expired = routineRange?.isAfterEnd(DateTime.now()) ?? false;
+    final configured = expired ? <ClassSchedule>[] : classes;
     final keys = sections.map((s) => s.courseKey).toSet();
-    if (keys.length != sections.length || sections.any((s) => sectionClashes(s, sections, classes).isNotEmpty)) {
+    if (keys.length != sections.length ||
+        sections
+            .any((s) => sectionClashes(s, sections, configured).isNotEmpty)) {
       throw StateError('Choose one clash-free active section per course.');
     }
     _calendarService.setClasses([
-      ...classes.where((c) => !keys.contains(c.courseCode.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase())),
+      ...configured.where((c) => !keys.contains(
+          c.courseCode.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase())),
       ...sections.expand((s) => s.meetings),
     ]);
+    if (expired) _calendarService.clearRoutineDateRange();
     _reminderService.refreshReminders(referenceDate: _selectedDate);
     _pushChangesToServer();
     notifyListeners();

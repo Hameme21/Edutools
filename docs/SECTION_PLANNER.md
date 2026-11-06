@@ -27,13 +27,25 @@ supplied faculties.json and remain editable; instructor input starts empty.
 Exact known titles fill missing course codes; unknown titles are not guessed.
 
 Section Planner is the last tool in Tools. Search a course code/title, then
-filter its section names in the separate section search box and add a section.
+filter its section names or faculty names/initials in the separate section
+search box and add a section.
 The Unified Class Routine shows active sections together with other configured
 courses in a Saturday–Friday hour grid. Cards retain their exact minute-based
 positions and durations. Overlaps are red and placed in separate vertical lanes
 so neither class is hidden. Phones can scroll the timeline horizontally.
 The section plan underneath lists active choices and saved backups. Clearing
 the section plan clears only the draft choices, not configured routine classes.
+
+After the configured routine end date passes (the last day remains inclusive),
+the planner stops including that semester's configured classes. Its old draft
+is reset once for that end date. The reset marker and draft save timestamp keep
+new selection preparation intact on reopening. The app checks on open/resume
+and once a minute while open; the web checks when opened/used and once a minute.
+Without a routine end date, no automatic expiration is guessed.
+
+Automatic cleanup does not delete the saved routine. Explicitly applying a new
+plan after expiration starts a new routine without the previous semester's
+classes and clears its old date range. Set the new dates in Class Setup.
 
 Select one active section per course and any number of backup sections. Backups
 are compared against the active sections of other courses and configured

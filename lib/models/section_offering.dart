@@ -42,6 +42,13 @@ int routineMinutes(String time) {
   return parts[0] * 60 + parts[1];
 }
 
+bool matchesSectionFaculty(SectionOffering section, String query) {
+  final text = query.trim().toLowerCase();
+  return section.section.toLowerCase().contains(text) ||
+      section.facultyName.toLowerCase().contains(text) ||
+      section.facultyCode.toLowerCase().contains(text);
+}
+
 List<ClassSchedule> unifiedSectionMeetings(
     Iterable<SectionOffering> active, Iterable<ClassSchedule> configured) {
   final replaced = active.map((s) => s.courseKey).toSet();

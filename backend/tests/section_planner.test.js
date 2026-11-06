@@ -48,3 +48,22 @@ test('unified preview keeps conflicting active meetings visible while apply rema
   assert.equal(planner.minutes('09:51'),591);
   assert.equal(planner.minutes('13:40'),820);
 });
+test('section search accepts faculty full names and initials without case sensitivity',()=>{
+  assert.equal(planner.matchesSectionFaculty(offerings[1],'Shakila Aziz'),true);
+  assert.equal(planner.matchesSectionFaculty(offerings[1],'sHaZ'),true);
+  assert.equal(planner.matchesSectionFaculty(offerings[1],'B'),true);
+  assert.equal(planner.matchesSectionFaculty(offerings[0],'ShAz'),false);
+});
+test('semester rollover clears old choices once and preserves new selection preparation',()=>{
+  const range={endDate:'2026-12-31'};
+  assert.equal(planner.expiredPlannerEnd(range,new Date(2026,11,31,23,59)),null);
+  const end=planner.expiredPlannerEnd(range,new Date(2027,0,1,1));
+  assert.equal(end,'2026-12-31');
+  const old={selected:['F26-1'],primary:{ACT2111:'F26-1'}};
+  const reset=planner.rolloverSectionDraft(old,end,new Date(2027,0,1,1));
+  assert.deepEqual(reset.selected,[]);
+  const next={...reset,selected:['F26-2'],primary:{ACT2111:'F26-2'}};
+  assert.deepEqual(planner.rolloverSectionDraft(next,end,new Date(2027,0,2)).selected,['F26-2']);
+  const fresh={...old,savedAtMs:new Date(2027,0,1,0,1).getTime()};
+  assert.deepEqual(planner.rolloverSectionDraft(fresh,end,new Date(2027,0,2)).selected,['F26-1']);
+});

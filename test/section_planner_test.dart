@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:educal/models/class_schedule.dart';
 import 'package:educal/models/section_offering.dart';
 import 'package:educal/models/course_catalog.dart';
+import 'package:educal/models/section_plan_lifecycle.dart';
+import 'package:educal/models/routine_date_range.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:educal/state/calendar_state.dart';
@@ -48,6 +50,40 @@ void main() {
             .courseCode,
         'CSE 3521');
     expect(courseCodeForTitle('Unknown subject'), isNull);
+  });
+  test('faculty search supports names and initials', () {
+    expect(matchesSectionFaculty(sections[1], 'Shakila Aziz'), isTrue);
+    expect(matchesSectionFaculty(sections[1], 'shaz'), isTrue);
+    expect(matchesSectionFaculty(sections[0], 'shaz'), isFalse);
+  });
+  test(
+      'semester end clears old draft once and retains preparation made afterward',
+      () {
+    final range = RoutineDateRange(
+        startDate: DateTime(2026, 10, 1),
+        endDate: DateTime(2026, 12, 31),
+        sourceDescription: 'Test');
+    expect(expiredPlannerEnd(range, DateTime(2026, 12, 31, 23, 59)), isNull);
+    final end = expiredPlannerEnd(range, DateTime(2027, 1, 1, 1));
+    final reset = rolloverSectionDraft({
+      'selected': ['F26-1'],
+      'primary': {'ACT2111': 'F26-1'}
+    }, end, DateTime(2027, 1, 1, 1));
+    expect(reset['selected'], isEmpty);
+    final next = {
+      ...reset,
+      'selected': ['F26-2'],
+      'primary': {'ACT2111': 'F26-2'}
+    };
+    expect(rolloverSectionDraft(next, end, DateTime(2027, 1, 2))['selected'],
+        ['F26-2']);
+    expect(
+        rolloverSectionDraft({
+          'selected': ['F26-3'],
+          'primary': {},
+          'savedAtMs': DateTime(2027, 1, 1, 0, 1).millisecondsSinceEpoch
+        }, end, DateTime(2027, 1, 2))['selected'],
+        ['F26-3']);
   });
   testWidgets(
       'multiple sections stay as backups and only active meetings enter the routine',
