@@ -6,7 +6,7 @@ Edutools is an academic calendar, class routine, and section planning app for Un
 - [Download the latest Android release](https://github.com/Hameme21/Edutools/releases/latest)
 - [Backend health](https://edutools-y4xy.onrender.com/api/health)
 
-Current release: **1.2.2**, Android build **128**.
+Current release: **1.2.3**, Android build **130**.
 
 ## Features
 
@@ -54,7 +54,7 @@ For developer installation, identify and explicitly target the phone's current p
 ```sh
 adb devices -l
 adb -s DEVICE_SERIAL shell am get-current-user
-adb -s DEVICE_SERIAL install --user PROFILE_ID -r Edutools-1.2.2.apk
+adb -s DEVICE_SERIAL install --user PROFILE_ID -r Edutools-1.2.3.apk
 ```
 
 The current Gradle release configuration uses the existing development signing key. Retain that key for compatible APK updates; configure a dedicated signing strategy before Play Store distribution. Android is the verified release target; other Flutter platform folders are development scaffolding.
