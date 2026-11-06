@@ -45,7 +45,7 @@ class ReleaseInfo {
 }
 
 class AppUpdateService {
-  static const String currentVersion = '1.1.7';
+  static const String currentVersion = '1.2.0';
   static const String repoOwner = 'Hameme21';
   static const String repoName = 'Edutools';
   static const String releasesUrl = 'https://github.com/Hameme21/Edutools/releases';

@@ -14,7 +14,7 @@ test('new Google user stays behind an opaque registration gate until required de
     return nodes.get(id);
   }
   const context = vm.createContext({
-    document: { getElementById: node }, state: { student: null },
+    AbortSignal, document: { getElementById: node }, state: { student: null },
     showAuthGate: () => node('authGate').classList.remove('hidden'),
     hideAuthGate: () => node('authGate').classList.add('hidden'),
     getApiBaseUrl: () => '', saveStudentSession() {}, startCrossPlatformAutoSync() {},
