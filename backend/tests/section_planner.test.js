@@ -67,3 +67,11 @@ test('semester rollover clears old choices once and preserves new selection prep
   const fresh={...old,savedAtMs:new Date(2027,0,1,0,1).getTime()};
   assert.deepEqual(planner.rolloverSectionDraft(fresh,end,new Date(2027,0,2)).selected,['F26-1']);
 });
+test('faculty is assigned by course and section; custom corrections remain editable',()=>{
+  const cls={courseCode:'ACT-2111',subject:'Accounting · Section B',instructor:''};
+  const filled=planner.fillSectionInstructor(cls,offerings);
+  assert.equal(filled.instructor,'Shakila Aziz');assert.equal(filled.section,'B');
+  assert.equal(planner.fillSectionInstructor({...filled,instructor:'Corrected instructor'},offerings).instructor,'Corrected instructor');
+  assert.equal(planner.assignedInstructor('ACT 2111','NOPE',offerings),null);
+  assert.equal(planner.applySections([offerings[1]],[])[0].instructor,'Shakila Aziz');
+});

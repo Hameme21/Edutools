@@ -27,6 +27,7 @@ class SectionOffering {
                   'id': '${json['id']}-${entry.key}',
                   'subject': '${json['title']} · Section ${json['section']}',
                   'courseCode': json['courseCode'],
+                  'section': json['section'],
                   'instructor': json['facultyName'],
                 }))
             .toList();
@@ -35,6 +36,38 @@ class SectionOffering {
   String get facultyLabel => facultyName == 'To be announced'
       ? 'TBA — To be announced'
       : '$facultyName ($facultyCode)';
+}
+
+SectionOffering? assignedSection(
+    Iterable<SectionOffering> catalog, String courseCode, String section,
+    {String? program}) {
+  String key(String text) =>
+      text.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase();
+  if (courseCode.trim().isEmpty || section.trim().isEmpty) return null;
+  final matches = catalog
+      .where((s) =>
+          s.courseKey == key(courseCode) &&
+          s.section.toUpperCase() == section.trim().toUpperCase() &&
+          (program == null || s.program == program))
+      .toList();
+  return matches.isNotEmpty &&
+          matches.map((s) => s.facultyName).toSet().length == 1
+      ? matches.first
+      : null;
+}
+
+bool missingInstructor(String value) => [
+      '',
+      'instructor',
+      'dr. instructor',
+      'tba'
+    ].contains(value.trim().toLowerCase());
+
+ClassSchedule fillSectionInstructor(
+    ClassSchedule cls, Iterable<SectionOffering> catalog) {
+  if (!missingInstructor(cls.instructor)) return cls;
+  final match = assignedSection(catalog, cls.courseCode, cls.section);
+  return match == null ? cls : cls.copyWith(instructor: match.facultyName);
 }
 
 int routineMinutes(String time) {

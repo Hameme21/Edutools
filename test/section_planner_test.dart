@@ -56,6 +56,16 @@ void main() {
     expect(matchesSectionFaculty(sections[1], 'shaz'), isTrue);
     expect(matchesSectionFaculty(sections[0], 'shaz'), isFalse);
   });
+  test('course plus section assigns faculty and preserves editable overrides', () {
+    final cls=ClassSchedule.fromJson({'subject':'Financial and Managerial Accounting · Section B','courseCode':'ACT-2111'});
+    final filled=fillSectionInstructor(cls,sections);
+    expect(filled.section,'B');expect(filled.instructor,'Shakila Aziz');
+    expect(ClassSchedule.fromJson(filled.toJson()).section,'B');
+    expect(fillSectionInstructor(filled.copyWith(instructor:'Corrected instructor'),sections).instructor,'Corrected instructor');
+    expect(assignedSection(sections,'ACT 2111','NOPE'),isNull);
+    expect(assignedSection(sections,'UNKNOWN 1111','B'),isNull);
+    expect(sections[1].meetings.first.instructor,'Shakila Aziz');
+  });
   test(
       'semester end clears old draft once and retains preparation made afterward',
       () {

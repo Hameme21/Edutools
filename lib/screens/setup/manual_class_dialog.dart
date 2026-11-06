@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/class_schedule.dart';
 import '../../models/course_catalog.dart';
+import '../../models/section_offering.dart';
 import '../../services/section_catalog_service.dart';
 import '../../widgets/searchable_input.dart';
 
@@ -22,6 +23,8 @@ class _ManualClassDialogState extends State<ManualClassDialog> {
   late TextEditingController _endController;
   late TextEditingController _roomController;
   late TextEditingController _instructorController;
+  final _sectionController = TextEditingController();
+  List<SectionOffering> _sections = [];
 
   int _dayOfWeek = 1;
   List<String> _faculty = [];
@@ -48,6 +51,14 @@ class _ManualClassDialogState extends State<ManualClassDialog> {
     _endController = TextEditingController(text: init?.endTime ?? '10:30');
     _roomController = TextEditingController(text: init?.room ?? 'Room 101');
     _instructorController = TextEditingController(text: init?.instructor ?? '');
+    _sectionController.text = init?.section ?? '';
+    SectionCatalogService.sections().then((values) {
+      if (!mounted) return;
+      setState(() {
+        _sections = values;
+        if (missingInstructor(_instructorController.text)) _assignInstructor();
+      });
+    });
     SectionCatalogService.faculty().then((values) {
       if (mounted) setState(() => _faculty = values);
     });
@@ -63,6 +74,7 @@ class _ManualClassDialogState extends State<ManualClassDialog> {
     _endController.dispose();
     _roomController.dispose();
     _instructorController.dispose();
+    _sectionController.dispose();
     super.dispose();
   }
 
@@ -73,6 +85,7 @@ class _ManualClassDialogState extends State<ManualClassDialog> {
             'CLS-${DateTime.now().millisecondsSinceEpoch}',
         subject: _subjectController.text.trim(),
         courseCode: _codeController.text.trim(),
+        section: _sectionController.text.split(' — ').first.trim(),
         dayOfWeek: _dayOfWeek,
         startTime: _startController.text.trim(),
         endTime: _endController.text.trim(),
@@ -82,6 +95,17 @@ class _ManualClassDialogState extends State<ManualClassDialog> {
       );
       widget.onSave(cls);
       Navigator.of(context).pop();
+    }
+  }
+
+  void _assignInstructor() {
+    final input = _sectionController.text;
+    final parts = input.split(' — ');
+    final match = assignedSection(_sections, _codeController.text, parts.first,
+        program: parts.length > 1 ? parts.last : null);
+    if (match != null) {
+      _sectionController.text = match.section;
+      _instructorController.text = match.facultyName;
     }
   }
 
@@ -137,7 +161,13 @@ class _ManualClassDialogState extends State<ManualClassDialog> {
                     hint: 'Search course planner courses',
                     onChanged: (value) {
                       final code = courseCodeForTitle(value);
-                      if (code != null) _codeController.text = code;
+                      if (code != null) {
+                        setState(() {
+                          _codeController.text = code;
+                          _instructorController.clear();
+                          _assignInstructor();
+                        });
+                      }
                     },
                     validator: (v) => v == null || v.trim().isEmpty
                         ? 'Subject is required'
@@ -156,12 +186,14 @@ class _ManualClassDialogState extends State<ManualClassDialog> {
                           label: 'Course Code',
                           hint: 'Search course code',
                           onChanged: (value) {
+                            _instructorController.clear();
                             for (final course in plannerCourses) {
                               if (course.code.toLowerCase() ==
                                   value.toLowerCase()) {
                                 _subjectController.text = course.name;
                               }
                             }
+                            setState(_assignInstructor);
                           },
                           validator: (v) => v == null || v.trim().isEmpty
                               ? 'Code is required'
@@ -196,6 +228,24 @@ class _ManualClassDialogState extends State<ManualClassDialog> {
                   const SizedBox(height: 12),
 
                   // Start & End Time (24h)
+                  SearchableInput(
+                      controller: _sectionController,
+                      options: _sections
+                          .where((s) =>
+                              s.courseKey ==
+                              _codeController.text
+                                  .replaceAll(RegExp(r'[^A-Za-z0-9]'), '')
+                                  .toUpperCase())
+                          .map((s) =>
+                              '${s.section} — ${s.facultyName} — ${s.program}')
+                          .toList(),
+                      label: 'Section',
+                      hint: 'Select section to fill instructor',
+                      onChanged: (_) {
+                        _instructorController.clear();
+                        setState(_assignInstructor);
+                      }),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(

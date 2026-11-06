@@ -175,6 +175,8 @@ class FileParserService {
 
         // Extract instructor from description if present
         String instructor = '';
+        final section = RegExp(r'\bsection\s*:\s*([A-Za-z]{1,3})\b',caseSensitive:false).firstMatch(description)?.group(1)
+            ?? RegExp(r'\b(?:section|sec)[\s:-]+([A-Za-z]{1,3})\b',caseSensitive:false).firstMatch(subject)?.group(1) ?? '';
         if (description.toLowerCase().contains('instructor:')) {
           instructor = description.split(RegExp(r'instructor:', caseSensitive: false))[1].split(',')[0].trim();
         } else if (description.toLowerCase().contains('teacher:')) {
@@ -187,6 +189,7 @@ class FileParserService {
             id: daysOfWeek.length > 1 ? '${baseUid}_d$dayOfWeek' : baseUid,
             subject: subject.isNotEmpty ? subject : summary,
             courseCode: courseCode,
+            section: section,
             dayOfWeek: dayOfWeek,
             startTime: startTime,
             endTime: endTime,
@@ -426,6 +429,7 @@ class FileParserService {
       final idIdx = header.indexOf('id');
       final subjectIdx = header.indexOf('subject');
       final codeIdx = header.indexOf('coursecode');
+      final sectionIdx = header.indexOf('section');
       final dayIdx = header.indexOf('dayofweek');
       final startIdx = header.indexOf('starttime');
       final endIdx = header.indexOf('endtime');
@@ -459,6 +463,7 @@ class FileParserService {
           id: getCol(idIdx, 'CLS-$i'),
           subject: subject,
           courseCode: code,
+          section: getCol(sectionIdx),
           dayOfWeek: day,
           startTime: start,
           endTime: end,

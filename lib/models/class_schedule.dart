@@ -5,6 +5,7 @@ class ClassSchedule {
   final String id;
   final String subject;
   final String courseCode;
+  final String section;
   final int dayOfWeek; // 1 = Monday, ..., 7 = Sunday
   final String startTime; // "09:00" (24h)
   final String endTime; // "10:30" (24h)
@@ -18,6 +19,7 @@ class ClassSchedule {
     required this.id,
     required this.subject,
     required this.courseCode,
+    this.section = '',
     required this.dayOfWeek,
     required this.startTime,
     required this.endTime,
@@ -107,6 +109,7 @@ class ClassSchedule {
       'id': id,
       'subject': subject,
       'courseCode': courseCode,
+      'section': section,
       'dayOfWeek': dayOfWeek,
       'startTime': startTime,
       'endTime': endTime,
@@ -122,6 +125,12 @@ class ClassSchedule {
     return ClassSchedule(
       id: json['id']?.toString() ?? UniqueKey().toString(),
       subject: json['subject']?.toString() ?? 'Untitled Class',
+      section: json['section']?.toString() ??
+          RegExp(r'\b(?:section|sec)[\s:-]+([A-Za-z]{1,3})\b',
+                  caseSensitive: false)
+              .firstMatch(json['subject']?.toString() ?? '')
+              ?.group(1) ??
+          '',
       courseCode: (json['courseCode']?.toString().trim().isNotEmpty ?? false) &&
               json['courseCode'] != 'GEN-101'
           ? json['courseCode'].toString()
@@ -147,6 +156,7 @@ class ClassSchedule {
     String? id,
     String? subject,
     String? courseCode,
+    String? section,
     int? dayOfWeek,
     String? startTime,
     String? endTime,
@@ -161,6 +171,7 @@ class ClassSchedule {
       id: id ?? this.id,
       subject: subject ?? this.subject,
       courseCode: courseCode ?? this.courseCode,
+      section: section ?? this.section,
       dayOfWeek: dayOfWeek ?? this.dayOfWeek,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,

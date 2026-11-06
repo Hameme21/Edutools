@@ -13,7 +13,7 @@
   function unifiedMeetings(active, configured) {
     const replaced = new Set(active.map(s => key(s.courseCode)));
     return [...configured.filter(c => !replaced.has(key(c.courseCode))), ...active.flatMap(s => s.meetings.map((m, i) => ({...m,
-      id: `${s.id}-${i}`, courseCode: s.courseCode, subject: `${s.title} · Section ${s.section}`,
+      id: `${s.id}-${i}`, courseCode: s.courseCode, section: s.section, subject: `${s.title} · Section ${s.section}`,
       instructor: s.facultyName, color: '#0891B2', reminderEnabled: true})))];
   }
   function applySections(active, configured) {
@@ -23,6 +23,17 @@
   function resolveCode(title, catalog) {
     const matches = catalog.filter(c => normalize(c.name) === normalize(title));
     return matches.length === 1 ? matches[0].code : null;
+  }
+  function sectionName(cls) { return cls.section || String(cls.subject || '').match(/\b(?:section|sec)[\s:-]+([a-z]{1,3})\b/i)?.[1] || ''; }
+  function assignedInstructor(code, section, catalog, program) {
+    if(!code || !section) return null;
+    const matches=catalog.filter(s=>key(s.courseCode)===key(code) && s.section.toUpperCase()===section.trim().toUpperCase() && (!program || s.program===program));
+    return matches.length && new Set(matches.map(s=>s.facultyName)).size===1?matches[0].facultyName:null;
+  }
+  function fillSectionInstructor(cls,catalog) {
+    if(!['','instructor','dr. instructor','tba'].includes(String(cls.instructor||'').trim().toLowerCase())) return cls;
+    const section=sectionName(cls),faculty=assignedInstructor(cls.courseCode,section,catalog);
+    return faculty?{...cls,section,instructor:faculty}:cls;
   }
   function matchesSectionFaculty(s,query) {
     const q=query.trim().toLowerCase();
@@ -40,7 +51,7 @@
     if((Number(draft.savedAtMs)||0)<boundary){draft.selected=[];draft.primary={};draft.savedAtMs=now.getTime();}
     draft.clearedForEndDate=expiredEnd;return draft;
   }
-  const api = {key, normalize, minutes, overlaps, clashes, unifiedMeetings, applySections, resolveCode, matchesSectionFaculty, expiredPlannerEnd, rolloverSectionDraft};
+  const api = {key, normalize, minutes, overlaps, clashes, unifiedMeetings, applySections, resolveCode, matchesSectionFaculty, expiredPlannerEnd, rolloverSectionDraft, sectionName, assignedInstructor, fillSectionInstructor};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document === 'undefined') return;
   root.SectionPlanner = api;
@@ -205,8 +216,9 @@
     panel.scrollIntoView({behavior: 'smooth', block: 'start'});
   });
   setInterval(()=>{if(ready && panel.style.display!=='none' && expiredPlannerEnd(state.routineRange)!==clearedForEndDate && expiredPlannerEnd(state.routineRange)) render();},60000);
-  data.then(([courses, faculty]) => {
+  data.then(([courses, faculty, catalog]) => {
     api.courses = courses;
+    api.sections = catalog.offerings;
     function datalist(id, inputId, values) {
       const list = el('datalist'); list.id = id;
       values.forEach(value => { const o = el('option'); o.value = value; list.append(o); });
@@ -220,6 +232,20 @@
     code?.addEventListener('input', () => { const match = courses.find(c => key(c.code) === key(code.value)); if (match) title.value = match.name; });
     const instructor = document.getElementById('classInstructor');
     if (instructor) instructor.placeholder = 'Search faculty name or initial';
+    const sectionInput=document.getElementById('classSection'),sectionOptions=document.getElementById('classSectionOptions');
+    function sectionChoices() {
+      sectionOptions.replaceChildren();
+      api.sections.filter(s=>key(s.courseCode)===key(code.value)).forEach(s=>{const o=el('option');o.value=`${s.section} — ${s.facultyName} — ${s.program}`;sectionOptions.append(o);});
+    }
+    function assignFaculty() {
+      const parts=sectionInput.value.split(' — '),name=assignedInstructor(code.value,parts[0],api.sections,parts.length>1?parts.at(-1):null);
+      instructor.value=name||'';
+      if(name)sectionInput.value=parts[0];
+    }
+    sectionInput.addEventListener('input',assignFaculty);
+    sectionInput.addEventListener('focus',sectionChoices);
+    code.addEventListener('input',()=>{sectionChoices();assignFaculty();});
+    title.addEventListener('input',()=>{sectionChoices();assignFaculty();});
     if (state.student) renderSetup();
   }).catch(() => { /* Opening the planner shows a retry message if assets fail. */ });
 })(typeof window !== 'undefined' ? window : globalThis);

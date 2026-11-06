@@ -4392,6 +4392,11 @@ body {
             <label>Subject / Course Name *</label>
             <input type="text" id="classSubject" class="form-input" placeholder="e.g. Data Structures & Algorithms" required>
           </div>
+          <div class="form-group">
+            <label for="classSection">Section</label>
+            <input type="text" id="classSection" class="form-input" placeholder="Select section to fill instructor" list="classSectionOptions">
+            <datalist id="classSectionOptions"></datalist>
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label>Day of Week *</label>
@@ -6134,6 +6139,7 @@ function renderSetup() {
   if (typeof SectionPlanner !== 'undefined' && SectionPlanner.courses) {
     for (const cls of state.classes) {
       if (!cls.courseCode || ['COURSE','GEN-101'].includes(cls.courseCode)) cls.courseCode = SectionPlanner.resolveCode(cls.subject, SectionPlanner.courses) || cls.courseCode;
+      if (SectionPlanner.sections) Object.assign(cls, SectionPlanner.fillSectionInstructor(cls, SectionPlanner.sections));
     }
   }
   renderRoutineWindowCard();
@@ -6186,6 +6192,8 @@ function renderSetup() {
         document.getElementById('classStartTime').value = cls.startTime;
         document.getElementById('classEndTime').value = cls.endTime;
         document.getElementById('classInstructor').value = cls.instructor || '';
+        document.getElementById('classSection').value = cls.section || (typeof SectionPlanner !== 'undefined' ? SectionPlanner.sectionName(cls) : '');
+        document.getElementById('classSection').dispatchEvent(new Event('focus'));
         state.activeEditClassId = cls.id;
         document.getElementById('classModalTitle').textContent = 'Edit Class';
         dom.classModal.classList.add('show');
@@ -7578,12 +7586,13 @@ function initEventListeners() {
     const room = document.getElementById('classRoom').value.trim() || 'Room TBA';
     const startTime = document.getElementById('classStartTime').value;
     const endTime = document.getElementById('classEndTime').value;
-    const instructor = document.getElementById('classInstructor').value.trim() || 'Instructor';
+    const section = document.getElementById('classSection').value.split(' — ')[0].trim();
+    const instructor = document.getElementById('classInstructor').value.trim() || (typeof SectionPlanner !== 'undefined' ? SectionPlanner.assignedInstructor(code, section, SectionPlanner.sections || []) : '') || '';
 
     if (state.activeEditClassId) {
       const idx = state.classes.findIndex(c => c.id === state.activeEditClassId);
       if (idx !== -1) {
-        state.classes[idx] = { ...state.classes[idx], courseCode: code, subject, dayOfWeek, room, startTime, endTime, instructor };
+        state.classes[idx] = { ...state.classes[idx], courseCode: code, section, subject, dayOfWeek, room, startTime, endTime, instructor };
       }
       state.activeEditClassId = null;
       document.getElementById('classModalTitle').textContent = 'Add New Class';
@@ -7592,6 +7601,7 @@ function initEventListeners() {
       state.classes.push({
         id: `CLS-${Date.now()}`,
         courseCode: code,
+        section,
         subject,
         dayOfWeek,
         room,

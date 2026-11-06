@@ -25,6 +25,11 @@ Course entry shares the native Course Planner catalog. The website uses the
 matching sample_data/course_catalog.json. Faculty suggestions come from the
 supplied faculties.json and remain editable; instructor input starts empty.
 Exact known titles fill missing course codes; unknown titles are not guessed.
+Selecting a course and section fills the assigned instructor automatically.
+Section identifiers are retained in saved routines. Section-tagged imports can
+fill missing faculty from the same catalog; ambiguous or unknown matches are
+not guessed. Existing instructor corrections and the routine Edit action remain
+available.
 
 Section Planner is the last tool in Tools. Search a course code/title, then
 filter its section names or faculty names/initials in the separate section

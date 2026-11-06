@@ -19,6 +19,7 @@ import '../services/sample_data_service.dart';
 import '../services/google_drive_sync_service.dart';
 import '../services/api_service.dart';
 import '../services/student_sync_service.dart';
+import '../services/section_catalog_service.dart';
 
 class CalendarState extends ChangeNotifier {
   final CalendarService _calendarService = CalendarService();
@@ -53,7 +54,7 @@ class CalendarState extends ChangeNotifier {
     _reminderService.refreshReminders(referenceDate: _selectedDate);
 
     // Restore persistent student session from disk
-    _restoreSavedSession();
+    _restoreSavedSession().then((_) => _assignMissingSectionInstructors());
   }
 
   @override
@@ -650,6 +651,7 @@ class CalendarState extends ChangeNotifier {
     final result = FileParserService.parseClassSchedule(content);
     if (result.isSuccess) {
       _calendarService.setClasses(result.items);
+      unawaited(_assignMissingSectionInstructors());
       if (autoApplyDates) {
         final detected = autoFigureRoutineDates(referenceDate: _selectedDate);
         _calendarService.setRoutineDateRange(
@@ -702,6 +704,7 @@ class CalendarState extends ChangeNotifier {
 
   void addClass(ClassSchedule classSchedule) {
     _calendarService.addClass(classSchedule);
+    unawaited(_assignMissingSectionInstructors());
     _reminderService.refreshReminders(referenceDate: _selectedDate);
     _pushChangesToServer();
     notifyListeners();
@@ -709,6 +712,7 @@ class CalendarState extends ChangeNotifier {
 
   void updateClass(ClassSchedule classSchedule) {
     _calendarService.updateClass(classSchedule);
+    unawaited(_assignMissingSectionInstructors());
     _reminderService.refreshReminders(referenceDate: _selectedDate);
     _pushChangesToServer();
     notifyListeners();
@@ -719,6 +723,20 @@ class CalendarState extends ChangeNotifier {
     _reminderService.refreshReminders(referenceDate: _selectedDate);
     _pushChangesToServer();
     notifyListeners();
+  }
+
+  Future<void> _assignMissingSectionInstructors() async {
+    if (!classes.any((c) => c.section.isNotEmpty && missingInstructor(c.instructor))) return;
+    try {
+      final catalog = await SectionCatalogService.sections();
+      if (_disposed) return;
+      var changed = false;
+      final updated = classes.map((c) { final filled = fillSectionInstructor(c, catalog); if (!identical(filled,c)) changed=true; return filled; }).toList();
+      if (!changed) return;
+      _calendarService.setClasses(updated);
+      _pushChangesToServer();
+      notifyListeners();
+    } catch (_) { /* Unknown/unavailable section data leaves the editable field unchanged. */ }
   }
 
   void addNotice(AcademicNotice notice) {
