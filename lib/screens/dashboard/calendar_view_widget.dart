@@ -212,7 +212,7 @@ class _CalendarViewWidgetState extends State<CalendarViewWidget> {
 
       final isHoliday = widget.calendarService.isHoliday(cellDate);
       final otherNotices = widget.calendarService.getOtherNotices(cellDate);
-      final hasClasses = widget.calendarService.getScheduledClassesForDayOfWeek(cellDate.weekday).isNotEmpty;
+      final hasClasses = widget.calendarService.getDaySchedule(cellDate).activeClasses.isNotEmpty;
 
       final hasFeeNotice = otherNotices.any((n) => n.category == NoticeCategory.semesterFee);
       final hasExamNotice = otherNotices.any((n) => n.category == NoticeCategory.exam);

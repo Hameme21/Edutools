@@ -5394,13 +5394,29 @@ function isDateHoliday(date) {
   return getHolidayNoticesForDate(date).length > 0 || isSemesterBreak(date);
 }
 
+function routineDayFromNotice(title, description) {
+  const days = {mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 7};
+  for (const text of [title || '', description || '']) {
+    const pattern = /\b(monday|mon|tuesday|tue|wednesday|wed|thursday|thu|friday|fri|saturday|sat|sunday|sun)(?:'s)?\s+(?:schedule|timetable|routine|class(?:es)?\b)/gi;
+    const matches = new Set(Array.from(text.matchAll(pattern), m => days[m[1].slice(0, 3).toLowerCase()]));
+    if (matches.size === 1) return [...matches][0];
+    if (matches.size > 1) return null;
+  }
+  return null;
+}
+
+function routineWeekdayForDate(date) {
+  const overrides = new Set(getOtherNoticesForDate(date)
+    .map(n => routineDayFromNotice(n.title, n.description)).filter(d => d !== null));
+  return overrides.size === 1 ? [...overrides][0] : (date.getDay() || 7);
+}
+
 function getActiveClassesForDate(date) {
   // CRITICAL RULE: If classes are not in session (holiday, semester break, suspended, exams, term ended), return []
   if (!areClassesInSession(date)) {
     return [];
   }
-  const jsDay = date.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
-  const weekday = jsDay === 0 ? 7 : jsDay;
+  const weekday = routineWeekdayForDate(date);
   return state.classes.filter(c => c.dayOfWeek === weekday);
 }
 
@@ -5478,8 +5494,7 @@ function renderStats() {
   const isHol = isDateHoliday(today);
   const activeClasses = getActiveClassesForDate(today);
   const totalRoutineToday = state.classes.filter(c => {
-    const jsDay = today.getDay();
-    const weekday = jsDay === 0 ? 7 : jsDay;
+    const weekday = routineWeekdayForDate(today);
     return c.dayOfWeek === weekday;
   }).length;
 
@@ -5490,7 +5505,8 @@ function renderStats() {
   } else {
     dom.statClassesVal.textContent = `${activeClasses.length} Active`;
     dom.statClassesVal.className = 'stat-value text-blue';
-    dom.statClassesSub.textContent = 'Regular Schedule';
+    dom.statClassesSub.textContent = routineWeekdayForDate(today) !== (today.getDay() || 7)
+      ? 'Makeup Class Schedule' : 'Regular Schedule';
   }
 
   // Count upcoming holidays

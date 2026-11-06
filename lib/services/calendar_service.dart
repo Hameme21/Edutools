@@ -3,6 +3,7 @@ import '../models/class_schedule.dart';
 import '../models/academic_notice.dart';
 import '../models/calendar_day_schedule.dart';
 import '../models/routine_date_range.dart';
+import '../models/routine_day_override.dart';
 
 class CalendarService {
   final List<ClassSchedule> _classes = [];
@@ -380,7 +381,17 @@ class CalendarService {
     return _notices.where((n) => !n.isHoliday && n.coversDate(date)).toList();
   }
 
-  /// Returns scheduled classes for the day-of-week (1 = Mon ... 7 = Sun)
+  /// Uses the academic calendar's replacement timetable on makeup dates.
+  int routineWeekdayForDate(DateTime date) {
+    final overrides = _notices
+        .where((n) => !n.isHoliday && n.coversDate(date))
+        .map((n) => routineDayFromNotice(n.title, n.description))
+        .whereType<int>()
+        .toSet();
+    return overrides.length == 1 ? overrides.single : date.weekday;
+  }
+
+  /// Returns scheduled classes for the day-of-week (1 = Mon ... 7 = Sun).
   List<ClassSchedule> getScheduledClassesForDayOfWeek(int dayOfWeek) {
     final list = _classes.where((c) => c.dayOfWeek == dayOfWeek).toList();
     list.sort((a, b) => a.startTime.compareTo(b.startTime));
@@ -398,7 +409,7 @@ class CalendarService {
 
     final isWithinRoutine = isDateWithinRoutine(cleanDate);
     final scheduledClasses = isWithinRoutine
-        ? getScheduledClassesForDayOfWeek(date.weekday)
+        ? getScheduledClassesForDayOfWeek(routineWeekdayForDate(cleanDate))
         : <ClassSchedule>[];
 
     final isBefore = _routineStartDate != null && cleanDate.isBefore(_routineStartDate!);

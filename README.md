@@ -6,7 +6,7 @@ Edutools is an academic calendar, class routine, and section planning app for Un
 - [Download the latest Android release](https://github.com/Hameme21/Edutools/releases/latest)
 - [Backend health](https://edutools-y4xy.onrender.com/api/health)
 
-Current release: **1.2.3**, Android build **130**.
+Current release: **1.2.3**, Android build **131**.
 
 ## Features
 
