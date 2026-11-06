@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/section_offering.dart';
 import '../../services/section_catalog_service.dart';
 import '../../state/calendar_state.dart';
+import '../../widgets/searchable_input.dart';
+import '../../widgets/unified_routine_grid.dart';
 
 class SectionPlannerSheet extends StatefulWidget {
   final CalendarState state;
@@ -20,9 +22,11 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
   List<SectionOffering>? _catalog;
   final Set<String> _selected = {};
   final Map<String, String> _primary = {};
-  String _query = '', _program = 'All';
+  String _query = '', _sectionQuery = '', _program = 'All';
+  final _courseSearch = TextEditingController();
+  final _sectionSearch = TextEditingController();
   String? _error;
-  int _limit = 40;
+  int _limit = 12;
   String get _key =>
       'section_plan_fall2026_${widget.state.currentStudent?.email.toLowerCase() ?? 'guest'}';
   List<SectionOffering> get _chosen =>
@@ -33,6 +37,27 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _courseSearch.dispose();
+    _sectionSearch.dispose();
+    super.dispose();
+  }
+
+  void _removeSection(SectionOffering section) {
+    _change(() {
+      _selected.remove(section.id);
+      if (_primary[section.courseKey] == section.id) {
+        _primary.remove(section.courseKey);
+        final remaining =
+            _chosen.where((s) => s.courseKey == section.courseKey);
+        if (remaining.isNotEmpty) {
+          _primary[section.courseKey] = remaining.first.id;
+        }
+      }
+    });
   }
 
   Future<void> _load() async {
@@ -129,18 +154,7 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
                                 () => _primary[section.courseKey] = section.id),
                             child: const Text('Make active')),
                       TextButton(
-                          onPressed: () => _change(() {
-                                _selected.remove(section.id);
-                                if (primary) {
-                                  _primary.remove(section.courseKey);
-                                  final remaining = _chosen.where(
-                                      (s) => s.courseKey == section.courseKey);
-                                  if (remaining.isNotEmpty) {
-                                    _primary[section.courseKey] =
-                                        remaining.first.id;
-                                  }
-                                }
-                              }),
+                          onPressed: () => _removeSection(section),
                           child: const Text('Remove')),
                     ])
               else
@@ -171,11 +185,20 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
     }
     final options = catalog
         .where((s) =>
+            _query.trim().isNotEmpty &&
             !_selected.contains(s.id) &&
             (_program == 'All' || s.program == _program) &&
-            '${s.courseCode} ${s.title} ${s.section} ${s.facultyName} ${s.facultyCode}'
-                .toLowerCase()
-                .contains(_query.toLowerCase()))
+            s.section
+                .toUpperCase()
+                .contains(_sectionQuery.trim().toUpperCase()) &&
+            ('${s.courseCode} ${s.title} ${s.facultyName} ${s.facultyCode}'
+                    .toLowerCase()
+                    .contains(_query.split(' — ').first.toLowerCase()) ||
+                s.courseKey.contains(_query
+                    .split(' — ')
+                    .first
+                    .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')
+                    .toUpperCase())))
         .toList();
     final hasClashes = _active.any((s) => _clashes(s).isNotEmpty);
     return SafeArea(
@@ -198,13 +221,28 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
                 const Text(
                     'BSCSE / BSDS offerings from the supplied routine. TBA means To be announced. Backups are alternatives and are not added to your routine.'),
                 const SizedBox(height: 12),
-                TextField(
-                    decoration: const InputDecoration(
-                        labelText: 'Search course, section or faculty',
-                        prefixIcon: Icon(Icons.search)),
+                SearchableInput(
+                    controller: _courseSearch,
+                    options: {
+                      for (final s in catalog)
+                        s.courseCode: '${s.courseCode} — ${s.title}'
+                    }.values.toList(),
+                    label: '1. Search course',
+                    hint: 'Course code or title',
                     onChanged: (value) => setState(() {
                           _query = value;
-                          _limit = 40;
+                          _limit = 12;
+                        })),
+                const SizedBox(height: 12),
+                TextField(
+                    controller: _sectionSearch,
+                    decoration: const InputDecoration(
+                        labelText: '2. Search section',
+                        hintText: 'e.g. A or BA',
+                        prefixIcon: Icon(Icons.filter_list)),
+                    onChanged: (value) => setState(() {
+                          _sectionQuery = value;
+                          _limit = 12;
                         })),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
@@ -215,26 +253,52 @@ class _SectionPlannerSheetState extends State<SectionPlannerSheet> {
                         .toList(),
                     onChanged: (p) => setState(() {
                           _program = p!;
-                          _limit = 40;
+                          _limit = 12;
                         })),
                 if (_error != null)
                   Text(_error!,
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.error)),
                 const SizedBox(height: 16),
-                Text(
-                    'My plan · ${_active.length} active courses · ${_chosen.length - _active.length} backups',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                for (final section in _chosen) _card(section, chosen: true),
-                const SizedBox(height: 16),
                 Text('Available sections · ${options.length}',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
+                if (_query.trim().isEmpty)
+                  const Text(
+                      'Search a course, then search or choose a section to add.'),
                 for (final section in options.take(_limit))
                   _card(section, chosen: false),
                 if (options.length > _limit)
                   TextButton(
-                      onPressed: () => setState(() => _limit += 40),
+                      onPressed: () => setState(() => _limit += 12),
                       child: const Text('Show more sections')),
+                const SizedBox(height: 20),
+                const Text('Unified Class Routine',
+                    style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.lightBlue,
+                        fontWeight: FontWeight.bold)),
+                Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Clear section plan'),
+                        onPressed: _chosen.isEmpty
+                            ? null
+                            : () => _change(() {
+                                  _selected.clear();
+                                  _primary.clear();
+                                }))),
+                UnifiedRoutineGrid(
+                    active: _active,
+                    configured: widget.state.classes,
+                    onRemove: _removeSection),
+                const SizedBox(height: 20),
+                const Text('Section plan',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                    'My plan · ${_active.length} active courses · ${_chosen.length - _active.length} backups'),
+                for (final section in _chosen) _card(section, chosen: true),
               ])),
               Padding(
                   padding: const EdgeInsets.all(16),

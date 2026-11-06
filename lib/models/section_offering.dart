@@ -37,10 +37,25 @@ class SectionOffering {
       : '$facultyName ($facultyCode)';
 }
 
+int routineMinutes(String time) {
+  final parts = time.split(':').map(int.parse).toList();
+  return parts[0] * 60 + parts[1];
+}
+
+List<ClassSchedule> unifiedSectionMeetings(
+    Iterable<SectionOffering> active, Iterable<ClassSchedule> configured) {
+  final replaced = active.map((s) => s.courseKey).toSet();
+  return [
+    ...configured.where((c) => !replaced.contains(
+        c.courseCode.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase())),
+    ...active.expand((s) => s.meetings)
+  ];
+}
+
 bool classesOverlap(ClassSchedule a, ClassSchedule b) =>
     a.dayOfWeek == b.dayOfWeek &&
-    a.startTime.compareTo(b.endTime) < 0 &&
-    b.startTime.compareTo(a.endTime) < 0;
+    routineMinutes(a.startTime) < routineMinutes(b.endTime) &&
+    routineMinutes(b.startTime) < routineMinutes(a.endTime);
 
 List<ClassSchedule> sectionClashes(SectionOffering candidate,
     Iterable<SectionOffering> active, Iterable<ClassSchedule> configured) {

@@ -35,15 +35,6 @@ class ToolsScreen extends StatelessWidget {
 
   static const _tools = <_ToolItem>[
     _ToolItem(
-        title: 'Section Planner',
-        description:
-            'Fall 2026 CSE / DS sections, faculty, exact meeting times and clash checks. Keep backup sections for each course.',
-        icon: Icons.view_week_outlined,
-        color: Color(0xFF0891B2),
-        bgColor: Color(0x1A0891B2),
-        chips: ['Sections', 'Clash check', 'Backups'],
-        action: 'sections'),
-    _ToolItem(
       title: 'Academic Calendar',
       description:
           'Interactive calendar with holidays, class schedules, exam dates, and daily schedule view.',
@@ -93,6 +84,15 @@ class ToolsScreen extends StatelessWidget {
       chips: ['Curriculum', 'GED', 'Electives'],
       action: 'planner',
     ),
+    _ToolItem(
+        title: 'Section Planner',
+        description:
+            'Fall 2026 CSE / DS sections, faculty, exact meeting times and clash checks. Keep backup sections for each course.',
+        icon: Icons.view_week_outlined,
+        color: Color(0xFF0891B2),
+        bgColor: Color(0x1A0891B2),
+        chips: ['Sections', 'Clash check', 'Backups'],
+        action: 'sections'),
   ];
 
   void _handleToolTap(BuildContext context, String action) {

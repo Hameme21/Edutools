@@ -26,7 +26,15 @@ matching sample_data/course_catalog.json. Faculty suggestions come from the
 supplied faculties.json and remain editable; instructor input starts empty.
 Exact known titles fill missing course codes; unknown titles are not guessed.
 
-In Tools → Section Planner, search a course, faculty name/initial, or section.
+Section Planner is the last tool in Tools. Search a course code/title, then
+filter its section names in the separate section search box and add a section.
+The Unified Class Routine shows active sections together with other configured
+courses in a Saturday–Friday hour grid. Cards retain their exact minute-based
+positions and durations. Overlaps are red and placed in separate vertical lanes
+so neither class is hidden. Phones can scroll the timeline horizontally.
+The section plan underneath lists active choices and saved backups. Clearing
+the section plan clears only the draft choices, not configured routine classes.
+
 Select one active section per course and any number of backup sections. Backups
 are compared against the active sections of other courses and configured
 classes, but are not simultaneous classes. “Make active” switches the choice.

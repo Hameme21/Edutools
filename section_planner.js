@@ -2,25 +2,29 @@
   'use strict';
   const key = code => String(code).replace(/[^a-z0-9]/gi, '').toUpperCase();
   const normalize = title => String(title).toLowerCase().replace(/&/g, 'and').replace(/laboratory/g, 'lab').replace(/[^a-z0-9]/g, '');
-  const overlaps = (a, b) => a.dayOfWeek === b.dayOfWeek && a.startTime < b.endTime && b.startTime < a.endTime;
+  const minutes = time => { const [h,m] = time.split(':').map(Number); return h*60+m; };
+  const overlaps = (a, b) => a.dayOfWeek === b.dayOfWeek && minutes(a.startTime) < minutes(b.endTime) && minutes(b.startTime) < minutes(a.endTime);
   function clashes(candidate, active, configured) {
     const replaced = new Set([...active.map(s => key(s.courseCode)), key(candidate.courseCode)]);
     const others = [...active.filter(s => key(s.courseCode) !== key(candidate.courseCode)).flatMap(s => s.meetings.map(m => ({...m, courseCode: s.courseCode}))),
       ...configured.filter(c => !replaced.has(key(c.courseCode)))];
     return others.filter(other => candidate.meetings.some(m => overlaps(m, other)));
   }
-  function applySections(active, configured) {
-    if (new Set(active.map(s => key(s.courseCode))).size !== active.length || active.some(s => clashes(s, active, configured).length)) throw Error('Resolve active-section clashes first.');
+  function unifiedMeetings(active, configured) {
     const replaced = new Set(active.map(s => key(s.courseCode)));
     return [...configured.filter(c => !replaced.has(key(c.courseCode))), ...active.flatMap(s => s.meetings.map((m, i) => ({...m,
       id: `${s.id}-${i}`, courseCode: s.courseCode, subject: `${s.title} · Section ${s.section}`,
       instructor: s.facultyName, color: '#0891B2', reminderEnabled: true})))];
   }
+  function applySections(active, configured) {
+    if (new Set(active.map(s => key(s.courseCode))).size !== active.length || active.some(s => clashes(s, active, configured).length)) throw Error('Resolve active-section clashes first.');
+    return unifiedMeetings(active, configured);
+  }
   function resolveCode(title, catalog) {
     const matches = catalog.filter(c => normalize(c.name) === normalize(title));
     return matches.length === 1 ? matches[0].code : null;
   }
-  const api = {key, normalize, overlaps, clashes, applySections, resolveCode};
+  const api = {key, normalize, minutes, overlaps, clashes, unifiedMeetings, applySections, resolveCode};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document === 'undefined') return;
   root.SectionPlanner = api;
@@ -38,11 +42,55 @@
   card.append(el('h3', 'Section Planner'), el('p', 'Fall 2026 CSE / DS sections, faculty, exact times and clash checks. Save backup sections per course.'));
   grid.append(card);
   grid.addEventListener('click', event => { const target = event.target.closest('[data-tool-action]'); if (target && target !== card) panel.style.display = 'none'; });
-  let sections = [], selected = new Set(), primary = {}, query = '', program = 'All', limit = 40;
+  let sections = [], selected = new Set(), primary = {}, query = '', sectionQuery = '', program = 'All', limit = 12;
   const draftKey = () => `section_plan_fall2026_${state.student?.email?.toLowerCase() || 'guest'}`;
   const chosen = () => sections.filter(s => selected.has(s.id));
   const active = () => chosen().filter(s => primary[key(s.courseCode)] === s.id);
-  let planList, optionList, summary, applyButton, message;
+  let planList, optionList, summary, applyButton, message, timetable, clashSummary;
+  function removeSection(s) {
+    selected.delete(s.id);
+    if (primary[key(s.courseCode)] === s.id) { delete primary[key(s.courseCode)]; const next = chosen().find(other => key(other.courseCode) === key(s.courseCode)); if (next) primary[key(s.courseCode)] = next.id; }
+    save(); render();
+  }
+  function renderTimetable() {
+    const entries = unifiedMeetings(active(), state.classes || []);
+    const meta = new Map(active().flatMap(s => s.meetings.map((_, i) => [`${s.id}-${i}`,s])));
+    const first = Math.min(8,...entries.map(m => Math.floor(minutes(m.startTime)/60)));
+    const last = Math.max(17,...entries.map(m => Math.ceil(minutes(m.endTime)/60)));
+    const span = (last-first)*60, hours = last-first;
+    const hourLabel = h => `${h%12 || 12} ${h<12?'AM':'PM'}`;
+    const conflict = new Set(entries.filter(a => entries.some(b => a !== b && overlaps(a,b))));
+    clashSummary.textContent = conflict.size ? `${conflict.size} clashing meetings. Red cards show the conflicts; choose another active section to resolve them.` : 'No clashes in the unified routine.';
+    clashSummary.className = conflict.size ? 'section-clash' : 'section-clear';
+    timetable.replaceChildren();
+    const canvas = el('div','','unified-canvas');
+    const header = el('div','','unified-row unified-header'); header.append(el('div','Day','unified-day-heading'));
+    const ticks = el('div','','unified-hours');
+    for(let h=first;h<last;h++) ticks.append(el('div',`${hourLabel(h)} – ${hourLabel(h+1)}`));
+    header.append(ticks); canvas.append(header);
+    for(const weekday of [6,7,1,2,3,4,5]) {
+      const meetings = entries.filter(m => m.dayOfWeek===weekday).sort((a,b)=>minutes(a.startTime)-minutes(b.startTime));
+      const ends = [], positions = meetings.map(m => { let lane = ends.findIndex(end=>end<=minutes(m.startTime)); if(lane<0) lane=ends.length; ends[lane]=minutes(m.endTime); return {m,lane}; });
+      const row = el('div','','unified-row');
+      const label = el('div','','unified-day'+(meetings.length?' has-classes':''));
+      label.append(el('strong',day[weekday].slice(0,3).toUpperCase()),el('small',meetings.length?`${meetings.length} ${meetings.length===1?'class':'classes'}`:'No class'));
+      const track = el('div','','unified-track'); track.style.height=`${meetings.length?ends.length*100+16:64}px`; track.style.setProperty('--hour-count',hours);
+      if(!meetings.length) track.append(el('em','No classes scheduled','unified-empty'));
+      positions.forEach(({m,lane})=>{
+        const s=meta.get(m.id), isClash=conflict.has(m);
+        const block=el('article','','unified-class'+(isClash?' is-clash':''));
+        block.style.left=`${(minutes(m.startTime)-first*60)/span*100}%`;
+        block.style.width=`calc(${(minutes(m.endTime)-minutes(m.startTime))/span*100}% - 4px)`;
+        block.style.top=`${lane*100+8}px`;
+        block.title=`${m.courseCode} · ${s?'Section '+s.section:m.subject}\n${m.instructor}\n${day[weekday]} ${m.startTime}–${m.endTime} · Room ${m.room}${isClash?'\nCLASH':''}`;
+        block.append(el('strong',m.courseCode),el('span',s?`${s.facultyName} · SEC ${s.section}`:m.instructor || m.subject),el('small',`${m.startTime}–${m.endTime} · ${m.room}`),el('small',isClash?'CLASH':s?'★ Active section':'Configured class'));
+        if(s) { const remove=button('×',()=>removeSection(s)); remove.className='unified-remove'; remove.setAttribute('aria-label',`Remove ${s.courseCode} section ${s.section}`); block.append(remove); }
+        track.append(block);
+      });
+      row.append(label,track);canvas.append(row);
+    }
+    timetable.append(canvas);
+  }
   function save() { try { localStorage.setItem(draftKey(), JSON.stringify({selected: [...selected], primary})); } catch (_) { message.textContent = 'This draft could not be saved on this device.'; } }
   function render() {
     const current = active(), existing = state.classes || [];
@@ -61,48 +109,57 @@
         const isPrimary = primary[key(s.courseCode)] === s.id;
         actions.append(el('strong', isPrimary ? 'Active section' : 'Backup only'));
         if (!isPrimary) actions.append(button('Make active', () => { primary[key(s.courseCode)] = s.id; save(); render(); }));
-        actions.append(button('Remove', () => {
-          selected.delete(s.id);
-          if (isPrimary) { delete primary[key(s.courseCode)]; const next = chosen().find(other => key(other.courseCode) === key(s.courseCode)); if (next) primary[key(s.courseCode)] = next.id; }
-          save(); render();
-        }));
+        actions.append(button('Remove', () => removeSection(s)));
       } else actions.append(button(primary[key(s.courseCode)] ? 'Add backup' : 'Add section', () => { selected.add(s.id); primary[key(s.courseCode)] ||= s.id; save(); render(); }));
       box.append(actions); return box;
     }
     chosen().forEach(s => planList.append(sectionCard(s, true)));
-    const matches = sections.filter(s => !selected.has(s.id) && (program === 'All' || s.program === program) &&
-      (`${s.courseCode} ${s.title} ${s.section} ${s.facultyName} ${s.facultyCode}`.toLowerCase().includes(query.toLowerCase()) || key(s.courseCode).includes(key(query))));
+    const courseQuery = query.split(' — ')[0];
+    const matches = sections.filter(s => query.trim() && !selected.has(s.id) && (program === 'All' || s.program === program) && s.section.toUpperCase().includes(sectionQuery.trim().toUpperCase()) &&
+      (`${s.courseCode} ${s.title} ${s.facultyName} ${s.facultyCode}`.toLowerCase().includes(courseQuery.toLowerCase()) || key(s.courseCode).includes(key(courseQuery))));
     optionList.append(el('h3', `Available sections · ${matches.length}`));
     matches.slice(0, limit).forEach(s => optionList.append(sectionCard(s, false)));
-    if (matches.length > limit) optionList.append(button('Show more sections', () => { limit += 40; render(); }));
+    if (!query.trim()) optionList.append(el('p','Search a course above, then search or choose a section to add.'));
+    if (matches.length > limit) optionList.append(button('Show more sections', () => { limit += 12; render(); }));
     const blocked = current.some(s => clashes(s, current, existing).length);
     applyButton.disabled = !current.length || blocked;
     applyButton.textContent = `Apply ${current.length} active sections to routine`;
     message.textContent = blocked ? 'Resolve active-section clashes before applying.' : 'Apply replaces configured meetings for these courses. Other courses stay in place. Backups stay in this planner.';
+    renderTimetable();
   }
   card.addEventListener('click', async () => {
     ['cgpaCalcPanel','examRoutinePanel','divisionCalcPanel','coursePlannerPanel','toolsCalendarPanel'].forEach(id => { const p = document.getElementById(id); if (p) p.style.display = 'none'; });
     panel.style.display = 'block'; panel.replaceChildren(el('p', 'Loading Fall 2026 sections…'));
     try {
       const [, , catalog] = await data; sections = catalog.offerings;
-      selected = new Set(); primary = {}; query = ''; program = 'All'; limit = 40;
+      selected = new Set(); primary = {}; query = ''; sectionQuery=''; program = 'All'; limit = 12;
       let saved; try { saved = JSON.parse(localStorage.getItem(draftKey()) || 'null'); } catch (_) {}
       const valid = new Set(sections.map(s => s.id));
       (saved?.selected || []).filter(id => valid.has(id)).forEach(id => selected.add(id));
       chosen().forEach(s => { primary[key(s.courseCode)] ||= s.id; if (saved?.primary?.[key(s.courseCode)] === s.id) primary[key(s.courseCode)] = s.id; });
       panel.replaceChildren(el('h2', 'Section Planner · Fall 2026'), button('Close planner', () => panel.style.display = 'none'),
         el('p', '791 BSCSE / BSDS offerings from the supplied routine. TBA means To be announced. Choose one active section per course and keep alternatives as backups.'));
-      const search = el('input', '', 'form-input'); search.type = 'search'; search.placeholder = 'Search course, section or faculty'; search.setAttribute('aria-label', 'Search course, section or faculty');
-      search.addEventListener('input', () => { query = search.value; limit = 40; render(); });
+      const search = el('input', '', 'form-input'); search.type = 'search'; search.placeholder = 'Search course code or title'; search.setAttribute('aria-label', 'Search course');
+      const courseOptions=el('datalist'); courseOptions.id='sectionCourseOptions';
+      [...new Map(sections.map(s=>[s.courseCode,s])).values()].forEach(s=>{const o=el('option');o.value=`${s.courseCode} — ${s.title}`;courseOptions.append(o);});
+      search.setAttribute('list','sectionCourseOptions');
+      search.addEventListener('input', () => { query = search.value; limit = 12; render(); });
+      const sectionSearch=el('input','','form-input');sectionSearch.type='search';sectionSearch.placeholder='Search section, e.g. A or BA';sectionSearch.setAttribute('aria-label','Search section');
+      sectionSearch.addEventListener('input',()=>{sectionQuery=sectionSearch.value;limit=12;render();});
       const filter = el('select', '', 'form-input'); filter.setAttribute('aria-label', 'Program');
       ['All','BSCSE','BSDS'].forEach(p => { const o = el('option', p); o.value = p; filter.append(o); });
-      filter.addEventListener('change', () => { program = filter.value; limit = 40; render(); });
+      filter.addEventListener('change', () => { program = filter.value; limit = 12; render(); });
       summary = el('h3'); planList = el('div'); optionList = el('div'); message = el('p');
       applyButton = button('Apply to routine', () => {
         try { state.classes = applySections(active(), state.classes || []); saveStudentSession(); renderAll(); syncStudentWithServer(true); showToast('Active sections added. Backups remain in the planner.', 'success'); render(); }
         catch (error) { message.textContent = error.message; }
       });
-      panel.append(search, filter, summary, planList, message, applyButton, optionList); render();
+      const selectors=el('div','','section-selectors');
+      for(const [text,input] of [['1. Search course',search],['2. Search section',sectionSearch],['Program',filter]]){const label=el('label',text);label.append(input);selectors.append(label);}
+      const tableHeading=el('div','','unified-heading');tableHeading.append(el('h3','Unified Class Routine'),button('Clear section plan',()=>{selected.clear();primary={};save();render();}));
+      timetable=el('div','','unified-scroll');timetable.setAttribute('role','region');timetable.setAttribute('aria-label','Unified Class Routine');timetable.tabIndex=0;
+      clashSummary=el('p');
+      panel.append(selectors,courseOptions,optionList,tableHeading,el('p','Swipe or scroll horizontally to see all hours. Cards use exact meeting times.'),timetable,clashSummary,el('h3','Section plan'),summary,planList,message,applyButton); render();
     } catch (error) { panel.replaceChildren(el('p', error.message)); }
     panel.scrollIntoView({behavior: 'smooth', block: 'start'});
   });

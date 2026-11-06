@@ -39,3 +39,12 @@ test('applying uses only active sections, replaces their previous meetings and p
   assert.equal(planner.resolveCode('Database Management Systems',catalog),'CSE 3521');
   assert.equal(planner.resolveCode('Made up course',catalog),null);
 });
+test('unified preview keeps conflicting active meetings visible while apply remains blocked', () => {
+  const a=offerings[0], other={...a,id:'other-course',courseCode:'CSE 1111'};
+  const unified=planner.unifiedMeetings([a,other],[]);
+  assert.equal(unified.length,4);
+  assert.ok(planner.overlaps(unified[0],unified[2]));
+  assert.throws(()=>planner.applySections([a,other],[]));
+  assert.equal(planner.minutes('09:51'),591);
+  assert.equal(planner.minutes('13:40'),820);
+});

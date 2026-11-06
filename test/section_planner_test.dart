@@ -75,9 +75,18 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'ACT 2111');
     await tester.pumpAndSettle();
+    await tester
+        .tap(find.text('ACT 2111 — Financial and Managerial Accounting').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'A');
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Add section').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add section').first);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).first, const Offset(0, 700));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'B');
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Add backup').first);
     await tester.pumpAndSettle();
