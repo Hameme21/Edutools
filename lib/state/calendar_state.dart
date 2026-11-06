@@ -421,8 +421,11 @@ class CalendarState extends ChangeNotifier {
     }
   }
 
+  String? lastDriveSyncError;
+
   Future<bool> syncWithGoogleDrive() async {
     if (_currentStudent == null || _isSyncing) return false;
+    lastDriveSyncError = null;
     _isSyncing = true;
     notifyListeners();
 
@@ -454,13 +457,16 @@ class CalendarState extends ChangeNotifier {
       await _saveSessionToDisk();
     } catch (error) {
       debugPrint('Drive sync failed: $error');
+      lastDriveSyncError = error.toString().replaceFirst('Bad state: ', '');
       _isSyncing = false;
       if (_currentStudent != null) _currentStudent = _currentStudent!.copyWith(isSynced: false);
       notifyListeners();
       return false;
     }
     _isSyncing = false;
-    return await syncWithWebsite();
+    final accountSynced = await syncWithWebsite();
+    if (!accountSynced) lastDriveSyncError = 'Drive sync completed, but syncing with the website failed. Please try again later.';
+    return accountSynced;
   }
 
   void _applySyncPayload(Map<String, dynamic> data) {

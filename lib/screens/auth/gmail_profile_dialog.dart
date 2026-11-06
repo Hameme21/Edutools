@@ -58,7 +58,11 @@ class _GmailProfileDialogState extends State<GmailProfileDialog> {
       setState(() => _isSyncing = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(synced ? 'Google Drive routine synced.' : 'Sync failed. Check Google Drive access and try again.'),
+          content: Text(synced
+              ? 'Google Drive routine synced.'
+              : widget.state.lastDriveSyncError ??
+                  'Sync failed. Check Google Drive access and try again.'),
+          duration: const Duration(seconds: 10),
           backgroundColor: synced ? const Color(0xFF10B981) : Colors.orange,
           behavior: SnackBarBehavior.floating,
         ),
@@ -104,282 +108,325 @@ class _GmailProfileDialogState extends State<GmailProfileDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-            // Top Bar: University Branding & Close
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Image.network(
-                      'https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png',
-                      width: 18,
-                      height: 18,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.school_rounded, size: 18, color: Color(0xFF2563EB)),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${domain.split('.').first.toUpperCase()} ACCOUNT',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                        color: isDark ? Colors.white70 : const Color(0xFF64748B),
+              // Top Bar: University Branding & Close
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Image.network(
+                        'https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png',
+                        width: 18,
+                        height: 18,
+                        errorBuilder: (_, __, ___) => const Icon(
+                            Icons.school_rounded,
+                            size: 18,
+                            color: Color(0xFF2563EB)),
                       ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 20),
-                  onPressed: () => Navigator.of(context).pop(),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Profile Avatar with Google Ring
-            Container(
-              width: 76,
-              height: 76,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF4285F4), Color(0xFF34A853), Color(0xFFFBBC05), Color(0xFFEA4335)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(3),
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFF2563EB),
-                ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Full Name & Email
-            Text(
-              student.fullName,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              student.email,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? Colors.white70 : const Color(0xFF475569),
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-
-            // Department & Student ID Chip
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.badge_outlined, size: 14, color: Color(0xFF2563EB)),
-                  const SizedBox(width: 6),
-                  Text(
-                    'ID: ${student.studentId} • ${student.department}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : const Color(0xFF334155),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Auto-Sync Status Card
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF10B981),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Google Drive Cloud Synced',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF10B981),
-                          ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${domain.split('.').first.toUpperCase()} ACCOUNT',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                          color:
+                              isDark ? Colors.white70 : const Color(0xFF64748B),
                         ),
-                        Text(
-                          'Syncs educal_sync_data.json via user Google Drive.',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isDark ? Colors.white60 : const Color(0xFF334155),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   IconButton(
-                    icon: _isSyncing
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF10B981)),
-                          )
-                        : const Icon(Icons.refresh_rounded, color: Color(0xFF10B981), size: 18),
-                    onPressed: _isSyncing ? null : _handleSyncNow,
-                    tooltip: 'Force Cloud Sync',
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.of(context).pop(),
                     visualDensity: VisualDensity.compact,
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
-            // Edit Profile Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => EditProfileDialog(state: widget.state),
-                  ).then((_) {
-                    if (mounted) setState(() {});
-                  });
-                },
-                icon: const Icon(Icons.edit_rounded, size: 16, color: Color(0xFF2563EB)),
-                label: const Text(
-                  'Edit Profile',
-                  style: TextStyle(color: Color(0xFF2563EB), fontSize: 13, fontWeight: FontWeight.w600),
+              // Profile Avatar with Google Ring
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF4285F4),
+                      Color(0xFF34A853),
+                      Color(0xFFFBBC05),
+                      Color(0xFFEA4335)
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0x662563EB)),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.all(3),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDark
+                        ? const Color(0xFF0F172A)
+                        : const Color(0xFF2563EB),
+                  ),
+                  child: Center(
+                    child: Text(
+                      initial,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
-            // Password Management Button
-            if (_hasPassword != null)
+              // Full Name & Email
+              Text(
+                student.fullName,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                student.email,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+
+              // Department & Student ID Chip
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF0F172A)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.badge_outlined,
+                        size: 14, color: Color(0xFF2563EB)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'ID: ${student.studentId} • ${student.department}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            isDark ? Colors.white70 : const Color(0xFF334155),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Auto-Sync Status Card
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Google Drive Cloud Synced',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                          Text(
+                            'Syncs educal_sync_data.json via user Google Drive.',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isDark
+                                  ? Colors.white60
+                                  : const Color(0xFF334155),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: _isSyncing
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Color(0xFF10B981)),
+                            )
+                          : const Icon(Icons.refresh_rounded,
+                              color: Color(0xFF10B981), size: 18),
+                      onPressed: _isSyncing ? null : _handleSyncNow,
+                      tooltip: 'Force Cloud Sync',
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Edit Profile Button
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: _openPasswordDialog,
-                  icon: Icon(
-                    _hasPassword == true ? Icons.lock_reset_rounded : Icons.lock_open_rounded,
-                    size: 16,
-                    color: _hasPassword == true ? const Color(0xFF2563EB) : const Color(0xFFEA580C),
-                  ),
-                  label: Text(
-                    _hasPassword == true ? 'Change Password' : 'Add Password',
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => EditProfileDialog(state: widget.state),
+                    ).then((_) {
+                      if (mounted) setState(() {});
+                    });
+                  },
+                  icon: const Icon(Icons.edit_rounded,
+                      size: 16, color: Color(0xFF2563EB)),
+                  label: const Text(
+                    'Edit Profile',
                     style: TextStyle(
-                      color: _hasPassword == true ? const Color(0xFF2563EB) : const Color(0xFFEA580C),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                        color: Color(0xFF2563EB),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                      color: (_hasPassword == true ? const Color(0xFF2563EB) : const Color(0xFFEA580C)).withValues(alpha: 0.4),
-                    ),
+                    side: const BorderSide(color: Color(0x662563EB)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
-            // Action Buttons (Sync Now & Sign Out)
-            Row(
-              children: [
-                Expanded(
+              // Password Management Button
+              if (_hasPassword != null)
+                SizedBox(
+                  width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: _handleLogout,
-                    icon: const Icon(Icons.logout_rounded, size: 16, color: Color(0xFFEF4444)),
-                    label: const Text('Sign out', style: TextStyle(color: Color(0xFFEF4444))),
+                    onPressed: _openPasswordDialog,
+                    icon: Icon(
+                      _hasPassword == true
+                          ? Icons.lock_reset_rounded
+                          : Icons.lock_open_rounded,
+                      size: 16,
+                      color: _hasPassword == true
+                          ? const Color(0xFF2563EB)
+                          : const Color(0xFFEA580C),
+                    ),
+                    label: Text(
+                      _hasPassword == true ? 'Change Password' : 'Add Password',
+                      style: TextStyle(
+                        color: _hasPassword == true
+                            ? const Color(0xFF2563EB)
+                            : const Color(0xFFEA580C),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFEF4444)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(
+                        color: (_hasPassword == true
+                                ? const Color(0xFF2563EB)
+                                : const Color(0xFFEA580C))
+                            .withValues(alpha: 0.4),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _isSyncing ? null : _handleSyncNow,
-                    icon: _isSyncing
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.cloud_sync_rounded, size: 16),
-                    label: const Text('Sync Now'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              const SizedBox(height: 12),
+
+              // Action Buttons (Sync Now & Sign Out)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _handleLogout,
+                      icon: const Icon(Icons.logout_rounded,
+                          size: 16, color: Color(0xFFEF4444)),
+                      label: const Text('Sign out',
+                          style: TextStyle(color: Color(0xFFEF4444))),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFEF4444)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _isSyncing ? null : _handleSyncNow,
+                      icon: _isSyncing
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.cloud_sync_rounded, size: 16),
+                      label: const Text('Sync Now'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
