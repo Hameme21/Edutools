@@ -35,29 +35,47 @@ class ReleaseInfo {
     }
     return ReleaseInfo(
       tagName: json['tag_name'] as String? ?? '',
-      name: json['name'] as String? ?? (json['tag_name'] as String? ?? 'New Release'),
+      name: json['name'] as String? ??
+          (json['tag_name'] as String? ?? 'New Release'),
       body: json['body'] as String? ?? '',
-      htmlUrl: json['html_url'] as String? ?? 'https://github.com/Hameme21/Edutools/releases',
+      htmlUrl: json['html_url'] as String? ??
+          'https://github.com/Hameme21/Edutools/releases',
       apkDownloadUrl: apkUrl,
-      publishedAt: json['published_at'] != null ? DateTime.tryParse(json['published_at'] as String) : null,
+      publishedAt: json['published_at'] != null
+          ? DateTime.tryParse(json['published_at'] as String)
+          : null,
     );
   }
 }
 
 class AppUpdateService {
-  static const String currentVersion = '1.2.0';
+  // Flutter supplies this from the APK build name (pubspec or --build-name).
+  // Keeping a separate hardcoded version can make a current APK look outdated.
+  static const String currentVersion =
+      String.fromEnvironment('FLUTTER_BUILD_NAME');
+  static bool _checkingForUpdates = false;
   static const String repoOwner = 'Hameme21';
   static const String repoName = 'Edutools';
-  static const String releasesUrl = 'https://github.com/Hameme21/Edutools/releases';
+  static const String releasesUrl =
+      'https://github.com/Hameme21/Edutools/releases';
 
   /// Compare semantic version numbers. Returns true if remote is newer than current.
   static bool isNewerVersion(String remoteTag, String current) {
-    final cleanRemote = remoteTag.replaceAll(RegExp(r'[^0-9.]'), '');
-    final cleanCurrent = current.replaceAll(RegExp(r'[^0-9.]'), '');
-    final remoteParts = cleanRemote.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    final currentParts = cleanCurrent.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    final version = RegExp(r'^v?(\d+)\.(\d+)\.(\d+)(?:\+[0-9A-Za-z.-]+)?$');
+    final remoteMatch = version.firstMatch(remoteTag.trim());
+    final currentMatch = version.firstMatch(current.trim());
+    // Unknown or malformed versions must not trigger an update alert.
+    if (remoteMatch == null || currentMatch == null) return false;
+    final remoteParts = [
+      for (var i = 1; i <= 3; i++) int.parse(remoteMatch.group(i)!)
+    ];
+    final currentParts = [
+      for (var i = 1; i <= 3; i++) int.parse(currentMatch.group(i)!)
+    ];
 
-    final length = remoteParts.length > currentParts.length ? remoteParts.length : currentParts.length;
+    final length = remoteParts.length > currentParts.length
+        ? remoteParts.length
+        : currentParts.length;
     for (int i = 0; i < length; i++) {
       final r = i < remoteParts.length ? remoteParts[i] : 0;
       final c = i < currentParts.length ? currentParts[i] : 0;
@@ -76,7 +94,8 @@ class AppUpdateService {
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 8);
       final request = await client.getUrl(
-        Uri.parse('https://api.github.com/repos/$repoOwner/$repoName/releases/latest'),
+        Uri.parse(
+            'https://api.github.com/repos/$repoOwner/$repoName/releases/latest'),
       );
       request.headers.set('User-Agent', 'EduCal-Flutter-App');
       request.headers.set('Accept', 'application/vnd.github.v3+json');
@@ -95,30 +114,42 @@ class AppUpdateService {
   }
 
   /// Checks for updates and displays the pop-up notification if a newer version is available.
-  static Future<void> checkForUpdates(BuildContext context, {bool isManual = false}) async {
-    final release = await getLatestRelease();
-    if (!context.mounted) return;
+  static Future<void> checkForUpdates(
+    BuildContext context, {
+    bool isManual = false,
+    Future<ReleaseInfo?> Function() releaseLoader = getLatestRelease,
+    String installedVersion = currentVersion,
+  }) async {
+    if (_checkingForUpdates) return;
+    _checkingForUpdates = true;
+    try {
+      final release = await releaseLoader();
+      if (!context.mounted) return;
 
-    if (release != null && isNewerVersion(release.tagName, currentVersion)) {
-      showDialog(
-        context: context,
-        barrierDismissible: true,
-        builder: (ctx) => UpdateDialog(release: release),
-      );
-    } else if (isManual) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(release == null
-              ? 'Could not check updates from GitHub. You can visit releases directly.'
-              : 'You are using the latest version ($currentVersion)! 🚀'),
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          action: SnackBarAction(
-            label: 'GitHub',
-            onPressed: () => openReleasePage(releasesUrl),
+      if (release != null &&
+          isNewerVersion(release.tagName, installedVersion)) {
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: true,
+          builder: (ctx) => UpdateDialog(release: release),
+        );
+      } else if (isManual) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(release == null
+                ? 'Could not check updates from GitHub. You can visit releases directly.'
+                : 'No newer release is available ($installedVersion).'),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'GitHub',
+              onPressed: () => openReleasePage(releasesUrl),
+            ),
           ),
-        ),
-      );
+        );
+      }
+    } finally {
+      _checkingForUpdates = false;
     }
   }
 
@@ -147,7 +178,8 @@ class AppUpdateService {
           mode: LaunchMode.platformDefault,
         );
       } catch (inner) {
-        debugPrint('[AppUpdateService] Secondary platform launch failed: $inner');
+        debugPrint(
+            '[AppUpdateService] Secondary platform launch failed: $inner');
       }
     }
   }
