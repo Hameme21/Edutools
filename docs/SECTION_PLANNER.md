@@ -1,0 +1,43 @@
+Section Planner — Fall 2026
+
+The bundled catalog contains all 791 rows (1,296 weekly meetings) from the supplied
+“Class Routine with faculty assign Fall 2026.pdf”. Its offerings cover BSCSE and
+BSDS only. It does not claim to include other departments or live registration
+availability. Conditional sections retain their “if required” note. TBA faculty
+is displayed as “To be announced”.
+
+Times retain the PDF's minute values, with explicit AM/PM converted to 24-hour
+time. For example, 12:31 PM is 12:31, 01:50 PM is 13:50, and the CSE 2216 L lab
+is Wednesday 11:11–13:40. Single-day labs and both meetings of theory sections are
+retained. PDF pages 28–54 contain no offering rows.
+
+The import script combines pdfplumber's table boundaries with PyMuPDF's text
+drawing origins. This avoids pulling overflowing title/room/faculty glyphs into
+neighboring columns. It asserts consecutive source row IDs 1–791 and validates
+every weekday, clock value and positive meeting duration. Source page and row
+numbers remain in the generated JSON for auditing.
+
+Rebuild the catalog with Python packages pdfplumber and pymupdf:
+
+    python scripts/import_section_offerings.py PDF_PATH FACULTIES_JSON_PATH
+
+Course entry shares the native Course Planner catalog. The website uses the
+matching sample_data/course_catalog.json. Faculty suggestions come from the
+supplied faculties.json and remain editable; instructor input starts empty.
+Exact known titles fill missing course codes; unknown titles are not guessed.
+
+In Tools → Section Planner, search a course, faculty name/initial, or section.
+Select one active section per course and any number of backup sections. Backups
+are compared against the active sections of other courses and configured
+classes, but are not simultaneous classes. “Make active” switches the choice.
+Back-to-back meetings are allowed. Overlapping meetings on the same weekday
+block applying an active plan. Each meeting is compared, including lab times.
+
+Applying replaces existing meetings for the selected course codes and preserves
+all other configured courses. Only active sections enter the routine and its
+normal account/Drive sync; backup drafts are stored locally per account/device.
+Web drafts use localStorage; app drafts use SharedPreferences.
+
+The website needs section_planner.js and the three sample_data JSON assets
+deployed alongside index.html. The Android APK bundles those JSON assets for
+offline use. No Firebase or MongoDB schema/configuration change is required.

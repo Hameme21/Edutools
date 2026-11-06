@@ -6,6 +6,7 @@ import 'cgpa_calculator_sheet.dart';
 import 'division_calculator_sheet.dart';
 import 'exam_routine_sheet.dart';
 import 'course_planner_sheet.dart';
+import 'section_planner_sheet.dart';
 
 class _ToolItem {
   final String title;
@@ -34,8 +35,18 @@ class ToolsScreen extends StatelessWidget {
 
   static const _tools = <_ToolItem>[
     _ToolItem(
+        title: 'Section Planner',
+        description:
+            'Fall 2026 CSE / DS sections, faculty, exact meeting times and clash checks. Keep backup sections for each course.',
+        icon: Icons.view_week_outlined,
+        color: Color(0xFF0891B2),
+        bgColor: Color(0x1A0891B2),
+        chips: ['Sections', 'Clash check', 'Backups'],
+        action: 'sections'),
+    _ToolItem(
       title: 'Academic Calendar',
-      description: 'Interactive calendar with holidays, class schedules, exam dates, and daily schedule view.',
+      description:
+          'Interactive calendar with holidays, class schedules, exam dates, and daily schedule view.',
       icon: Icons.calendar_month_rounded,
       color: AppTheme.primaryLight,
       bgColor: Color(0x1A3B82F6),
@@ -44,7 +55,8 @@ class ToolsScreen extends StatelessWidget {
     ),
     _ToolItem(
       title: 'CGPA Calculator',
-      description: 'Course-by-course GPA calculator with retake support, UIU grade scale, and target CGPA planner.',
+      description:
+          'Course-by-course GPA calculator with retake support, UIU grade scale, and target CGPA planner.',
       icon: Icons.calculate_rounded,
       color: Color(0xFF8B5CF6),
       bgColor: Color(0x1A8B5CF6),
@@ -53,7 +65,8 @@ class ToolsScreen extends StatelessWidget {
     ),
     _ToolItem(
       title: 'Exam Routine',
-      description: 'Searchable final exam schedule in a Day × Time Slot grid. Find your exam slot instantly.',
+      description:
+          'Searchable final exam schedule in a Day × Time Slot grid. Find your exam slot instantly.',
       icon: Icons.event_note_rounded,
       color: Color(0xFFF59E0B),
       bgColor: Color(0x1AF59E0B),
@@ -62,7 +75,8 @@ class ToolsScreen extends StatelessWidget {
     ),
     _ToolItem(
       title: 'Division Calculator',
-      description: 'Tuition fee calculator with waiver/scholarship logic, installment plans, and multi-semester planner.',
+      description:
+          'Tuition fee calculator with waiver/scholarship logic, installment plans, and multi-semester planner.',
       icon: Icons.account_balance_wallet_rounded,
       color: Color(0xFFEF4444),
       bgColor: Color(0x1AEF4444),
@@ -71,7 +85,8 @@ class ToolsScreen extends StatelessWidget {
     ),
     _ToolItem(
       title: 'Course Planner',
-      description: 'Full UIU BSc in CSE curriculum — 12 trimesters, GED options, and elective tracks.',
+      description:
+          'Full UIU BSc in CSE curriculum — 12 trimesters, GED options, and elective tracks.',
       icon: Icons.school_rounded,
       color: Color(0xFF10B981),
       bgColor: Color(0x1A10B981),
@@ -82,6 +97,12 @@ class ToolsScreen extends StatelessWidget {
 
   void _handleToolTap(BuildContext context, String action) {
     switch (action) {
+      case 'sections':
+        showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            builder: (_) => SectionPlannerSheet(state: state));
       case 'calendar':
         showModalBottomSheet(
           context: context,
@@ -135,7 +156,8 @@ class ToolsScreen extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.construction_rounded, color: AppTheme.primaryLight, size: 22),
+                    Icon(Icons.construction_rounded,
+                        color: AppTheme.primaryLight, size: 22),
                     const SizedBox(width: 8),
                     Text(
                       'Academic Toolkit',
@@ -160,10 +182,10 @@ class ToolsScreen extends StatelessWidget {
           ),
         ),
         ..._tools.map((tool) => _ToolCard(
-          tool: tool,
-          isDark: isDark,
-          onTap: () => _handleToolTap(context, tool.action),
-        )),
+              tool: tool,
+              isDark: isDark,
+              onTap: () => _handleToolTap(context, tool.action),
+            )),
       ],
     );
   }
@@ -195,7 +217,8 @@ class _ToolCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color:
+                    isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
               ),
             ),
             child: Column(
@@ -214,7 +237,8 @@ class _ToolCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 3),
                       decoration: BoxDecoration(
                         color: const Color(0x1A10B981),
                         borderRadius: BorderRadius.circular(20),
@@ -256,24 +280,33 @@ class _ToolCard extends StatelessWidget {
                       child: Wrap(
                         spacing: 6,
                         runSpacing: 4,
-                        children: tool.chips.map((chip) => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                            ),
-                          ),
-                          child: Text(
-                            chip,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                            ),
-                          ),
-                        )).toList(),
+                        children: tool.chips
+                            .map((chip) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF0F172A)
+                                        : const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? const Color(0xFF334155)
+                                          : const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    chip,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? Colors.white54
+                                          : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ))
+                            .toList(),
                       ),
                     ),
                     Container(
@@ -281,15 +314,20 @@ class _ToolCard extends StatelessWidget {
                       height: 28,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                        color: isDark
+                            ? const Color(0xFF0F172A)
+                            : const Color(0xFFF1F5F9),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Icon(
                         Icons.arrow_forward_rounded,
                         size: 14,
-                        color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                        color:
+                            isDark ? Colors.white54 : const Color(0xFF64748B),
                       ),
                     ),
                   ],

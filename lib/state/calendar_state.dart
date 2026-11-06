@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/class_schedule.dart';
+import '../models/section_offering.dart';
 import '../models/academic_notice.dart';
 import '../models/calendar_day_schedule.dart';
 import '../models/reminder_notification.dart';
@@ -677,6 +678,20 @@ class CalendarState extends ChangeNotifier {
       notifyListeners();
     }
     return result;
+  }
+
+  void applyPlannedSections(List<SectionOffering> sections) {
+    final keys = sections.map((s) => s.courseKey).toSet();
+    if (keys.length != sections.length || sections.any((s) => sectionClashes(s, sections, classes).isNotEmpty)) {
+      throw StateError('Choose one clash-free active section per course.');
+    }
+    _calendarService.setClasses([
+      ...classes.where((c) => !keys.contains(c.courseCode.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase())),
+      ...sections.expand((s) => s.meetings),
+    ]);
+    _reminderService.refreshReminders(referenceDate: _selectedDate);
+    _pushChangesToServer();
+    notifyListeners();
   }
 
   void addClass(ClassSchedule classSchedule) {

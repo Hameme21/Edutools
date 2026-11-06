@@ -2577,6 +2577,17 @@ body {
 
 .auth-gate.hidden { display: none; }
 #googleVerifyModal { z-index:11001; background:var(--bg-main); }
+.section-planner { padding:20px; border:1px solid var(--border-color); border-radius:16px; background:var(--bg-card); scroll-margin-top:110px; }
+.section-planner button { padding:10px 14px; border:1px solid var(--border-color); border-radius:10px; background:var(--bg-card-subtle); color:var(--text-main); font:inherit; font-size:13px; font-weight:600; cursor:pointer; }
+.section-planner button:disabled { opacity:.45; cursor:not-allowed; }
+.section-planner button:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+.section-planner > * { margin-bottom:14px; }
+.section-planner > .form-input { display:block; width:100%; padding:12px; background:var(--bg-card-subtle); color:var(--text-main); border:1px solid var(--border-color); border-radius:10px; font:inherit; box-sizing:border-box; }
+.section-choice { padding:16px; margin:12px 0; border:1px solid var(--border-color); border-radius:12px; overflow-wrap:anywhere; }
+.section-choice p { margin:6px 0; font-size:13px; }
+.section-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
+.section-clash { color:var(--danger); font-weight:600; }
+.section-clear { color:#10b981; }
 #googleVerifyModal .modal-box { width:calc(100% - 32px); border-radius:20px; }
 #gvStep2 .form-group { margin-bottom:18px; }
 #gvStep2 .registration-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; }
@@ -6092,6 +6103,11 @@ function renderNotices() {
 }
 
 function renderSetup() {
+  if (typeof SectionPlanner !== 'undefined' && SectionPlanner.courses) {
+    for (const cls of state.classes) {
+      if (!cls.courseCode || ['COURSE','GEN-101'].includes(cls.courseCode)) cls.courseCode = SectionPlanner.resolveCode(cls.subject, SectionPlanner.courses) || cls.courseCode;
+    }
+  }
   renderRoutineWindowCard();
   dom.loadedClassesCount.textContent = `${state.classes.length} classes`;
   dom.daysRoutineContainer.innerHTML = '';
@@ -6847,7 +6863,10 @@ function parseIcsContent(text) {
         }
       }
 
-      let instructor = 'Instructor';
+      if (courseCode === 'COURSE' && typeof SectionPlanner !== 'undefined' && SectionPlanner.courses) {
+        courseCode = SectionPlanner.resolveCode(subject, SectionPlanner.courses) || courseCode;
+      }
+      let instructor = '';
       if (desc.toLowerCase().includes('instructor:')) {
         instructor = desc.split(/instructor:/i)[1].split(',')[0].trim();
       } else if (desc.toLowerCase().includes('teacher:')) {
@@ -9096,5 +9115,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 </script>
+<script src="section_planner.js"></script>
 </body>
 </html>

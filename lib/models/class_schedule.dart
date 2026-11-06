@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'course_catalog.dart';
 
 class ClassSchedule {
   final String id;
@@ -121,14 +122,23 @@ class ClassSchedule {
     return ClassSchedule(
       id: json['id']?.toString() ?? UniqueKey().toString(),
       subject: json['subject']?.toString() ?? 'Untitled Class',
-      courseCode: json['courseCode']?.toString() ?? 'GEN-101',
+      courseCode: (json['courseCode']?.toString().trim().isNotEmpty ?? false) &&
+              json['courseCode'] != 'GEN-101'
+          ? json['courseCode'].toString()
+          : courseCodeForTitle(json['subject']?.toString() ?? '') ??
+              json['courseCode']?.toString() ??
+              '',
       dayOfWeek: int.tryParse(json['dayOfWeek']?.toString() ?? '1') ?? 1,
       startTime: json['startTime']?.toString() ?? '09:00',
       endTime: json['endTime']?.toString() ?? '10:00',
       room: json['room']?.toString() ?? 'TBA',
-      instructor: json['instructor']?.toString() ?? 'Instructor',
-      colorHex: json['color']?.toString() ?? json['colorHex']?.toString() ?? '#4A90E2',
-      customReminderMinutes: json['customReminderMinutes'] != null ? int.tryParse(json['customReminderMinutes'].toString()) : null,
+      instructor: json['instructor']?.toString() ?? '',
+      colorHex: json['color']?.toString() ??
+          json['colorHex']?.toString() ??
+          '#4A90E2',
+      customReminderMinutes: json['customReminderMinutes'] != null
+          ? int.tryParse(json['customReminderMinutes'].toString())
+          : null,
       reminderEnabled: json['reminderEnabled'] != false,
     );
   }
@@ -157,7 +167,9 @@ class ClassSchedule {
       room: room ?? this.room,
       instructor: instructor ?? this.instructor,
       colorHex: colorHex ?? this.colorHex,
-      customReminderMinutes: clearCustomReminder ? null : (customReminderMinutes ?? this.customReminderMinutes),
+      customReminderMinutes: clearCustomReminder
+          ? null
+          : (customReminderMinutes ?? this.customReminderMinutes),
       reminderEnabled: reminderEnabled ?? this.reminderEnabled,
     );
   }

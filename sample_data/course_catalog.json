@@ -1,0 +1,372 @@
+[
+  {
+    "code": "ENG 1011",
+    "name": "English I",
+    "credits": 3.0
+  },
+  {
+    "code": "BDS 1201",
+    "name": "History of the Emergence of Bangladesh",
+    "credits": 2.0
+  },
+  {
+    "code": "CSE 1110",
+    "name": "Introduction to Computer Systems",
+    "credits": 1.0
+  },
+  {
+    "code": "MATH 1151",
+    "name": "Fundamental Calculus",
+    "credits": 3.0
+  },
+  {
+    "code": "ENG 1013",
+    "name": "English II",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 1111",
+    "name": "Structured Programming Language",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 1112",
+    "name": "Structured Programming Language Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "CSE 2213",
+    "name": "Discrete Mathematics",
+    "credits": 3.0
+  },
+  {
+    "code": "MATH 2183",
+    "name": "Calculus and Linear Algebra",
+    "credits": 3.0
+  },
+  {
+    "code": "PHY 2105",
+    "name": "Physics",
+    "credits": 3.0
+  },
+  {
+    "code": "PHY 2106",
+    "name": "Physics Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "CSE 2215",
+    "name": "Data Structure and Algorithms I",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 2216",
+    "name": "Data Structure and Algorithms I Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "MATH 2201",
+    "name": "Coordinate Geometry and Vector Analysis",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 1325",
+    "name": "Digital Logic Design",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 1326",
+    "name": "Digital Logic Design Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "CSE 1115",
+    "name": "Object Oriented Programming",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 1116",
+    "name": "Object Oriented Programming Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "MATH 2205",
+    "name": "Probability and Statistics",
+    "credits": 3.0
+  },
+  {
+    "code": "SOC 2101",
+    "name": "Society, Technology and Engineering Ethics",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 2217",
+    "name": "Data Structure and Algorithms II",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 2218",
+    "name": "Data Structure and Algorithms II Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "EEE 2113",
+    "name": "Electrical Circuits",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 3521",
+    "name": "Database Management Systems",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 3522",
+    "name": "Database Management Systems Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "EEE 2123",
+    "name": "Electronics",
+    "credits": 3.0
+  },
+  {
+    "code": "EEE 2124",
+    "name": "Electronics Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "CSE 4165",
+    "name": "Web Programming",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 3313",
+    "name": "Computer Architecture",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 2118",
+    "name": "Advanced OOP Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "BIO 3105",
+    "name": "Biology for Engineers",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 3411",
+    "name": "System Analysis and Design",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 3412",
+    "name": "System Analysis and Design Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "CSE 4325",
+    "name": "Microprocessors and Microcontrollers",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4326",
+    "name": "Microprocessors and Microcontrollers Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "CSE 3421",
+    "name": "Software Engineering",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 3422",
+    "name": "Software Engineering Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "CSE 3811",
+    "name": "Artificial Intelligence",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 3812",
+    "name": "Artificial Intelligence Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "CSE 2233",
+    "name": "Theory of Computation",
+    "credits": 3.0
+  },
+  {
+    "code": "PMG 4101",
+    "name": "Project Management",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 3711",
+    "name": "Computer Networks",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 3712",
+    "name": "Computer Networks Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "CSE 4000A",
+    "name": "Final Year Design Project - I",
+    "credits": 2.0
+  },
+  {
+    "code": "CSE 4509",
+    "name": "Operating Systems",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4510",
+    "name": "Operating Systems Lab",
+    "credits": 1.0
+  },
+  {
+    "code": "CSE 4000B",
+    "name": "Final Year Design Project - II",
+    "credits": 2.0
+  },
+  {
+    "code": "CSE 4531",
+    "name": "Computer Security",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4000C",
+    "name": "Final Year Design Project - III",
+    "credits": 2.0
+  },
+  {
+    "code": "EEE 4261",
+    "name": "Green Computing",
+    "credits": 3.0
+  },
+  {
+    "code": "GED 1005",
+    "name": "AI Literacy and Prompt Engineering",
+    "credits": 3.0
+  },
+  {
+    "code": "ECO 4101",
+    "name": "Economics",
+    "credits": 3.0
+  },
+  {
+    "code": "ACT 2111",
+    "name": "Financial and Managerial Accounting",
+    "credits": 3.0
+  },
+  {
+    "code": "TEC 2499",
+    "name": "Technology Entrepreneurship",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4125",
+    "name": "Ethical Hacking and Network Defense",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4777",
+    "name": "Network Security",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4587",
+    "name": "Cloud Computing",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4611",
+    "name": "Compiler Design",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4621",
+    "name": "Computer Graphics",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4451",
+    "name": "Human Computer Interaction",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4435",
+    "name": "Software Architecture",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4181",
+    "name": "Mobile Application Development",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4945",
+    "name": "UI: Concepts and Design",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4495",
+    "name": "Software Testing and QA",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4327",
+    "name": "VLSI Design",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4399",
+    "name": "Embedded Machine Learning",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4889",
+    "name": "Machine Learning",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4891",
+    "name": "Data Mining",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4817",
+    "name": "Big Data Analytics",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4883",
+    "name": "Digital Image Processing",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4811",
+    "name": "Natural Language Processing",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4813",
+    "name": "Deep Learning",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4893",
+    "name": "Introduction to Bioinformatics",
+    "credits": 3.0
+  },
+  {
+    "code": "CSE 4133",
+    "name": "Business Intelligence",
+    "credits": 3.0
+  }
+]

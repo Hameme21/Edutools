@@ -1,5 +1,6 @@
 import 'dart:convert';
 import '../models/class_schedule.dart';
+import '../models/course_catalog.dart';
 import '../models/academic_notice.dart';
 import 'calendar_service.dart';
 
@@ -170,8 +171,10 @@ class FileParserService {
           }
         }
 
+        if (courseCode == 'GEN-101') courseCode = courseCodeForTitle(subject) ?? courseCode;
+
         // Extract instructor from description if present
-        String instructor = 'Instructor';
+        String instructor = '';
         if (description.toLowerCase().contains('instructor:')) {
           instructor = description.split(RegExp(r'instructor:', caseSensitive: false))[1].split(',')[0].trim();
         } else if (description.toLowerCase().contains('teacher:')) {
@@ -443,7 +446,7 @@ class FileParserService {
         }
 
         final subject = getCol(subjectIdx, cols.length > 1 ? cols[1] : 'Subject');
-        final code = getCol(codeIdx, cols.length > 2 ? cols[2] : 'CODE');
+        final code = codeIdx < 0 ? courseCodeForTitle(subject) ?? getCol(codeIdx, 'CODE') : getCol(codeIdx);
         final dayStr = getCol(dayIdx, cols.length > 3 ? cols[3] : '1');
         final day = _parseDayOfWeek(dayStr);
         final start = getCol(startIdx, cols.length > 4 ? cols[4] : '09:00');
